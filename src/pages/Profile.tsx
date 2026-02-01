@@ -1,22 +1,15 @@
-import { User, Mail, Calendar, Trophy, Flame, Zap, Edit2, Camera } from "lucide-react";
+import { User, Mail, Calendar, Trophy, Flame, Zap, Edit2, Camera, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
-
-const achievements = [
-  { name: "First Steps", icon: "🎯" },
-  { name: "Week Warrior", icon: "🔥" },
-  { name: "Quiz Master", icon: "🧠" },
-];
 
 const stats = [
-  { label: "Total XP", value: "12,450", icon: Zap, color: "xp" },
-  { label: "Current Level", value: "12", icon: Trophy, color: "level" },
-  { label: "Day Streak", value: "14", icon: Flame, color: "streak" },
+  { label: "Total XP", value: "0", icon: Zap, color: "xp" },
+  { label: "Current Level", value: "1", icon: Trophy, color: "level" },
+  { label: "Day Streak", value: "0", icon: Flame, color: "streak" },
 ];
 
 export default function Profile() {
-  const currentXp = 2450;
-  const nextLevelXp = 3000;
+  const currentXp = 0;
+  const nextLevelXp = 1000;
   const progress = (currentXp / nextLevelXp) * 100;
 
   return (
@@ -28,7 +21,7 @@ export default function Profile() {
             <Avatar className="h-24 w-24 ring-4 ring-primary/20">
               <AvatarImage src="/placeholder.svg" />
               <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
-                JD
+                U
               </AvatarFallback>
             </Avatar>
             <button className="absolute bottom-0 right-0 p-2 bg-primary rounded-full text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity">
@@ -38,26 +31,26 @@ export default function Profile() {
 
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-display font-bold text-foreground">John Doe</h1>
+              <h1 className="text-2xl font-display font-bold text-foreground">New User</h1>
               <span className="level-badge">
                 <span className="text-xs opacity-80">LVL</span>
-                <span className="text-lg font-bold">12</span>
+                <span className="text-lg font-bold">1</span>
               </span>
               <button className="p-2 rounded-lg hover:bg-secondary transition-colors ml-auto">
                 <Edit2 className="h-4 w-4 text-muted-foreground" />
               </button>
             </div>
 
-            <p className="text-level font-medium mb-4">Knowledge Seeker</p>
+            <p className="text-level font-medium mb-4">Beginner</p>
 
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <span>john.doe@example.com</span>
+                <span>Set up your email</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                <span>Joined January 2026</span>
+                <span>Joined February 2026</span>
               </div>
             </div>
 
@@ -76,7 +69,7 @@ export default function Profile() {
                 />
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                {(nextLevelXp - currentXp).toLocaleString()} XP until Level 13
+                {(nextLevelXp - currentXp).toLocaleString()} XP until Level 2
               </p>
             </div>
           </div>
@@ -104,19 +97,17 @@ export default function Profile() {
         ))}
       </div>
 
-      {/* Recent Achievements */}
+      {/* Achievements - Empty State */}
       <div className="bg-card rounded-2xl border border-border/50 p-6">
         <h3 className="font-semibold text-foreground mb-4">Recent Achievements</h3>
-        <div className="flex gap-4">
-          {achievements.map((achievement) => (
-            <div
-              key={achievement.name}
-              className="flex-1 p-4 bg-secondary/50 rounded-xl border border-border/50 text-center"
-            >
-              <div className="text-3xl mb-2">{achievement.icon}</div>
-              <p className="text-sm font-medium text-foreground">{achievement.name}</p>
-            </div>
-          ))}
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-achievement/10 flex items-center justify-center mb-4">
+            <Trophy className="h-8 w-8 text-achievement/40" />
+          </div>
+          <h4 className="font-medium text-foreground mb-2">No achievements yet</h4>
+          <p className="text-sm text-muted-foreground max-w-sm">
+            Complete tasks, quizzes, and maintain streaks to earn achievements!
+          </p>
         </div>
       </div>
 
@@ -127,16 +118,16 @@ export default function Profile() {
           <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-xl">
             <div>
               <p className="font-medium text-foreground">Email</p>
-              <p className="text-sm text-muted-foreground">john.doe@example.com</p>
+              <p className="text-sm text-muted-foreground">Not set up yet</p>
             </div>
-            <button className="text-sm text-primary hover:underline">Change</button>
+            <button className="text-sm text-primary hover:underline">Add</button>
           </div>
           <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-xl">
             <div>
               <p className="font-medium text-foreground">Password</p>
-              <p className="text-sm text-muted-foreground">Last changed 30 days ago</p>
+              <p className="text-sm text-muted-foreground">Set up your password</p>
             </div>
-            <button className="text-sm text-primary hover:underline">Update</button>
+            <button className="text-sm text-primary hover:underline">Set Up</button>
           </div>
         </div>
       </div>

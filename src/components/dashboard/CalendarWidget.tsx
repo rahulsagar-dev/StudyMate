@@ -1,51 +1,19 @@
-import { ChevronLeft, ChevronRight, BookOpen, FileText, Brain } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const events = [
-  { id: 1, title: "Biology Exam", type: "exam", time: "10:00 AM", date: 15 },
-  { id: 2, title: "Physics Study Session", type: "study", time: "2:00 PM", date: 15 },
-  { id: 3, title: "Chemistry Assignment Due", type: "deadline", time: "11:59 PM", date: 17 },
-  { id: 4, title: "Math Quiz", type: "exam", time: "9:00 AM", date: 20 },
-];
-
-const getEventIcon = (type: string) => {
-  switch (type) {
-    case "exam":
-      return <Brain className="h-3 w-3" />;
-    case "study":
-      return <BookOpen className="h-3 w-3" />;
-    case "deadline":
-      return <FileText className="h-3 w-3" />;
-    default:
-      return <BookOpen className="h-3 w-3" />;
-  }
-};
-
-const getEventColor = (type: string) => {
-  switch (type) {
-    case "exam":
-      return "bg-destructive/20 text-destructive border-destructive/30";
-    case "study":
-      return "bg-primary/20 text-primary border-primary/30";
-    case "deadline":
-      return "bg-warning/20 text-warning border-warning/30";
-    default:
-      return "bg-muted text-muted-foreground border-border";
-  }
-};
+// Empty events for new users
+const events: { id: number; title: string; type: string; time: string; date: number }[] = [];
 
 // Generate calendar days
 const generateCalendarDays = () => {
   const days = [];
   const startDay = 5; // Friday
-  const totalDays = 31;
+  const totalDays = 28;
 
-  // Add empty cells for days before month starts
   for (let i = 0; i < startDay; i++) {
     days.push(null);
   }
 
-  // Add days
   for (let i = 1; i <= totalDays; i++) {
     days.push(i);
   }
@@ -110,26 +78,32 @@ export function CalendarWidget() {
         </div>
       </div>
 
-      {/* Upcoming Events */}
-      <div className="flex-1 overflow-y-auto space-y-2">
+      {/* Upcoming Events - Empty State */}
+      <div className="flex-1 flex flex-col">
         <h4 className="text-sm font-medium text-muted-foreground mb-2">Upcoming</h4>
-        {events.slice(0, 3).map((event) => (
-          <div
-            key={event.id}
-            className={cn(
-              "flex items-center gap-3 p-2.5 rounded-lg border",
-              getEventColor(event.type)
-            )}
-          >
-            <div className="p-1.5 rounded-md bg-current/10">
-              {getEventIcon(event.type)}
+        {events.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
+              <Calendar className="h-6 w-6 text-primary/50" />
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{event.title}</p>
-              <p className="text-xs opacity-70">Feb {event.date} • {event.time}</p>
-            </div>
+            <p className="text-sm text-muted-foreground">No upcoming events</p>
+            <p className="text-xs text-muted-foreground mt-1">Add exams & deadlines to stay on track</p>
           </div>
-        ))}
+        ) : (
+          <div className="space-y-2">
+            {events.slice(0, 3).map((event) => (
+              <div
+                key={event.id}
+                className="flex items-center gap-3 p-2.5 rounded-lg border bg-secondary/50 border-border/50"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{event.title}</p>
+                  <p className="text-xs text-muted-foreground">Feb {event.date} • {event.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

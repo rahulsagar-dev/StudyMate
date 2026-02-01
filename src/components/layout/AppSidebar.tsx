@@ -146,17 +146,17 @@ export function AppSidebar() {
           <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20">
             <AvatarImage src="/placeholder.svg" />
             <AvatarFallback className="bg-primary/20 text-primary font-semibold">
-              JD
+              U
             </AvatarFallback>
           </Avatar>
           <div className={cn(
             "flex-1 min-w-0 transition-all duration-300",
             collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
           )}>
-            <p className="text-sm font-medium text-foreground truncate">John Doe</p>
+            <p className="text-sm font-medium text-foreground truncate">New User</p>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-level font-semibold">Level 12</span>
-              <Progress value={65} className="h-1.5 flex-1 bg-muted" />
+              <span className="text-xs text-level font-semibold">Level 1</span>
+              <Progress value={0} className="h-1.5 flex-1 bg-muted" />
             </div>
           </div>
         </NavLink>
