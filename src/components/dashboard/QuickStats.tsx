@@ -4,38 +4,38 @@ import { cn } from "@/lib/utils";
 const stats = [
   {
     label: "Total XP",
-    value: "12,450",
+    value: "0",
     icon: Zap,
     color: "xp",
-    change: "+250 today",
+    change: "Start earning!",
   },
   {
     label: "Current Level",
-    value: "12",
-    subtitle: "Knowledge Seeker",
+    value: "1",
+    subtitle: "Beginner",
     icon: Trophy,
     color: "level",
-    progress: 65,
+    progress: 0,
   },
   {
     label: "Day Streak",
-    value: "14",
+    value: "0",
     icon: Flame,
     color: "streak",
-    change: "Best: 28 days",
+    change: "Start today!",
   },
   {
     label: "Weekly Goal",
-    value: "78%",
+    value: "0%",
     icon: Target,
     color: "primary",
-    progress: 78,
+    progress: 0,
   },
 ];
 
 export function QuickStats() {
   return (
-    <div className="grid grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
         <div
           key={stat.label}
@@ -59,7 +59,7 @@ export function QuickStats() {
                   "h-5 w-5",
                   stat.color === "xp" && "text-xp",
                   stat.color === "level" && "text-level",
-                  stat.color === "streak" && "text-streak streak-animate",
+                  stat.color === "streak" && "text-streak",
                   stat.color === "primary" && "text-primary"
                 )}
               />

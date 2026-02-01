@@ -1,14 +1,13 @@
 import { cn } from "@/lib/utils";
-import { Flame } from "lucide-react";
+import { Flame, Sparkles } from "lucide-react";
 
-// Generate mock heatmap data for the past 12 weeks
+// Empty heatmap data for new users
 const generateHeatmapData = () => {
   const data: number[][] = [];
   for (let week = 0; week < 12; week++) {
     const weekData: number[] = [];
     for (let day = 0; day < 7; day++) {
-      // Random intensity 0-4
-      weekData.push(Math.floor(Math.random() * 5));
+      weekData.push(0); // All empty
     }
     data.push(weekData);
   }
@@ -31,9 +30,9 @@ const getHeatmapColor = (intensity: number) => {
 };
 
 export function StudyHeatmap() {
-  // Calculate current streak
-  const currentStreak = 14;
-  const longestStreak = 28;
+  // Fresh user values
+  const currentStreak = 0;
+  const longestStreak = 0;
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-6">
@@ -41,12 +40,14 @@ export function StudyHeatmap() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-display font-semibold text-foreground">Study Consistency</h3>
-          <p className="text-sm text-muted-foreground">Your GitHub-style activity heatmap</p>
+          <p className="text-sm text-muted-foreground">Your activity heatmap</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-streak/10 rounded-lg border border-streak/20">
-            <Flame className="h-4 w-4 text-streak streak-animate" />
-            <span className="text-sm font-semibold text-streak">{currentStreak} day streak</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50">
+            <Flame className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-muted-foreground">
+              {currentStreak === 0 ? "No streak yet" : `${currentStreak} day streak`}
+            </span>
           </div>
         </div>
       </div>
@@ -88,7 +89,7 @@ export function StudyHeatmap() {
                       "heatmap-cell",
                       getHeatmapColor(intensity)
                     )}
-                    title={`${intensity * 30} minutes studied`}
+                    title="No activity yet"
                   />
                 ))}
               </div>
@@ -97,10 +98,11 @@ export function StudyHeatmap() {
         </div>
       </div>
 
-      {/* Legend */}
+      {/* Legend & CTA */}
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-border/50">
-        <div className="flex items-center gap-4">
-          <span className="text-xs text-muted-foreground">Longest streak: {longestStreak} days</span>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Sparkles className="h-4 w-4" />
+          <span>Start studying to build your streak!</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-muted-foreground">Less</span>
