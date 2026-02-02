@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Bot,
@@ -21,6 +21,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 const mainNavItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
@@ -46,8 +48,16 @@ const utilityItems = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = async () => {
+    await signOut();
+    toast.success("Logged out successfully");
+    navigate("/auth");
+  };
 
   const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => (
     <NavLink
@@ -72,6 +82,10 @@ export function AppSidebar() {
       )}
     </NavLink>
   );
+
+  // Get user display info
+  const userEmail = user?.email ?? "New User";
+  const userInitial = user?.email ? user.email[0].toUpperCase() : "U";
 
   return (
     <aside
@@ -146,14 +160,16 @@ export function AppSidebar() {
           <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20">
             <AvatarImage src="/placeholder.svg" />
             <AvatarFallback className="bg-primary/20 text-primary font-semibold">
-              U
+              {userInitial}
             </AvatarFallback>
           </Avatar>
           <div className={cn(
             "flex-1 min-w-0 transition-all duration-300",
             collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
           )}>
-            <p className="text-sm font-medium text-foreground truncate">New User</p>
+            <p className="text-sm font-medium text-foreground truncate">
+              {user ? userEmail.split("@")[0] : "New User"}
+            </p>
             <div className="flex items-center gap-2">
               <span className="text-xs text-level font-semibold">Level 1</span>
               <Progress value={0} className="h-1.5 flex-1 bg-muted" />
@@ -162,10 +178,23 @@ export function AppSidebar() {
         </NavLink>
 
         {!collapsed && (
-          <button className="w-full mt-2 sidebar-item text-muted-foreground hover:text-destructive">
-            <LogOut className="h-5 w-5" />
-            <span>Logout</span>
-          </button>
+          user ? (
+            <button 
+              onClick={handleLogout}
+              className="w-full mt-2 sidebar-item text-muted-foreground hover:text-destructive"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Logout</span>
+            </button>
+          ) : (
+            <NavLink 
+              to="/auth"
+              className="w-full mt-2 sidebar-item text-muted-foreground hover:text-primary"
+            >
+              <LogOut className="h-5 w-5" />
+              <span>Login</span>
+            </NavLink>
+          )
         )}
       </div>
 

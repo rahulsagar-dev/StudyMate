@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Settings as SettingsIcon, Bell, Moon, Globe, Shield, HelpCircle, LogOut, Clock, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +34,9 @@ import {
 } from "@/components/ui/select";
 
 export default function Settings() {
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+
   // Toggle states
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
@@ -88,9 +93,11 @@ export default function Settings() {
     toast.error("Account deletion initiated. Check your email to confirm.");
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setLogoutOpen(false);
+    await signOut();
     toast.success("You have been logged out successfully");
+    navigate("/auth");
   };
 
   const langNames: Record<string, string> = {

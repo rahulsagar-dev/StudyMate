@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
 import { Flame, Sparkles } from "lucide-react";
 
-// Empty heatmap data for new users
+// Empty heatmap data for new users - full year (52 weeks)
 const generateHeatmapData = () => {
   const data: number[][] = [];
-  for (let week = 0; week < 12; week++) {
+  for (let week = 0; week < 52; week++) {
     const weekData: number[] = [];
     for (let day = 0; day < 7; day++) {
       weekData.push(0); // All empty
@@ -16,7 +16,25 @@ const generateHeatmapData = () => {
 
 const heatmapData = generateHeatmapData();
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const months = ["Dec", "Jan", "Feb"];
+const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+// Calculate which months to show and their approximate positions
+const getMonthLabels = () => {
+  const labels: { month: string; position: number }[] = [];
+  // Each month is roughly 4.33 weeks, so we show month labels at appropriate positions
+  const weeksPerMonth = 52 / 12;
+  
+  months.forEach((month, index) => {
+    labels.push({
+      month,
+      position: Math.round(index * weeksPerMonth)
+    });
+  });
+  
+  return labels;
+};
+
+const monthLabels = getMonthLabels();
 
 const getHeatmapColor = (intensity: number) => {
   const colors = [
@@ -40,7 +58,7 @@ export function StudyHeatmap() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h3 className="text-lg font-display font-semibold text-foreground">Study Consistency</h3>
-          <p className="text-sm text-muted-foreground">Your activity heatmap</p>
+          <p className="text-sm text-muted-foreground">Your activity heatmap for 2026</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg border border-border/50">
@@ -53,9 +71,9 @@ export function StudyHeatmap() {
       </div>
 
       {/* Heatmap */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-2">
         {/* Day Labels */}
-        <div className="flex flex-col gap-1 pr-2">
+        <div className="flex flex-col gap-1 pr-2 flex-shrink-0">
           {days.map((day, i) => (
             <span key={day} className="text-xs text-muted-foreground h-3 flex items-center">
               {i % 2 === 0 ? day : ""}
@@ -63,15 +81,15 @@ export function StudyHeatmap() {
           ))}
         </div>
 
-        {/* Grid */}
-        <div className="flex-1">
+        {/* Grid Container */}
+        <div className="flex-1 min-w-0">
           {/* Month Labels */}
-          <div className="flex mb-2">
-            {months.map((month, i) => (
+          <div className="flex mb-2 relative h-4">
+            {monthLabels.map(({ month, position }, i) => (
               <span
                 key={month}
-                className="text-xs text-muted-foreground"
-                style={{ marginLeft: i === 0 ? 0 : "auto" }}
+                className="text-xs text-muted-foreground absolute"
+                style={{ left: `${(position / 52) * 100}%` }}
               >
                 {month}
               </span>
@@ -79,9 +97,9 @@ export function StudyHeatmap() {
           </div>
 
           {/* Cells */}
-          <div className="flex gap-1">
+          <div className="flex gap-[3px]">
             {heatmapData.map((week, weekIndex) => (
-              <div key={weekIndex} className="flex flex-col gap-1">
+              <div key={weekIndex} className="flex flex-col gap-[3px]">
                 {week.map((intensity, dayIndex) => (
                   <div
                     key={`${weekIndex}-${dayIndex}`}
