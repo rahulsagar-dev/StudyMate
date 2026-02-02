@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Zap, TrendingUp, ShoppingBag, Bell } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -44,9 +45,12 @@ export function TopBar({ className }: TopBarProps) {
         </div>
 
         {/* Store */}
-        <button className="relative p-2.5 rounded-lg bg-secondary hover:bg-accent transition-colors group">
+        <Link 
+          to="/store"
+          className="relative p-2.5 rounded-lg bg-secondary hover:bg-accent transition-colors group"
+        >
           <ShoppingBag className="h-5 w-5 text-muted-foreground group-hover:text-achievement transition-colors" />
-        </button>
+        </Link>
 
         {/* Notifications */}
         <button className="relative p-2.5 rounded-lg bg-secondary hover:bg-accent transition-colors">

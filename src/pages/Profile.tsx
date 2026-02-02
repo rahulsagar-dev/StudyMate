@@ -1,5 +1,8 @@
-import { User, Mail, Calendar, Trophy, Flame, Zap, Edit2, Camera, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { User, Mail, Calendar, Trophy, Flame, Zap, Edit2, Camera, Sparkles, LogIn } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const stats = [
   { label: "Total XP", value: "0", icon: Zap, color: "xp" },
@@ -8,9 +11,44 @@ const stats = [
 ];
 
 export default function Profile() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   const currentXp = 0;
   const nextLevelXp = 1000;
   const progress = (currentXp / nextLevelXp) * 100;
+
+  const userEmail = user?.email ?? "Not set up yet";
+  const userInitial = user?.email ? user.email[0].toUpperCase() : "U";
+  const userName = user?.email ? user.email.split("@")[0] : "New User";
+  const joinDate = user?.created_at 
+    ? new Date(user.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+    : "February 2026";
+
+  if (!user) {
+    return (
+      <div className="space-y-6 max-w-4xl mx-auto">
+        <div className="bg-card rounded-2xl border border-border/50 p-12 text-center">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
+            <User className="h-10 w-10 text-primary/50" />
+          </div>
+          <h2 className="text-2xl font-display font-bold text-foreground mb-2">
+            Sign in to view your profile
+          </h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            Create an account or sign in to track your progress, earn XP, and unlock achievements.
+          </p>
+          <Button 
+            onClick={() => navigate("/auth")}
+            className="bg-gradient-primary hover:opacity-90"
+          >
+            <LogIn className="mr-2 h-4 w-4" />
+            Sign In or Create Account
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -21,7 +59,7 @@ export default function Profile() {
             <Avatar className="h-24 w-24 ring-4 ring-primary/20">
               <AvatarImage src="/placeholder.svg" />
               <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">
-                U
+                {userInitial}
               </AvatarFallback>
             </Avatar>
             <button className="absolute bottom-0 right-0 p-2 bg-primary rounded-full text-primary-foreground opacity-0 group-hover:opacity-100 transition-opacity">
@@ -31,7 +69,7 @@ export default function Profile() {
 
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
-              <h1 className="text-2xl font-display font-bold text-foreground">New User</h1>
+              <h1 className="text-2xl font-display font-bold text-foreground">{userName}</h1>
               <span className="level-badge">
                 <span className="text-xs opacity-80">LVL</span>
                 <span className="text-lg font-bold">1</span>
@@ -46,11 +84,11 @@ export default function Profile() {
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
-                <span>Set up your email</span>
+                <span>{userEmail}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                <span>Joined February 2026</span>
+                <span>Joined {joinDate}</span>
               </div>
             </div>
 
@@ -118,16 +156,16 @@ export default function Profile() {
           <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-xl">
             <div>
               <p className="font-medium text-foreground">Email</p>
-              <p className="text-sm text-muted-foreground">Not set up yet</p>
+              <p className="text-sm text-muted-foreground">{userEmail}</p>
             </div>
-            <button className="text-sm text-primary hover:underline">Add</button>
+            <button className="text-sm text-primary hover:underline">Edit</button>
           </div>
           <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-xl">
             <div>
               <p className="font-medium text-foreground">Password</p>
-              <p className="text-sm text-muted-foreground">Set up your password</p>
+              <p className="text-sm text-muted-foreground">••••••••</p>
             </div>
-            <button className="text-sm text-primary hover:underline">Set Up</button>
+            <button className="text-sm text-primary hover:underline">Change</button>
           </div>
         </div>
       </div>
