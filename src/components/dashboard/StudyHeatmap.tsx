@@ -1,40 +1,65 @@
 import { cn } from "@/lib/utils";
 import { Flame, Sparkles } from "lucide-react";
 
-// Empty heatmap data for new users - full year (52 weeks)
+// Generate accurate 2026 calendar data
 const generateHeatmapData = () => {
-  const data: number[][] = [];
-  for (let week = 0; week < 52; week++) {
-    const weekData: number[] = [];
-    for (let day = 0; day < 7; day++) {
-      weekData.push(0); // All empty
-    }
-    data.push(weekData);
+  const year = 2026;
+  const startDate = new Date(year, 0, 1); // Jan 1, 2026
+  const endDate = new Date(year, 11, 31); // Dec 31, 2026
+  
+  // Find the first Sunday on or before Jan 1
+  const firstDay = new Date(startDate);
+  while (firstDay.getDay() !== 0) {
+    firstDay.setDate(firstDay.getDate() - 1);
   }
-  return data;
+  
+  const weeks: { date: Date; intensity: number }[][] = [];
+  let currentDate = new Date(firstDay);
+  
+  while (currentDate <= endDate || weeks.length < 53) {
+    const week: { date: Date; intensity: number }[] = [];
+    for (let day = 0; day < 7; day++) {
+      const isInYear = currentDate.getFullYear() === year;
+      week.push({
+        date: new Date(currentDate),
+        intensity: 0, // Empty for new user
+      });
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+    weeks.push(week);
+    if (currentDate > endDate && currentDate.getFullYear() > year) break;
+  }
+  
+  return weeks;
 };
 
-const heatmapData = generateHeatmapData();
-const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-// Calculate which months to show and their approximate positions
-const getMonthLabels = () => {
-  const labels: { month: string; position: number }[] = [];
-  // Each month is roughly 4.33 weeks, so we show month labels at appropriate positions
-  const weeksPerMonth = 52 / 12;
+// Get month labels with their starting week positions
+const getMonthLabels = (weeks: { date: Date; intensity: number }[][]) => {
+  const labels: { month: string; weekIndex: number }[] = [];
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  let lastMonth = -1;
   
-  months.forEach((month, index) => {
-    labels.push({
-      month,
-      position: Math.round(index * weeksPerMonth)
-    });
+  weeks.forEach((week, weekIndex) => {
+    // Check each day in the week
+    for (const day of week) {
+      if (day.date.getFullYear() === 2026) {
+        const month = day.date.getMonth();
+        if (month !== lastMonth) {
+          labels.push({
+            month: monthNames[month],
+            weekIndex
+          });
+          lastMonth = month;
+          break;
+        }
+      }
+    }
   });
   
   return labels;
 };
 
-const monthLabels = getMonthLabels();
+const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const getHeatmapColor = (intensity: number) => {
   const colors = [
@@ -48,9 +73,11 @@ const getHeatmapColor = (intensity: number) => {
 };
 
 export function StudyHeatmap() {
+  const heatmapData = generateHeatmapData();
+  const monthLabels = getMonthLabels(heatmapData);
+  
   // Fresh user values
   const currentStreak = 0;
-  const longestStreak = 0;
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-6">
@@ -73,43 +100,72 @@ export function StudyHeatmap() {
       {/* Heatmap */}
       <div className="flex gap-2 overflow-x-auto pb-2">
         {/* Day Labels */}
-        <div className="flex flex-col gap-1 pr-2 flex-shrink-0">
+        <div className="flex flex-col gap-[3px] pr-2 flex-shrink-0">
+          <div className="h-4" /> {/* Spacer for month labels */}
           {days.map((day, i) => (
-            <span key={day} className="text-xs text-muted-foreground h-3 flex items-center">
-              {i % 2 === 0 ? day : ""}
-            </span>
+            <div 
+              key={day} 
+              className="h-[11px] flex items-center"
+            >
+              <span className="text-[10px] text-muted-foreground w-7">
+                {i % 2 === 1 ? day : ""}
+              </span>
+            </div>
           ))}
         </div>
 
         {/* Grid Container */}
         <div className="flex-1 min-w-0">
           {/* Month Labels */}
-          <div className="flex mb-2 relative h-4">
-            {monthLabels.map(({ month, position }, i) => (
+          <div className="flex h-4 mb-1">
+            {monthLabels.map(({ month, weekIndex }, i) => (
               <span
-                key={month}
-                className="text-xs text-muted-foreground absolute"
-                style={{ left: `${(position / 52) * 100}%` }}
+                key={`${month}-${i}`}
+                className="text-[10px] text-muted-foreground absolute"
+                style={{ 
+                  marginLeft: `${weekIndex * 14}px`,
+                  position: 'relative',
+                  left: 0
+                }}
               >
                 {month}
               </span>
             ))}
           </div>
 
-          {/* Cells */}
-          <div className="flex gap-[3px]">
+          {/* Cells Grid */}
+          <div className="flex gap-[3px] relative">
+            {/* Month labels positioned absolutely */}
+            <div className="absolute -top-4 left-0 flex">
+              {monthLabels.map(({ month, weekIndex }, i) => (
+                <span
+                  key={`${month}-${i}`}
+                  className="text-[10px] text-muted-foreground"
+                  style={{ 
+                    position: 'absolute',
+                    left: `${weekIndex * 14}px`
+                  }}
+                >
+                  {month}
+                </span>
+              ))}
+            </div>
+            
             {heatmapData.map((week, weekIndex) => (
               <div key={weekIndex} className="flex flex-col gap-[3px]">
-                {week.map((intensity, dayIndex) => (
-                  <div
-                    key={`${weekIndex}-${dayIndex}`}
-                    className={cn(
-                      "heatmap-cell",
-                      getHeatmapColor(intensity)
-                    )}
-                    title="No activity yet"
-                  />
-                ))}
+                {week.map((day, dayIndex) => {
+                  const isInYear = day.date.getFullYear() === 2026;
+                  return (
+                    <div
+                      key={`${weekIndex}-${dayIndex}`}
+                      className={cn(
+                        "w-[11px] h-[11px] rounded-sm",
+                        isInYear ? getHeatmapColor(day.intensity) : "bg-transparent"
+                      )}
+                      title={isInYear ? `${day.date.toDateString()}: No activity yet` : ""}
+                    />
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -127,7 +183,7 @@ export function StudyHeatmap() {
           {[0, 1, 2, 3, 4].map((intensity) => (
             <div
               key={intensity}
-              className={cn("w-3 h-3 rounded-sm", getHeatmapColor(intensity))}
+              className={cn("w-[11px] h-[11px] rounded-sm", getHeatmapColor(intensity))}
             />
           ))}
           <span className="text-xs text-muted-foreground">More</span>
