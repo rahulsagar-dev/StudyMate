@@ -10,7 +10,7 @@ import {
 
 const CELL_SIZE = 10;
 const CELL_GAP = 2;
-const MONTH_GAP = 6;
+const MONTH_GAP = 12;
 
 interface DayData {
   date: Date;
@@ -191,7 +191,9 @@ const formatStudyTime = (minutes: number): string => {
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function StudyHeatmap() {
-  const [activityData] = useState(() => generateMockActivity());
+  // Fresh state for new users - empty activity map
+  // This will later be replaced with Supabase data
+  const [activityData] = useState<Map<string, { studyMinutes: number; xpEarned: number; tasksCompleted: number }>>(() => new Map());
   
   const monthGroups = useMemo(() => generateMonthGroups(activityData), [activityData]);
   const { currentStreak, longestStreak } = useMemo(() => calculateStreaks(monthGroups), [monthGroups]);
@@ -275,7 +277,7 @@ export function StudyHeatmap() {
                   style={{ marginRight: monthIndex < 11 ? MONTH_GAP : 0 }}
                 >
                   {/* Month Label */}
-                  <div className="h-5 mb-0.5">
+                  <div className="h-5 mb-2">
                     <span className="text-[10px] text-muted-foreground font-medium">
                       {monthGroup.monthName}
                     </span>
