@@ -1,126 +1,101 @@
 
-# Plan: Fresh Start - Empty State UI + Working Settings
+
+# Study Consistency Heatmap Refinement Plan
 
 ## Overview
-Transform the StudyMate app into a "fresh install" state where a new user would see empty/zero data, while making the Settings page fully functional with interactive toggles and dialogs. Feature pages (AI Assistant, Summarizer, Flashcards, Quizzes, Study Planner, Calendar, Achievements, Store, Streaks) will show "Under Construction" placeholder screens.
+This plan addresses four key refinements to make the heatmap feel cleaner, more scannable, and present a proper "fresh state" for new users.
 
 ---
 
-## What Will Change
+## Changes Summary
 
-### 1. Dashboard - Fresh/Empty State
-The dashboard will show zero stats and empty states to simulate a new user experience:
+### 1. Increase Horizontal Spacing Between Months
+- Increase `MONTH_GAP` from `6` to `12` pixels
+- This creates clearer visual separation between month blocks, making the calendar easier to scan
 
-- **QuickStats**: Reset to 0 XP, Level 1 "Beginner", 0 day streak, 0% weekly goal
-- **TaskPanel**: Empty task list with a friendly "No tasks yet" message and CTA to add first task
-- **StudyHeatmap**: All cells at intensity 0 (empty), 0 day streak
-- **CalendarWidget**: Show "No upcoming events" empty state
-- **AnalyticsChart**: Empty chart with "Start studying to see your progress" message
+### 2. Add Vertical Gap Between Month Labels and Grid
+- Increase the spacing between month labels (Jan, Feb, etc.) and the first row of cells
+- Change from `mb-0.5` (2px) to `mb-2` (8px) for better visual hierarchy
 
-### 2. Settings Page - Fully Functional
-Make all settings interactive with real state management:
+### 3. Fresh State for New Users
+- Replace the `generateMockActivity()` function with a "fresh start" mode
+- Add an `isNewUser` prop or state that defaults to `true`
+- When `isNewUser` is true:
+  - Render all cells as empty/neutral (dark gray - `bg-heatmap-0`)
+  - Show "No streak yet" in streak indicator
+  - Display welcoming subtitle: "Your activity heatmap for 2026"
+  - Show motivational message: "Start studying today to build your streak! 🚀"
+- When user has activity (future Supabase integration):
+  - Dynamically activate cells based on real data
+  - Update streak counters in real-time
 
-- **Working toggle switches** that save state (Notifications, Dark Mode, Study Reminders, Two-Factor Auth)
-- **Editable dialogs** for Daily Goal, Break Interval, and Language settings
-- **Toast notifications** when settings are changed
-- **Data Export button** with confirmation dialog
-- **Delete Account** with confirmation dialog and warning
-- **Working Logout button** with confirmation
-
-### 3. Profile Page - New User State
-- Reset XP to 0, Level 1 "Beginner"
-- Empty achievements section with "Earn your first achievement" message
-- Generic placeholder avatar
-
-### 4. Feature Pages - Under Construction Placeholders
-Replace all these pages with attractive "Under Construction" screens:
-
-| Page | Placeholder Message |
-|------|---------------------|
-| AI Assistant | "AI Assistant is coming soon! Get ready to supercharge your learning." |
-| Summarizer | "AI Summarizer is under construction. Soon you'll condense notes instantly." |
-| Flashcards | "Flashcards feature is being built. Master subjects with spaced repetition soon!" |
-| Quizzes | "Quiz Engine is in development. Test your knowledge and earn XP soon!" |
-| Study Planner | "Study Planner is coming. Organize your sessions for maximum productivity." |
-| Calendar | "Calendar is under construction. Track exams, deadlines, and sessions soon." |
-| Achievements | "Achievements are being crafted. Unlock badges and earn rewards soon!" |
-| Store | "Reward Store is coming. Spend XP on themes, avatars, and boosts soon!" |
-| Streaks | "Streaks & XP tracking is under development. Watch your consistency grow soon!" |
-| Analytics | "Analytics dashboard is being built. Deep dive into your performance soon!" |
-
-### 5. Sidebar & TopBar - Fresh State
-- TopBar: Show Level 1, 0 XP, 0 day streak
-- Sidebar: User profile shows "New User" with Level 1
+### 4. Streak Indicators in Fresh State
+- Keep streak badges visible but styled as inactive
+- "No streak yet" with muted styling (already implemented)
+- Hide "Best: X days" badge when `longestStreak === 0` (already implemented)
 
 ---
 
-## Files to Create/Modify
+## Technical Implementation
 
-### New Files
-- `src/components/UnderConstruction.tsx` - Reusable placeholder component with icon, title, description, and optional CTA
+### File to Modify
+`src/components/dashboard/StudyHeatmap.tsx`
 
-### Modified Files
-1. `src/components/dashboard/QuickStats.tsx` - Zero/empty values
-2. `src/components/dashboard/TaskPanel.tsx` - Empty state UI
-3. `src/components/dashboard/StudyHeatmap.tsx` - All zeros, empty state
-4. `src/components/dashboard/CalendarWidget.tsx` - Empty state
-5. `src/components/dashboard/AnalyticsChart.tsx` - Empty state
-6. `src/pages/Settings.tsx` - Full interactivity with state, dialogs, toasts
-7. `src/pages/Profile.tsx` - New user empty state
-8. `src/components/layout/TopBar.tsx` - Reset gamification values
-9. `src/components/layout/AppSidebar.tsx` - Reset user values
-10. `src/pages/AIAssistant.tsx` - Under construction
-11. `src/pages/Summarizer.tsx` - Under construction
-12. `src/pages/Flashcards.tsx` - Under construction
-13. `src/pages/Quizzes.tsx` - Under construction
-14. `src/pages/StudyPlanner.tsx` - Under construction
-15. `src/pages/CalendarPage.tsx` - Under construction
-16. `src/pages/Achievements.tsx` - Under construction
-17. `src/pages/Store.tsx` - Under construction
-18. `src/pages/Streaks.tsx` - Under construction
-19. `src/pages/Analytics.tsx` - Under construction
-
----
-
-## Technical Details
-
-### UnderConstruction Component
+### Constant Changes
 ```text
-+------------------------------------------+
-|                                          |
-|            [Construction Icon]           |
-|                                          |
-|         "Feature Name Coming Soon"       |
-|                                          |
-|      "Description of what's coming"      |
-|                                          |
-|          [Back to Dashboard]             |
-|                                          |
-+------------------------------------------+
+Current:
+  MONTH_GAP = 6
+
+New:
+  MONTH_GAP = 12
 ```
 
-### Settings Page Enhancements
-- Use React `useState` for toggle states
-- Use Radix UI `Dialog` for edit modals (Daily Goal, Break Interval, Language)
-- Use `sonner` toast for feedback on changes
-- Confirmation dialogs for destructive actions (Delete Account, Logout)
-- Form inputs for editable values
+### Month Label Spacing
+```text
+Current:
+  <div className="h-5 mb-0.5">
 
-### Empty State Design Pattern
-All empty states will follow this pattern:
-- Subtle icon (grayed out or in primary color at low opacity)
-- Friendly headline
-- Encouraging description
-- Optional call-to-action button
+New:
+  <div className="h-5 mb-2">
+```
+
+### Fresh State Logic
+Replace the mock activity generator with an empty map for new users:
+
+```text
+Current:
+  const [activityData] = useState(() => generateMockActivity());
+
+New:
+  // For fresh users, start with empty activity
+  // This will later be replaced with Supabase data
+  const [activityData] = useState<Map<string, {...}>>(() => new Map());
+```
+
+This approach:
+- Renders all 2026 calendar cells as neutral gray (`bg-heatmap-0`)
+- Shows "No streak yet" badge
+- Displays "Start studying today to build your streak! 🚀" message
+- Keeps the legend and UI fully functional
+- Ready for future real-time updates from Supabase
 
 ---
 
-## Implementation Order
-1. Create `UnderConstruction.tsx` component
-2. Update all feature pages to use UnderConstruction
-3. Update dashboard components to empty states
-4. Update TopBar and Sidebar to fresh user values
-5. Rebuild Settings page with full interactivity
-6. Update Profile page to new user state
+## Visual Result
 
-This will give you a clean slate that looks professional and ready for you to provide prompts for each feature later.
+| Element | Before | After |
+|---------|--------|-------|
+| Month gap | 6px | 12px |
+| Label to grid gap | 2px | 8px |
+| Initial cells | Random mock data | All empty/neutral |
+| Streak badge | Shows mock streak | "No streak yet" |
+| Motivational text | Based on mock | "Start studying today..." |
+
+---
+
+## Future Considerations
+Once Supabase integration is complete, the `activityData` state will be populated from the database, and the heatmap will automatically:
+- Fill cells based on actual study sessions
+- Update streak counters in real-time
+- Trigger when tasks are completed or XP is earned
+
