@@ -7,6 +7,10 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+ import { useStudySessions } from "@/hooks/useStudySessions";
+ import { useProfile } from "@/hooks/useProfile";
+ import { useAuth } from "@/contexts/AuthContext";
+ import { Skeleton } from "@/components/ui/skeleton";
 
 const CELL_SIZE = 10;
 const CELL_GAP = 2;
@@ -26,33 +30,8 @@ interface MonthGroup {
   weeks: DayData[][];
 }
 
-// Generate mock activity data for demonstration
-const generateMockActivity = (): Map<string, { studyMinutes: number; xpEarned: number; tasksCompleted: number }> => {
-  const activity = new Map();
-  const today = new Date(2026, 1, 3); // Current date: Feb 3, 2026
-  
-  // Generate some realistic activity patterns
-  for (let i = 0; i < 60; i++) {
-    const date = new Date(today);
-    date.setDate(date.getDate() - i);
-    
-    // Skip some days randomly for realistic gaps
-    if (Math.random() > 0.7) continue;
-    
-    const studyMinutes = Math.floor(Math.random() * 180) + 15;
-    const xpEarned = Math.floor(studyMinutes * 1.5) + Math.floor(Math.random() * 50);
-    const tasksCompleted = Math.floor(Math.random() * 5) + 1;
-    
-    const dateKey = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
-    activity.set(dateKey, { studyMinutes, xpEarned, tasksCompleted });
-  }
-  
-  return activity;
-};
-
 // Generate calendar data grouped by months
-const generateMonthGroups = (activityData: Map<string, { studyMinutes: number; xpEarned: number; tasksCompleted: number }>): MonthGroup[] => {
-  const year = 2026;
+ const generateMonthGroups = (activityData: Map<string, { studyMinutes: number; xpEarned: number; tasksCompleted: number }>, year: number = 2026): MonthGroup[] => {
   const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const monthGroups: MonthGroup[] = [];
   
@@ -72,7 +51,8 @@ const generateMonthGroups = (activityData: Map<string, { studyMinutes: number; x
       
       for (let day = 0; day < 7; day++) {
         const isCurrentMonth = currentDate.getMonth() === month && currentDate.getFullYear() === year;
-        const dateKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}-${currentDate.getDate()}`;
+         // Use YYYY-MM-DD format to match Supabase date format
+         const dateKey = currentDate.toISOString().split('T')[0];
         const dayActivity = activityData.get(dateKey);
         
         week.push({
@@ -106,62 +86,6 @@ const generateMonthGroups = (activityData: Map<string, { studyMinutes: number; x
   return monthGroups;
 };
 
-// Calculate streaks from month groups
-const calculateStreaks = (monthGroups: MonthGroup[]) => {
-  const today = new Date(2026, 1, 3);
-  today.setHours(0, 0, 0, 0);
-  
-  // Flatten all days and sort by date descending
-  const allDays = monthGroups
-    .flatMap(mg => mg.weeks.flat())
-    .filter(d => d.isCurrentYear)
-    .sort((a, b) => b.date.getTime() - a.date.getTime());
-  
-  // Remove duplicates (from week overlaps)
-  const seenDates = new Set<string>();
-  const uniqueDays = allDays.filter(d => {
-    const key = d.date.toISOString().split('T')[0];
-    if (seenDates.has(key)) return false;
-    seenDates.add(key);
-    return true;
-  });
-  
-  let currentStreak = 0;
-  let longestStreak = 0;
-  let tempStreak = 0;
-  let checkingCurrent = true;
-  
-  for (let i = 0; i < uniqueDays.length; i++) {
-    const day = uniqueDays[i];
-    const hasActivity = day.studyMinutes > 0;
-    
-    if (checkingCurrent) {
-      if (hasActivity) {
-        currentStreak++;
-        tempStreak++;
-      } else {
-        const isToday = day.date.getTime() === today.getTime();
-        if (!isToday) {
-          checkingCurrent = false;
-          longestStreak = Math.max(longestStreak, tempStreak);
-          tempStreak = 0;
-        }
-      }
-    } else {
-      if (hasActivity) {
-        tempStreak++;
-      } else {
-        longestStreak = Math.max(longestStreak, tempStreak);
-        tempStreak = 0;
-      }
-    }
-  }
-  
-  longestStreak = Math.max(longestStreak, tempStreak, currentStreak);
-  
-  return { currentStreak, longestStreak };
-};
-
 const getIntensityLevel = (studyMinutes: number): number => {
   if (studyMinutes === 0) return 0;
   if (studyMinutes < 30) return 1;
@@ -191,18 +115,23 @@ const formatStudyTime = (minutes: number): string => {
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export function StudyHeatmap() {
-  // Fresh state for new users - empty activity map
-  // This will later be replaced with Supabase data
-  const [activityData] = useState<Map<string, { studyMinutes: number; xpEarned: number; tasksCompleted: number }>>(() => new Map());
+   const { user } = useAuth();
+   const { profile, loading: profileLoading } = useProfile();
+   const { getActivityMap, loading: sessionsLoading } = useStudySessions(2026);
   
-  const monthGroups = useMemo(() => generateMonthGroups(activityData), [activityData]);
-  const { currentStreak, longestStreak } = useMemo(() => calculateStreaks(monthGroups), [monthGroups]);
+   const activityData = useMemo(() => getActivityMap(), [getActivityMap]);
+   const monthGroups = useMemo(() => generateMonthGroups(activityData, 2026), [activityData]);
+   
+   // Use streaks from profile (calculated by database)
+   const currentStreak = profile?.current_streak || 0;
+   const longestStreak = profile?.longest_streak || 0;
   
   const totalStudyDays = useMemo(() => 
     monthGroups.flatMap(mg => mg.weeks.flat()).filter(d => d.isCurrentYear && d.studyMinutes > 0).length
   , [monthGroups]);
 
   const hasActivity = totalStudyDays > 0;
+   const loading = profileLoading || sessionsLoading;
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-lg">
@@ -211,7 +140,9 @@ export function StudyHeatmap() {
         <div>
           <h3 className="text-lg font-display font-semibold text-foreground">Study Consistency</h3>
           <p className="text-sm text-muted-foreground">
-            {hasActivity 
+             {!user
+               ? "Sign in to track your study activity"
+               : hasActivity 
               ? `${totalStudyDays} study sessions in 2026`
               : "Your activity heatmap for 2026"
             }
@@ -229,12 +160,16 @@ export function StudyHeatmap() {
               "h-4 w-4 transition-colors",
               currentStreak > 0 ? "text-streak" : "text-muted-foreground"
             )} />
-            <span className={cn(
-              "text-sm font-medium",
-              currentStreak > 0 ? "text-streak" : "text-muted-foreground"
-            )}>
-              {currentStreak > 0 ? `${currentStreak} day streak` : "No streak yet"}
-            </span>
+             {loading ? (
+               <Skeleton className="h-4 w-20" />
+             ) : (
+               <span className={cn(
+                 "text-sm font-medium",
+                 currentStreak > 0 ? "text-streak" : "text-muted-foreground"
+               )}>
+                 {currentStreak > 0 ? `${currentStreak} day streak` : "No streak yet"}
+               </span>
+             )}
           </div>
           
           {/* Longest Streak */}

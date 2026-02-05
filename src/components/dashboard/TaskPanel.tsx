@@ -1,35 +1,81 @@
-import { useState } from "react";
-import { Check, Circle, Zap, Plus, ListTodo } from "lucide-react";
+ import { useState } from "react";
+ import { Check, Zap, Plus, ListTodo, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+ import { useTasks } from "@/hooks/useTasks";
+ import { useAuth } from "@/contexts/AuthContext";
+ import { Button } from "@/components/ui/button";
+ import { Input } from "@/components/ui/input";
+ import {
+   Dialog,
+   DialogContent,
+   DialogHeader,
+   DialogTitle,
+   DialogTrigger,
+ } from "@/components/ui/dialog";
+ import {
+   Select,
+   SelectContent,
+   SelectItem,
+   SelectTrigger,
+   SelectValue,
+ } from "@/components/ui/select";
+ import { Label } from "@/components/ui/label";
 
-interface Task {
-  id: string;
-  title: string;
-  subject: string;
-  xp: number;
-  completed: boolean;
-}
-
-// Start with empty task list for new users
-const initialTasks: Task[] = [];
+ const SUBJECTS = ["Math", "Science", "History", "English", "General", "Programming", "Language", "Art"];
+ const XP_OPTIONS = [10, 15, 20, 25, 30, 40, 50];
 
 export function TaskPanel() {
-  const [tasks, setTasks] = useState(initialTasks);
+   const { user } = useAuth();
+   const { tasks, loading, addTask, toggleTask, deleteTask } = useTasks();
   const [animatingXp, setAnimatingXp] = useState<string | null>(null);
+   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+   const [newTaskTitle, setNewTaskTitle] = useState("");
+   const [newTaskSubject, setNewTaskSubject] = useState("General");
+   const [newTaskXp, setNewTaskXp] = useState(20);
 
-  const toggleTask = (id: string) => {
+   const handleToggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id);
     if (task && !task.completed) {
       setAnimatingXp(id);
       setTimeout(() => setAnimatingXp(null), 800);
     }
-    setTasks(tasks.map((task) =>
-      task.id === id ? { ...task, completed: !task.completed } : task
-    ));
+     await toggleTask(id);
   };
 
+   const handleAddTask = async () => {
+     if (!newTaskTitle.trim()) return;
+     await addTask(newTaskTitle.trim(), newTaskSubject, newTaskXp);
+     setNewTaskTitle("");
+     setNewTaskSubject("General");
+     setNewTaskXp(20);
+     setIsAddDialogOpen(false);
+   };
+ 
   const completedCount = tasks.filter((t) => t.completed).length;
-  const totalXp = tasks.filter((t) => t.completed).reduce((sum, t) => sum + t.xp, 0);
+   const totalXp = tasks.filter((t) => t.completed).reduce((sum, t) => sum + t.xp_reward, 0);
+ 
+   // Show login prompt if not authenticated
+   if (!user) {
+     return (
+       <div className="bg-card rounded-2xl border border-border/50 p-6 h-full flex flex-col">
+         <div className="flex items-center justify-between mb-4">
+           <div>
+             <h3 className="text-lg font-display font-semibold text-foreground">Today's Tasks</h3>
+             <p className="text-sm text-muted-foreground">Sign in to track tasks</p>
+           </div>
+         </div>
+         <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
+           <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+             <ListTodo className="h-8 w-8 text-primary/50" />
+           </div>
+           <h4 className="font-medium text-foreground mb-2">Sign in to get started</h4>
+           <p className="text-sm text-muted-foreground max-w-[200px]">
+             Create an account to track tasks and earn XP!
+           </p>
+         </div>
+       </div>
+     );
+   }
 
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-6 h-full flex flex-col">
@@ -38,17 +84,78 @@ export function TaskPanel() {
         <div>
           <h3 className="text-lg font-display font-semibold text-foreground">Today's Tasks</h3>
           <p className="text-sm text-muted-foreground">
-            {tasks.length === 0 ? "No tasks yet" : `${completedCount}/${tasks.length} completed • ${totalXp} XP earned`}
+             {loading ? "Loading..." : tasks.length === 0 ? "No tasks yet" : `${completedCount}/${tasks.length} completed • ${totalXp} XP earned`}
           </p>
         </div>
-        <button className="p-2 rounded-lg bg-secondary hover:bg-accent transition-colors">
-          <Plus className="h-4 w-4 text-muted-foreground" />
-        </button>
+         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+           <DialogTrigger asChild>
+             <button className="p-2 rounded-lg bg-secondary hover:bg-accent transition-colors">
+               <Plus className="h-4 w-4 text-muted-foreground" />
+             </button>
+           </DialogTrigger>
+           <DialogContent className="sm:max-w-[400px]">
+             <DialogHeader>
+               <DialogTitle>Add New Task</DialogTitle>
+             </DialogHeader>
+             <div className="space-y-4 pt-4">
+               <div className="space-y-2">
+                 <Label htmlFor="title">Task Title</Label>
+                 <Input
+                   id="title"
+                   placeholder="e.g., Complete math homework"
+                   value={newTaskTitle}
+                   onChange={(e) => setNewTaskTitle(e.target.value)}
+                   onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
+                 />
+               </div>
+               <div className="grid grid-cols-2 gap-4">
+                 <div className="space-y-2">
+                   <Label>Subject</Label>
+                   <Select value={newTaskSubject} onValueChange={setNewTaskSubject}>
+                     <SelectTrigger>
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {SUBJECTS.map((subject) => (
+                         <SelectItem key={subject} value={subject}>
+                           {subject}
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
+                 <div className="space-y-2">
+                   <Label>XP Reward</Label>
+                   <Select value={String(newTaskXp)} onValueChange={(v) => setNewTaskXp(Number(v))}>
+                     <SelectTrigger>
+                       <SelectValue />
+                     </SelectTrigger>
+                     <SelectContent>
+                       {XP_OPTIONS.map((xp) => (
+                         <SelectItem key={xp} value={String(xp)}>
+                           {xp} XP
+                         </SelectItem>
+                       ))}
+                     </SelectContent>
+                   </Select>
+                 </div>
+               </div>
+               <Button onClick={handleAddTask} className="w-full" disabled={!newTaskTitle.trim()}>
+                 <Plus className="h-4 w-4 mr-2" />
+                 Add Task
+               </Button>
+             </div>
+           </DialogContent>
+         </Dialog>
       </div>
 
       {/* Task List */}
       <div className="flex-1 overflow-y-auto">
-        {tasks.length === 0 ? (
+         {loading ? (
+           <div className="flex items-center justify-center h-full">
+             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+           </div>
+         ) : tasks.length === 0 ? (
           // Empty State
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
             <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
@@ -58,7 +165,10 @@ export function TaskPanel() {
             <p className="text-sm text-muted-foreground mb-4 max-w-[200px]">
               Add your first task to start earning XP!
             </p>
-            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+             <button 
+               onClick={() => setIsAddDialogOpen(true)}
+               className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+             >
               <Plus className="h-4 w-4" />
               Add Task
             </button>
@@ -69,10 +179,10 @@ export function TaskPanel() {
               <div
                 key={task.id}
                 className={cn(
-                  "task-card cursor-pointer relative",
+                   "task-card cursor-pointer relative group",
                   task.completed && "opacity-60"
                 )}
-                onClick={() => toggleTask(task.id)}
+                 onClick={() => handleToggleTask(task.id)}
               >
                 <button
                   className={cn(
@@ -97,13 +207,23 @@ export function TaskPanel() {
 
                 <div className="flex items-center gap-1 px-2 py-1 bg-xp/10 rounded-full">
                   <Zap className="h-3 w-3 text-xp" />
-                  <span className="text-xs font-semibold text-xp">+{task.xp}</span>
+                   <span className="text-xs font-semibold text-xp">+{task.xp_reward}</span>
                 </div>
+ 
+                 <button
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     deleteTask(task.id);
+                   }}
+                   className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 transition-all"
+                 >
+                   <Trash2 className="h-4 w-4 text-destructive" />
+                 </button>
 
                 {/* XP Animation */}
                 {animatingXp === task.id && (
                   <div className="absolute right-8 top-1/2 -translate-y-1/2 xp-pop">
-                    <span className="text-xp font-bold">+{task.xp} XP!</span>
+                     <span className="text-xp font-bold">+{task.xp_reward} XP!</span>
                   </div>
                 )}
               </div>
