@@ -134,12 +134,12 @@ export function StudyHeatmap() {
    const loading = profileLoading || sessionsLoading;
 
   return (
-    <div className="bg-card rounded-2xl border border-border/50 p-6 shadow-lg">
+    <div className="bg-card rounded-2xl border border-border/50 p-4 sm:p-6 shadow-lg">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
-          <h3 className="text-lg font-display font-semibold text-foreground">Study Consistency</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-base sm:text-lg font-display font-semibold text-foreground">Study Consistency</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">
              {!user
                ? "Sign in to track your study activity"
                : hasActivity 
@@ -186,8 +186,8 @@ export function StudyHeatmap() {
 
       {/* Heatmap Container */}
       <TooltipProvider delayDuration={100}>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex">
+        <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
+          <div className="inline-flex min-w-max">
             {/* Day Labels Column */}
             <div className="flex flex-col flex-shrink-0 pr-2 pt-5">
               {dayLabels.map((day, i) => (
@@ -287,28 +287,28 @@ export function StudyHeatmap() {
       </TooltipProvider>
 
       {/* Legend & Motivation */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-5 pt-4 border-t border-border/30">
-        <div className="flex items-center gap-2 text-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mt-4 sm:mt-5 pt-3 sm:pt-4 border-t border-border/30">
+        <div className="flex items-center gap-2 text-xs sm:text-sm">
           {hasActivity && currentStreak > 0 ? (
             <>
-              <Flame className="h-4 w-4 text-streak animate-pulse" />
+              <Flame className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-streak animate-pulse" />
               <span className="text-foreground">
-                You're on a <span className="font-semibold text-streak">{currentStreak}-day</span> consistency streak 🔥 Keep going!
+                You're on a <span className="font-semibold text-streak">{currentStreak}-day</span> streak 🔥
               </span>
             </>
           ) : hasActivity ? (
             <span className="text-muted-foreground">
-              Great progress! Study today to start a new streak 💪
+              Study today to start a streak 💪
             </span>
           ) : (
             <span className="text-muted-foreground">
-              Start studying today to build your streak! 🚀
+              Start studying to build your streak! 🚀
             </span>
           )}
         </div>
         
         {/* Legend */}
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           <span className="text-[10px] text-muted-foreground/70 mr-1">Less</span>
           {[0, 1, 2, 3, 4].map((intensity) => (
             <Tooltip key={intensity}>
