@@ -15,8 +15,10 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className="flex-1 ml-16 flex flex-col">
         <TopBar />
         
-        <main className="flex-1 p-6 overflow-auto">
-          {children}
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            {children}
+          </div>
         </main>
       </div>
 
