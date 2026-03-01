@@ -1,0 +1,166 @@
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+
+export interface SubjectData {
+  name: string;
+  value: number;
+  color: string;
+}
+
+export interface DailyPatternData {
+  day: string;
+  hours: number;
+}
+
+export interface MonthlyProgressData {
+  week: string;
+  tasks: number;
+  xp: number;
+}
+
+export interface AnalyticsData {
+  totalStudyHours: number;
+  studyHoursTrend: number;
+  quizzesCompleted: number;
+  flashcardsReviewed: number;
+  averageScore: number;
+  subjectData: SubjectData[];
+  dailyPattern: DailyPatternData[];
+  monthlyProgress: MonthlyProgressData[];
+  loading: boolean;
+}
+
+const SUBJECT_COLORS = [
+  "hsl(180, 70%, 50%)",   // primary cyan
+  "hsl(265, 70%, 60%)",   // level purple
+  "hsl(142, 70%, 45%)",   // xp green
+  "hsl(45, 90%, 55%)",    // achievement gold
+  "hsl(25, 95%, 55%)",    // streak orange
+  "hsl(340, 65%, 55%)",   // pink
+  "hsl(200, 70%, 55%)",   // blue
+  "hsl(160, 60%, 45%)",   // teal
+];
+
+export function useAnalytics() {
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<any[]>([]);
+
+  const fetchData = useCallback(async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const now = new Date();
+      const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const endStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, "0")}-${String(endOfMonth.getDate()).padStart(2, "0")}`;
+
+      const [sessionsRes, tasksRes] = await Promise.all([
+        supabase
+          .from("study_sessions")
+          .select("*")
+          .eq("user_id", user.id)
+          .gte("date", startOfMonth)
+          .lte("date", endStr),
+        supabase
+          .from("tasks")
+          .select("*")
+          .eq("user_id", user.id)
+          .eq("completed", true),
+      ]);
+
+      setSessions(sessionsRes.data || []);
+      setTasks(tasksRes.data || []);
+    } catch (err) {
+      console.error("Error fetching analytics:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const analytics = useMemo<AnalyticsData>(() => {
+    // Total study hours this month
+    const totalMinutes = sessions.reduce((sum, s) => sum + (s.study_minutes || 0), 0);
+    const totalStudyHours = Math.round((totalMinutes / 60) * 10) / 10;
+
+    // Trend: compare first half vs second half of available data
+    const mid = Math.floor(sessions.length / 2);
+    const firstHalf = sessions.slice(0, mid).reduce((s, r) => s + (r.study_minutes || 0), 0);
+    const secondHalf = sessions.slice(mid).reduce((s, r) => s + (r.study_minutes || 0), 0);
+    const studyHoursTrend = firstHalf > 0 ? Math.round(((secondHalf - firstHalf) / firstHalf) * 100) : 0;
+
+    // Subject breakdown from completed tasks
+    const subjectMap = new Map<string, number>();
+    tasks.forEach((t) => {
+      const current = subjectMap.get(t.subject) || 0;
+      subjectMap.set(t.subject, current + (t.xp_reward || 0));
+    });
+    const subjectData: SubjectData[] = Array.from(subjectMap.entries())
+      .map(([name, value], i) => ({
+        name,
+        value,
+        color: SUBJECT_COLORS[i % SUBJECT_COLORS.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+
+    // Daily pattern (aggregate by day-of-week)
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayTotals = new Array(7).fill(0);
+    const dayCounts = new Array(7).fill(0);
+    sessions.forEach((s) => {
+      const d = new Date(s.date + "T00:00:00");
+      const dayIndex = d.getDay();
+      dayTotals[dayIndex] += s.study_minutes || 0;
+      dayCounts[dayIndex]++;
+    });
+    // Reorder to Mon-Sun
+    const reorder = [1, 2, 3, 4, 5, 6, 0];
+    const dailyPattern: DailyPatternData[] = reorder.map((i) => ({
+      day: dayNames[i],
+      hours: Math.round((dayCounts[i] > 0 ? dayTotals[i] / dayCounts[i] : 0) / 60 * 10) / 10,
+    }));
+
+    // Monthly progress by week
+    const weekBuckets: { tasks: number; xp: number }[] = [
+      { tasks: 0, xp: 0 },
+      { tasks: 0, xp: 0 },
+      { tasks: 0, xp: 0 },
+      { tasks: 0, xp: 0 },
+    ];
+    sessions.forEach((s) => {
+      const day = new Date(s.date + "T00:00:00").getDate();
+      const weekIdx = Math.min(Math.floor((day - 1) / 7), 3);
+      weekBuckets[weekIdx].tasks += s.tasks_completed || 0;
+      weekBuckets[weekIdx].xp += s.xp_earned || 0;
+    });
+    const monthlyProgress: MonthlyProgressData[] = weekBuckets.map((w, i) => ({
+      week: `Week ${i + 1}`,
+      tasks: w.tasks,
+      xp: w.xp,
+    }));
+
+    return {
+      totalStudyHours,
+      studyHoursTrend,
+      quizzesCompleted: 0,
+      flashcardsReviewed: 0,
+      averageScore: 0,
+      subjectData,
+      dailyPattern,
+      monthlyProgress,
+      loading,
+    };
+  }, [sessions, tasks, loading]);
+
+  return analytics;
+}
