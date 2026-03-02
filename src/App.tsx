@@ -13,6 +13,7 @@ import Quizzes from "./pages/Quizzes";
 import StudyPlanner from "./pages/StudyPlanner";
 import CalendarPage from "./pages/CalendarPage";
 import Achievements from "./pages/Achievements";
+import FocusMode from "./pages/FocusMode";
 import Store from "./pages/Store";
 import Streaks from "./pages/Streaks";
 import Analytics from "./pages/Analytics";
@@ -33,6 +34,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<MainLayout><Dashboard /></MainLayout>} />
+            <Route path="/focus" element={<MainLayout><FocusMode /></MainLayout>} />
             <Route path="/ai-assistant" element={<MainLayout><AIAssistant /></MainLayout>} />
             <Route path="/summarizer" element={<MainLayout><Summarizer /></MainLayout>} />
             <Route path="/flashcards" element={<MainLayout><Flashcards /></MainLayout>} />
