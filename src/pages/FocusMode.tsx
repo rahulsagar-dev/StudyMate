@@ -207,7 +207,7 @@ export default function FocusMode() {
           <h1 className="text-2xl font-display font-bold text-foreground">Deep Focus</h1>
           <p className={cn(
             "text-sm",
-            sessionInvalidated ? "text-destructive" : pausedBySystem ? "text-yellow-500" : "text-muted-foreground"
+            sessionInvalidated ? "text-destructive" : pausedBySystem ? "text-warning" : "text-muted-foreground"
           )}>
             {getStatusMessage()}
           </p>
