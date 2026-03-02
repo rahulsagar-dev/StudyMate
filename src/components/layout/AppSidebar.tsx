@@ -2,13 +2,14 @@ import { useState } from "react";
 import { useNavigate, NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
+  Sparkles,
+  Calendar,
+  Trophy,
   Bot,
   FileText,
   Layers,
   Brain,
   CalendarDays,
-  Calendar,
-  Trophy,
   ShoppingBag,
   Flame,
   BarChart3,
@@ -16,7 +17,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
+  Target,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,16 +27,20 @@ import { toast } from "sonner";
 
 const mainNavItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Focus Mode", url: "/focus", icon: Target, sparkle: true },
+  { title: "Calendar", url: "/calendar", icon: Calendar },
+  { title: "Achievements", url: "/achievements", icon: Trophy },
+];
+
+const toolsItems = [
   { title: "AI Assistant", url: "/ai-assistant", icon: Bot },
   { title: "Summarizer", url: "/summarizer", icon: FileText },
   { title: "Flashcards", url: "/flashcards", icon: Layers },
   { title: "Quizzes", url: "/quizzes", icon: Brain },
   { title: "Study Planner", url: "/study-planner", icon: CalendarDays },
-  { title: "Calendar", url: "/calendar", icon: Calendar },
 ];
 
 const gamificationItems = [
-  { title: "Achievements", url: "/achievements", icon: Trophy },
   { title: "Store", url: "/store", icon: ShoppingBag },
   { title: "Streaks & XP", url: "/streaks", icon: Flame },
 ];
@@ -59,7 +64,7 @@ export function AppSidebar() {
     navigate("/auth");
   };
 
-  const NavItem = ({ item }: { item: typeof mainNavItems[0] }) => (
+  const NavItem = ({ item }: { item: { title: string; url: string; icon: any; sparkle?: boolean } }) => (
     <NavLink
       to={item.url}
       className={cn(
@@ -67,10 +72,15 @@ export function AppSidebar() {
         isActive(item.url) && "active"
       )}
     >
-      <item.icon className={cn(
-        "h-5 w-5 shrink-0 transition-colors",
-        isActive(item.url) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
-      )} />
+      <div className="relative">
+        <item.icon className={cn(
+          "h-5 w-5 shrink-0 transition-colors",
+          isActive(item.url) ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+        )} />
+        {item.sparkle && !collapsed && (
+          <Sparkles className="absolute -top-1 -right-1 h-2.5 w-2.5 text-achievement" />
+        )}
+      </div>
       <span className={cn(
         "whitespace-nowrap transition-all duration-300",
         collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
@@ -83,9 +93,15 @@ export function AppSidebar() {
     </NavLink>
   );
 
-  // Get user display info
   const userEmail = user?.email ?? "New User";
   const userInitial = user?.email ? user.email[0].toUpperCase() : "U";
+
+  const sections = [
+    { label: "Main", items: mainNavItems },
+    { label: "Tools", items: toolsItems },
+    { label: "Rewards", items: gamificationItems },
+    { label: "Settings", items: utilityItems },
+  ];
 
   return (
     <aside
@@ -109,43 +125,20 @@ export function AppSidebar() {
         </span>
       </div>
 
-      {/* Main Navigation */}
+      {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-2 space-y-6">
-        {/* Main */}
-        <div className="space-y-1">
-          {!collapsed && (
-            <span className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Main
-            </span>
-          )}
-          {mainNavItems.map((item) => (
-            <NavItem key={item.url} item={item} />
-          ))}
-        </div>
-
-        {/* Gamification */}
-        <div className="space-y-1">
-          {!collapsed && (
-            <span className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Gamification
-            </span>
-          )}
-          {gamificationItems.map((item) => (
-            <NavItem key={item.url} item={item} />
-          ))}
-        </div>
-
-        {/* Utility */}
-        <div className="space-y-1">
-          {!collapsed && (
-            <span className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-              Settings
-            </span>
-          )}
-          {utilityItems.map((item) => (
-            <NavItem key={item.url} item={item} />
-          ))}
-        </div>
+        {sections.map((section) => (
+          <div key={section.label} className="space-y-1">
+            {!collapsed && (
+              <span className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                {section.label}
+              </span>
+            )}
+            {section.items.map((item) => (
+              <NavItem key={item.url} item={item} />
+            ))}
+          </div>
+        ))}
       </div>
 
       {/* User Profile */}
@@ -179,7 +172,7 @@ export function AppSidebar() {
 
         {!collapsed && (
           user ? (
-            <button 
+            <button
               onClick={handleLogout}
               className="w-full mt-2 sidebar-item text-muted-foreground hover:text-destructive"
             >
@@ -187,7 +180,7 @@ export function AppSidebar() {
               <span>Logout</span>
             </button>
           ) : (
-            <NavLink 
+            <NavLink
               to="/auth"
               className="w-full mt-2 sidebar-item text-muted-foreground hover:text-primary"
             >
@@ -203,11 +196,7 @@ export function AppSidebar() {
         onClick={() => setCollapsed(!collapsed)}
         className="absolute -right-3 top-20 w-6 h-6 bg-card border border-border rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-primary transition-colors"
       >
-        {collapsed ? (
-          <ChevronRight className="h-3 w-3" />
-        ) : (
-          <ChevronLeft className="h-3 w-3" />
-        )}
+        {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
       </button>
     </aside>
   );
