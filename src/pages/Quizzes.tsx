@@ -176,7 +176,7 @@ export default function Quizzes() {
                         >
                           <div className="flex items-center gap-2">
                             {submitted && oi === q.correctAnswer && (
-                              <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                              <CheckCircle2 className="h-4 w-4 text-xp shrink-0" />
                             )}
                             {submitted && oi === selected && !isCorrect && (
                               <XCircle className="h-4 w-4 text-destructive shrink-0" />
