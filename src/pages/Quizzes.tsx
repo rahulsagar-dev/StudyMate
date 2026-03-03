@@ -156,7 +156,7 @@ export default function Quizzes() {
                       let optionClass = "p-3 rounded-lg border cursor-pointer transition-all duration-200 text-sm ";
                       if (submitted) {
                         if (oi === q.correctAnswer) {
-                          optionClass += "border-green-500/50 bg-green-500/10 text-foreground";
+                          optionClass += "border-xp/50 bg-xp/10 text-foreground";
                         } else if (oi === selected && !isCorrect) {
                           optionClass += "border-destructive/50 bg-destructive/10 text-foreground";
                         } else {
