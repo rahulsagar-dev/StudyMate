@@ -1,7 +1,7 @@
  import { useState } from "react";
  import { Check, Zap, Plus, ListTodo, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
- import { useTasks } from "@/hooks/useTasks";
+ import { useTasks, PRIORITY_OPTIONS } from "@/hooks/useTasks";
  import { useAuth } from "@/contexts/AuthContext";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
@@ -21,8 +21,7 @@ import { cn } from "@/lib/utils";
  } from "@/components/ui/select";
  import { Label } from "@/components/ui/label";
 
- const SUBJECTS = ["Math", "Science", "History", "English", "General", "Programming", "Language", "Art"];
- const XP_OPTIONS = [10, 15, 20, 25, 30, 40, 50];
+
 
 export function TaskPanel() {
    const { user } = useAuth();
@@ -30,8 +29,7 @@ export function TaskPanel() {
   const [animatingXp, setAnimatingXp] = useState<string | null>(null);
    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
    const [newTaskTitle, setNewTaskTitle] = useState("");
-   const [newTaskSubject, setNewTaskSubject] = useState("General");
-   const [newTaskXp, setNewTaskXp] = useState(20);
+   const [newTaskPriority, setNewTaskPriority] = useState("quick-win");
 
    const handleToggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id);
@@ -44,12 +42,11 @@ export function TaskPanel() {
 
    const handleAddTask = async () => {
      if (!newTaskTitle.trim()) return;
-     await addTask(newTaskTitle.trim(), newTaskSubject, newTaskXp);
-     setNewTaskTitle("");
-     setNewTaskSubject("General");
-     setNewTaskXp(20);
-     setIsAddDialogOpen(false);
-   };
+      await addTask(newTaskTitle.trim(), newTaskPriority, 20);
+      setNewTaskTitle("");
+      setNewTaskPriority("quick-win");
+      setIsAddDialogOpen(false);
+    };
  
   const completedCount = tasks.filter((t) => t.completed).length;
    const totalXp = tasks.filter((t) => t.completed).reduce((sum, t) => sum + t.xp_reward, 0);
@@ -108,38 +105,21 @@ export function TaskPanel() {
                    onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
                  />
                </div>
-               <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                   <Label>Subject</Label>
-                   <Select value={newTaskSubject} onValueChange={setNewTaskSubject}>
-                     <SelectTrigger>
-                       <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {SUBJECTS.map((subject) => (
-                         <SelectItem key={subject} value={subject}>
-                           {subject}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-                 <div className="space-y-2">
-                   <Label>XP Reward</Label>
-                   <Select value={String(newTaskXp)} onValueChange={(v) => setNewTaskXp(Number(v))}>
-                     <SelectTrigger>
-                       <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {XP_OPTIONS.map((xp) => (
-                         <SelectItem key={xp} value={String(xp)}>
-                           {xp} XP
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-               </div>
+               <div className="space-y-2">
+                    <Label>Priority</Label>
+                    <Select value={newTaskPriority} onValueChange={setNewTaskPriority}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRIORITY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                <Button onClick={handleAddTask} className="w-full" disabled={!newTaskTitle.trim()}>
                  <Plus className="h-4 w-4 mr-2" />
                  Add Task
@@ -202,7 +182,7 @@ export function TaskPanel() {
                   )}>
                     {task.title}
                   </p>
-                  <p className="text-xs text-muted-foreground">{task.subject}</p>
+                  <p className="text-xs text-muted-foreground">{PRIORITY_OPTIONS.find(o => o.value === task.subject)?.label || task.subject}</p>
                 </div>
 
                 <div className="flex items-center gap-1 px-2 py-1 bg-xp/10 rounded-full">

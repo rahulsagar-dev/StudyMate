@@ -3,16 +3,25 @@
  import { useAuth } from "@/contexts/AuthContext";
  import { useToast } from "@/hooks/use-toast";
  
- export interface Task {
-   id: string;
-   title: string;
-   subject: string;
-   xp_reward: number;
-   completed: boolean;
-   completed_at: string | null;
-   due_date: string | null;
-   created_at: string;
- }
+export type TaskPriority = "quick-win" | "major-project" | "add-ons" | "today-exclusive";
+
+export const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
+  { value: "quick-win", label: "Quick Win" },
+  { value: "major-project", label: "Major Project" },
+  { value: "add-ons", label: "Add-ons" },
+  { value: "today-exclusive", label: "Today Exclusive" },
+];
+
+export interface Task {
+    id: string;
+    title: string;
+    subject: string; // stores priority value in DB
+    xp_reward: number;
+    completed: boolean;
+    completed_at: string | null;
+    due_date: string | null;
+    created_at: string;
+  }
  
  export function useTasks() {
    const { user } = useAuth();
