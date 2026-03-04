@@ -14,6 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_error_logs: {
+        Row: {
+          created_at: string
+          error_message: string
+          feature: string
+          id: string
+          input_text: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message: string
+          feature: string
+          id?: string
+          input_text?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string
+          feature?: string
+          id?: string
+          input_text?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string
+          extracted_text: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          parsed_at: string | null
+          processing_status: string
+          text_length: number | null
+          user_id: string
+          word_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          extracted_text?: string | null
+          file_name: string
+          file_size?: number
+          file_type: string
+          file_url: string
+          id?: string
+          parsed_at?: string | null
+          processing_status?: string
+          text_length?: number | null
+          user_id: string
+          word_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          extracted_text?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          parsed_at?: string | null
+          processing_status?: string
+          text_length?: number | null
+          user_id?: string
+          word_count?: number | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -93,6 +165,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      summaries: {
+        Row: {
+          compression_ratio: number
+          created_at: string
+          id: string
+          original_text: string
+          summary_text: string
+          summary_type: string
+          title: string
+          user_id: string
+          word_count: number
+        }
+        Insert: {
+          compression_ratio?: number
+          created_at?: string
+          id?: string
+          original_text: string
+          summary_text: string
+          summary_type?: string
+          title?: string
+          user_id: string
+          word_count?: number
+        }
+        Update: {
+          compression_ratio?: number
+          created_at?: string
+          id?: string
+          original_text?: string
+          summary_text?: string
+          summary_type?: string
+          title?: string
+          user_id?: string
+          word_count?: number
+        }
+        Relationships: []
       }
       tasks: {
         Row: {
