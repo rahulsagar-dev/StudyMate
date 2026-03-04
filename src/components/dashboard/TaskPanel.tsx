@@ -182,7 +182,7 @@ export function TaskPanel() {
                   )}>
                     {task.title}
                   </p>
-                  <p className="text-xs text-muted-foreground">{task.subject}</p>
+                  <p className="text-xs text-muted-foreground">{PRIORITY_OPTIONS.find(o => o.value === task.subject)?.label || task.subject}</p>
                 </div>
 
                 <div className="flex items-center gap-1 px-2 py-1 bg-xp/10 rounded-full">
