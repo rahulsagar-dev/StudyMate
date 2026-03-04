@@ -105,38 +105,21 @@ export function TaskPanel() {
                    onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
                  />
                </div>
-               <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-2">
-                   <Label>Subject</Label>
-                   <Select value={newTaskSubject} onValueChange={setNewTaskSubject}>
-                     <SelectTrigger>
-                       <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {SUBJECTS.map((subject) => (
-                         <SelectItem key={subject} value={subject}>
-                           {subject}
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-                 <div className="space-y-2">
-                   <Label>XP Reward</Label>
-                   <Select value={String(newTaskXp)} onValueChange={(v) => setNewTaskXp(Number(v))}>
-                     <SelectTrigger>
-                       <SelectValue />
-                     </SelectTrigger>
-                     <SelectContent>
-                       {XP_OPTIONS.map((xp) => (
-                         <SelectItem key={xp} value={String(xp)}>
-                           {xp} XP
-                         </SelectItem>
-                       ))}
-                     </SelectContent>
-                   </Select>
-                 </div>
-               </div>
+               <div className="space-y-2">
+                    <Label>Priority</Label>
+                    <Select value={newTaskPriority} onValueChange={setNewTaskPriority}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PRIORITY_OPTIONS.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                <Button onClick={handleAddTask} className="w-full" disabled={!newTaskTitle.trim()}>
                  <Plus className="h-4 w-4 mr-2" />
                  Add Task
