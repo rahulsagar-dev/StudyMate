@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
  } from "@/components/ui/select";
  import { Label } from "@/components/ui/label";
 
- const XP_OPTIONS = [10, 15, 20, 25, 30, 40, 50];
+
 
 export function TaskPanel() {
    const { user } = useAuth();
