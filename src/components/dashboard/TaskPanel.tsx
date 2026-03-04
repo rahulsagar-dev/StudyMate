@@ -1,7 +1,7 @@
  import { useState } from "react";
  import { Check, Zap, Plus, ListTodo, Loader2, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
- import { useTasks } from "@/hooks/useTasks";
+ import { useTasks, PRIORITY_OPTIONS } from "@/hooks/useTasks";
  import { useAuth } from "@/contexts/AuthContext";
  import { Button } from "@/components/ui/button";
  import { Input } from "@/components/ui/input";
