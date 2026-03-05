@@ -24,6 +24,7 @@ function generateDays(year: number, month: number) {
 
 export default function CalendarPage() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
