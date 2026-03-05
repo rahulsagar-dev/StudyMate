@@ -121,11 +121,26 @@ export function TaskPanel() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-               <Button onClick={handleAddTask} className="w-full" disabled={!newTaskTitle.trim()}>
-                 <Plus className="h-4 w-4 mr-2" />
-                 Add Task
-               </Button>
+                   </div>
+                <div className="space-y-2">
+                  <Label>XP Reward</Label>
+                  <Select value={newTaskXp} onValueChange={setNewTaskXp}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 XP</SelectItem>
+                      <SelectItem value="20">20 XP</SelectItem>
+                      <SelectItem value="30">30 XP</SelectItem>
+                      <SelectItem value="50">50 XP</SelectItem>
+                      <SelectItem value="100">100 XP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleAddTask} className="w-full" disabled={!newTaskTitle.trim()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Task
+                </Button>
              </div>
            </DialogContent>
          </Dialog>
