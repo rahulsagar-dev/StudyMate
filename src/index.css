@@ -47,12 +47,12 @@
     --level: 265 70% 60%;
     --level-foreground: 265 70% 10%;
 
-    /* Heatmap Intensity */
+    /* Heatmap Intensity - Multi-hue gradient */
     --heatmap-0: 220 15% 15%;
-    --heatmap-1: 142 50% 25%;
-    --heatmap-2: 142 60% 35%;
-    --heatmap-3: 142 70% 45%;
-    --heatmap-4: 142 75% 55%;
+    --heatmap-1: 200 60% 35%;
+    --heatmap-2: 160 65% 40%;
+    --heatmap-3: 45 80% 50%;
+    --heatmap-4: 25 90% 55%;
 
     /* Status Colors */
     --destructive: 0 70% 50%;

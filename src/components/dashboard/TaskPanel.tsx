@@ -29,9 +29,10 @@ export function TaskPanel() {
   const [animatingXp, setAnimatingXp] = useState<string | null>(null);
    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
    const [newTaskTitle, setNewTaskTitle] = useState("");
-   const [newTaskPriority, setNewTaskPriority] = useState("quick-win");
+    const [newTaskPriority, setNewTaskPriority] = useState("quick-win");
+    const [newTaskXp, setNewTaskXp] = useState("20");
 
-   const handleToggleTask = async (id: string) => {
+    const handleToggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id);
     if (task && !task.completed) {
       setAnimatingXp(id);
@@ -42,10 +43,11 @@ export function TaskPanel() {
 
    const handleAddTask = async () => {
      if (!newTaskTitle.trim()) return;
-      await addTask(newTaskTitle.trim(), newTaskPriority, 20);
-      setNewTaskTitle("");
-      setNewTaskPriority("quick-win");
-      setIsAddDialogOpen(false);
+       await addTask(newTaskTitle.trim(), newTaskPriority, parseInt(newTaskXp));
+       setNewTaskTitle("");
+       setNewTaskPriority("quick-win");
+       setNewTaskXp("20");
+       setIsAddDialogOpen(false);
     };
  
   const completedCount = tasks.filter((t) => t.completed).length;
@@ -119,11 +121,26 @@ export function TaskPanel() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-               <Button onClick={handleAddTask} className="w-full" disabled={!newTaskTitle.trim()}>
-                 <Plus className="h-4 w-4 mr-2" />
-                 Add Task
-               </Button>
+                   </div>
+                <div className="space-y-2">
+                  <Label>XP Reward</Label>
+                  <Select value={newTaskXp} onValueChange={setNewTaskXp}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10 XP</SelectItem>
+                      <SelectItem value="20">20 XP</SelectItem>
+                      <SelectItem value="30">30 XP</SelectItem>
+                      <SelectItem value="50">50 XP</SelectItem>
+                      <SelectItem value="100">100 XP</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleAddTask} className="w-full" disabled={!newTaskTitle.trim()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Task
+                </Button>
              </div>
            </DialogContent>
          </Dialog>
