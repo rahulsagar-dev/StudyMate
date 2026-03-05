@@ -86,6 +86,95 @@ export type Database = {
         }
         Relationships: []
       }
+      flashcard_sets: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      flashcards: {
+        Row: {
+          back_text: string
+          front_text: string
+          id: string
+          position: number
+          set_id: string
+        }
+        Insert: {
+          back_text: string
+          front_text: string
+          id?: string
+          position?: number
+          set_id: string
+        }
+        Update: {
+          back_text?: string
+          front_text?: string
+          id?: string
+          position?: number
+          set_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flashcards_set_id_fkey"
+            columns: ["set_id"]
+            isOneToOne: false
+            referencedRelation: "flashcard_sets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      generation_history: {
+        Row: {
+          card_count: number
+          created_at: string
+          id: string
+          input_text: string | null
+          output_data: Json
+          source_filename: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          card_count?: number
+          created_at?: string
+          id?: string
+          input_text?: string | null
+          output_data?: Json
+          source_filename?: string | null
+          source_type?: string
+          user_id: string
+        }
+        Update: {
+          card_count?: number
+          created_at?: string
+          id?: string
+          input_text?: string | null
+          output_data?: Json
+          source_filename?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       google_calendar_tokens: {
         Row: {
           access_token: string
