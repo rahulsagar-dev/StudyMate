@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar, Clock, Zap } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Clock, Zap, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
