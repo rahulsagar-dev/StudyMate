@@ -29,9 +29,10 @@ export function TaskPanel() {
   const [animatingXp, setAnimatingXp] = useState<string | null>(null);
    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
    const [newTaskTitle, setNewTaskTitle] = useState("");
-   const [newTaskPriority, setNewTaskPriority] = useState("quick-win");
+    const [newTaskPriority, setNewTaskPriority] = useState("quick-win");
+    const [newTaskXp, setNewTaskXp] = useState("20");
 
-   const handleToggleTask = async (id: string) => {
+    const handleToggleTask = async (id: string) => {
     const task = tasks.find((t) => t.id === id);
     if (task && !task.completed) {
       setAnimatingXp(id);
