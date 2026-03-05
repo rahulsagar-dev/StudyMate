@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar, Clock, Zap, ExternalLink } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar, Clock, Zap, RefreshCw, Link2, Unlink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -24,7 +24,7 @@ function generateDays(year: number, month: number) {
 
 export default function CalendarPage() {
   const { user } = useAuth();
-  const { toast } = useToast();
+  const { connected, loading: gcalLoading, syncing, connect, disconnect, syncSessions } = useGoogleCalendar();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -70,7 +70,7 @@ export default function CalendarPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
             <Calendar className="h-5 w-5 text-primary" />
@@ -80,22 +80,48 @@ export default function CalendarPage() {
             <p className="text-sm text-muted-foreground">Track your study sessions day by day</p>
           </div>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-2"
-          onClick={() => {
-            window.open("https://calendar.google.com", "_blank");
-            toast({
-              title: "Google Calendar",
-              description: "Sync feature coming soon! For now, you can view your Google Calendar.",
-            });
-          }}
-        >
-          <ExternalLink className="h-4 w-4" />
-          <span className="hidden sm:inline">Sync to Google Calendar</span>
-          <span className="sm:hidden">Sync</span>
-        </Button>
+
+        {/* Google Calendar Actions */}
+        {user && (
+          <div className="flex items-center gap-2">
+            {connected ? (
+              <>
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="gap-2"
+                  onClick={syncSessions}
+                  disabled={syncing}
+                >
+                  <RefreshCw className={cn("h-4 w-4", syncing && "animate-spin")} />
+                  {syncing ? "Syncing..." : "Sync to Google Calendar"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={disconnect}
+                  disabled={gcalLoading}
+                >
+                  <Unlink className="h-4 w-4" />
+                  <span className="hidden sm:inline">Disconnect</span>
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={connect}
+                disabled={gcalLoading}
+              >
+                <Link2 className="h-4 w-4" />
+                <span className="hidden sm:inline">Connect Google Calendar</span>
+                <span className="sm:hidden">Connect</span>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
