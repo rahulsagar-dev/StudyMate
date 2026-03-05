@@ -43,10 +43,11 @@ export function TaskPanel() {
 
    const handleAddTask = async () => {
      if (!newTaskTitle.trim()) return;
-      await addTask(newTaskTitle.trim(), newTaskPriority, 20);
-      setNewTaskTitle("");
-      setNewTaskPriority("quick-win");
-      setIsAddDialogOpen(false);
+       await addTask(newTaskTitle.trim(), newTaskPriority, parseInt(newTaskXp));
+       setNewTaskTitle("");
+       setNewTaskPriority("quick-win");
+       setNewTaskXp("20");
+       setIsAddDialogOpen(false);
     };
  
   const completedCount = tasks.filter((t) => t.completed).length;
