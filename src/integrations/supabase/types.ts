@@ -283,6 +283,36 @@ export type Database = {
         }
         Relationships: []
       }
+      study_activity: {
+        Row: {
+          active_minutes: number
+          created_at: string
+          date: string
+          id: string
+          pomodoro_sessions: number
+          productivity_score: number
+          user_id: string
+        }
+        Insert: {
+          active_minutes?: number
+          created_at?: string
+          date?: string
+          id?: string
+          pomodoro_sessions?: number
+          productivity_score?: number
+          user_id: string
+        }
+        Update: {
+          active_minutes?: number
+          created_at?: string
+          date?: string
+          id?: string
+          pomodoro_sessions?: number
+          productivity_score?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       study_sessions: {
         Row: {
           created_at: string
