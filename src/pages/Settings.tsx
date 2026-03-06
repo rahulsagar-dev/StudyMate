@@ -255,15 +255,17 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* Break Interval */}
+          {/* Pomodoro Settings */}
           <div className="px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-secondary">
                 <Timer className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium text-foreground">Break Interval</p>
-                <p className="text-sm text-muted-foreground">{breakInterval} minutes (Pomodoro)</p>
+                <p className="font-medium text-foreground">Pomodoro Timer</p>
+                <p className="text-sm text-muted-foreground">
+                  {pomodoroSettings.focusMinutes}m focus · {pomodoroSettings.shortBreakMinutes}m break · {pomodoroSettings.sessionsBeforeLongBreak} sessions/cycle
+                </p>
               </div>
             </div>
             <button
