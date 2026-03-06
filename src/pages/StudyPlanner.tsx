@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { AmbientBackground } from "@/components/AmbientBackground";
 import { motion } from "framer-motion";
 import {
   GraduationCap, Settings, Calendar, BarChart3, Plus, Trash2,
@@ -313,9 +312,8 @@ export default function StudyPlanner() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-7xl mx-auto px-6 py-6 space-y-6 relative"
+      className="max-w-7xl mx-auto px-6 py-6 space-y-6"
     >
-      <AmbientBackground variant="planner" />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>

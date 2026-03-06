@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
-import { AmbientBackground } from "@/components/AmbientBackground";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -69,8 +68,7 @@ export default function CalendarPage() {
   const selectedSession = selectedDate ? sessionMap.get(selectedDate) : null;
 
   return (
-    <div className="space-y-6 relative">
-      <AmbientBackground variant="calendar" />
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">

@@ -4,12 +4,9 @@ import { TaskPanel } from "@/components/dashboard/TaskPanel";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { AnalyticsChart } from "@/components/dashboard/AnalyticsChart";
 
-import { AmbientBackground } from "@/components/AmbientBackground";
-
 export default function Dashboard() {
   return (
-    <div className="space-y-6 stagger-children relative">
-      <AmbientBackground variant="dashboard" />
+    <div className="space-y-6 stagger-children">
       {/* Quick Stats */}
       <QuickStats />
 
