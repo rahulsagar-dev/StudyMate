@@ -37,6 +37,7 @@ const DIFF_SESSION: Record<string, { study: number; break_: number; total: numbe
 };
 
 const DIFF_WEIGHT: Record<string, number> = { difficult: 3, moderate: 2, easy: 1 };
+const DIFF_XP: Record<string, number> = { difficult: 80, moderate: 60, easy: 40 };
 
 function loadPlans(): SchedulePlan[] {
   try {
