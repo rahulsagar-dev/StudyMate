@@ -37,6 +37,7 @@ const DIFF_SESSION: Record<string, { study: number; break_: number; total: numbe
 };
 
 const DIFF_WEIGHT: Record<string, number> = { difficult: 3, moderate: 2, easy: 1 };
+const DIFF_XP: Record<string, number> = { difficult: 80, moderate: 60, easy: 40 };
 
 function loadPlans(): SchedulePlan[] {
   try {
@@ -136,6 +137,7 @@ function generateSchedule(subjects: Subject[], dailyHours: number, freeSlots: st
           durationHrs: +(sess.total / 60).toFixed(2),
           breakMin: sess.break_,
           studyMin: sess.study,
+          xpReward: DIFF_XP[sub.difficulty],
         });
 
         cursor += sess.total;
@@ -201,12 +203,13 @@ export default function StudyPlanner() {
     const result = generateSchedule(subjects, dailyHours, freeSlots);
     setSchedule(result);
     setGenerated(true);
-    setGenerating(false);
-    toast({ title: "Timetable generated!", description: `${result.length} sessions scheduled` });
+    const totalXP = result.reduce((s, t) => s + t.xpReward, 0);
+    toast({ title: "Timetable generated!", description: `${result.length} sessions scheduled · ${totalXP} XP potential` });
   };
 
   const saveSchedule = () => {
     const totalHrs = schedule.reduce((s, t) => s + t.durationHrs, 0);
+    const totalXP = schedule.reduce((s, t) => s + t.xpReward, 0);
     const plan: SchedulePlan = {
       id: crypto.randomUUID(),
       subjects: [...subjects],
@@ -217,6 +220,7 @@ export default function StudyPlanner() {
       createdAt: new Date().toISOString(),
       totalStudyHours: +totalHrs.toFixed(1),
       weeklyHours: +totalHrs.toFixed(1),
+      totalXP,
     };
     const updated = [plan, ...savedPlans].slice(0, 10);
     setSavedPlans(updated);
@@ -269,25 +273,33 @@ export default function StudyPlanner() {
     toast({ title: "PDF export feature coming soon!" });
   };
 
+  // TODO: Later connect XP system with global user progression system
+  // (levels, achievements, streaks, leaderboard)
   const syncToTasks = async () => {
+    const totalXP = schedule.reduce((s, t) => s + t.xpReward, 0);
     for (const session of schedule) {
       await addTask(
         `Study: ${session.subject} (${session.startTime} - ${session.endTime})`,
         "major-project",
-        session.difficulty === "difficult" ? 30 : session.difficulty === "moderate" ? 20 : 10
+        session.xpReward
       );
     }
-    toast({ title: "Tasks synced!", description: `${schedule.length} study sessions added to dashboard` });
+    toast({ title: "Tasks synced!", description: `${schedule.length} study tasks synced to Dashboard (+${totalXP} XP potential)` });
   };
 
   // Analytics
   const totalPlannedHrs = schedule.reduce((s, t) => s + t.durationHrs, 0);
+  const totalScheduleXP = schedule.reduce((s, t) => s + t.xpReward, 0);
   const availableHrs = dailyHours * 7;
   const utilization = availableHrs > 0 ? Math.round((totalPlannedHrs / availableHrs) * 100) : 0;
-  const subjectHours = subjects.map((sub) => ({
-    name: sub.name,
-    hours: +schedule.filter((s) => s.subject === sub.name).reduce((sum, s) => sum + s.durationHrs, 0).toFixed(1),
-  }));
+  const subjectHours = subjects.map((sub) => {
+    const sessions = schedule.filter((s) => s.subject === sub.name);
+    return {
+      name: sub.name,
+      hours: +sessions.reduce((sum, s) => sum + s.durationHrs, 0).toFixed(1),
+      xp: sessions.reduce((sum, s) => sum + s.xpReward, 0),
+    };
+  });
 
   const daySchedules = DAYS.map((day) => ({
     day,
@@ -337,7 +349,7 @@ export default function StudyPlanner() {
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="text-sm font-medium text-foreground">
-                            {plan.subjects.length} subjects · {plan.totalStudyHours}h
+                            {plan.subjects.length} subjects · {plan.totalStudyHours}h · {plan.totalXP || 0} XP
                           </div>
                           <Badge variant="outline" className="text-xs">
                             {plan.planType === "week" ? "Weekly" : "Monthly"}
@@ -532,11 +544,21 @@ export default function StudyPlanner() {
                   </div>
                   <Separator />
                   <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Total XP Earnable This Week</span>
+                      <span className="text-level font-bold">{totalScheduleXP} XP</span>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
                     <p className="text-xs text-muted-foreground font-medium">Subject Distribution</p>
                     {subjectHours.map((sh) => (
                       <div key={sh.name} className="flex items-center justify-between text-sm">
                         <span className="text-foreground">{sh.name}</span>
-                        <span className="text-muted-foreground">{sh.hours}h</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{sh.hours}h</span>
+                          <span className="text-level font-medium text-xs">{sh.xp} XP</span>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -617,6 +639,7 @@ export default function StudyPlanner() {
                               <div className="flex items-center gap-1 ml-auto shrink-0">
                                 <Badge variant="outline" className="text-xs">{session.durationHrs}h</Badge>
                                 <Badge variant="outline" className="text-xs capitalize">{session.difficulty}</Badge>
+                                <Badge className="text-xs bg-level/15 text-level border-level/30 hover:bg-level/20">+{session.xpReward} XP</Badge>
                               </div>
                             </motion.div>
                           ))}

@@ -13,6 +13,7 @@ export interface TimeSlot {
   durationHrs: number;
   breakMin: number;
   studyMin: number;
+  xpReward: number;
 }
 
 export interface SchedulePlan {
@@ -25,4 +26,5 @@ export interface SchedulePlan {
   createdAt: string;
   totalStudyHours: number;
   weeklyHours: number;
+  totalXP: number;
 }
