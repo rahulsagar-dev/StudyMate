@@ -1,5 +1,6 @@
 import { QuickStats } from "@/components/dashboard/QuickStats";
 import { StudyHeatmap } from "@/components/dashboard/StudyHeatmap";
+import { StudyActivityHeatmap } from "@/components/dashboard/StudyActivityHeatmap";
 import { TaskPanel } from "@/components/dashboard/TaskPanel";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { AnalyticsChart } from "@/components/dashboard/AnalyticsChart";
