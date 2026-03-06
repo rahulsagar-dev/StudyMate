@@ -349,7 +349,7 @@ export default function StudyPlanner() {
                       <CardContent className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="text-sm font-medium text-foreground">
-                            {plan.subjects.length} subjects · {plan.totalStudyHours}h
+                            {plan.subjects.length} subjects · {plan.totalStudyHours}h · {plan.totalXP || 0} XP
                           </div>
                           <Badge variant="outline" className="text-xs">
                             {plan.planType === "week" ? "Weekly" : "Monthly"}
