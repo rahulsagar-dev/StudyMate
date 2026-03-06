@@ -13,7 +13,12 @@ export default function Dashboard() {
 
       {/* Main Grid */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Heatmap - Full Width */}
+        {/* Study Activity Heatmap - Full Width */}
+        <div className="col-span-12">
+          <StudyActivityHeatmap />
+        </div>
+
+        {/* Original Study Consistency Heatmap */}
         <div className="col-span-12">
           <StudyHeatmap />
         </div>

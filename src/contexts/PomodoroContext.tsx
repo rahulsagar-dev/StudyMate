@@ -167,6 +167,32 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
             xp_earned: xp,
           });
         }
+
+        // Update study_activity for pomodoro count
+        const { data: activityRow } = await supabase
+          .from("study_activity")
+          .select("id, active_minutes, pomodoro_sessions")
+          .eq("user_id", user.id)
+          .eq("date", today)
+          .maybeSingle();
+
+        if (activityRow) {
+          const newSessions = activityRow.pomodoro_sessions + 1;
+          const tScore = activityRow.active_minutes >= 300 ? 4 : activityRow.active_minutes >= 180 ? 3 : activityRow.active_minutes >= 60 ? 2 : activityRow.active_minutes >= 20 ? 1 : 0;
+          const pScore = newSessions >= 10 ? 4 : newSessions >= 7 ? 3 : newSessions >= 4 ? 2 : newSessions >= 1 ? 1 : 0;
+          await supabase.from("study_activity").update({
+            pomodoro_sessions: newSessions,
+            productivity_score: Math.round((tScore + pScore) / 2),
+          }).eq("id", activityRow.id);
+        } else {
+          const pScore = 1;
+          await supabase.from("study_activity").insert({
+            user_id: user.id,
+            date: today,
+            pomodoro_sessions: 1,
+            productivity_score: pScore,
+          });
+        }
       }
 
       if (isCycleComplete) {
