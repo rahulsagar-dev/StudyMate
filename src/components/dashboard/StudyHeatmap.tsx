@@ -226,7 +226,9 @@ export function StudyHeatmap() {
                       <div key={weekIndex} className="flex flex-col" style={{ gap: CELL_GAP }}>
                         {week.map((day, dayIndex) => {
                           const intensity = getIntensityLevel(day.studyMinutes);
-                          const hasData = day.studyMinutes > 0;
+                          const dateKey = day.date.toISOString().split('T')[0];
+                          const actData = studyActivityMap.get(dateKey);
+                          const hasData = day.studyMinutes > 0 || (actData && (actData.activeMinutes > 0 || actData.pomodoroSessions > 0));
                           
                           if (!day.isCurrentYear) {
                             return (
@@ -266,6 +268,8 @@ export function StudyHeatmap() {
                                   </p>
                                   {hasData ? (
                                     <div className="space-y-0.5 text-muted-foreground">
+                                      <p>🕐 Time Spent: {formatStudyTime(actData?.activeMinutes || 0)}</p>
+                                      <p>🍅 Pomodoro Sessions: {actData?.pomodoroSessions || 0}</p>
                                       <p>📚 {formatStudyTime(day.studyMinutes)} study</p>
                                       <p>⚡ {day.xpEarned} XP earned</p>
                                       <p>✅ {day.tasksCompleted} tasks completed</p>
