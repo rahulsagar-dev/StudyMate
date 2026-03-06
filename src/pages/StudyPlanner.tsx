@@ -209,6 +209,7 @@ export default function StudyPlanner() {
 
   const saveSchedule = () => {
     const totalHrs = schedule.reduce((s, t) => s + t.durationHrs, 0);
+    const totalXP = schedule.reduce((s, t) => s + t.xpReward, 0);
     const plan: SchedulePlan = {
       id: crypto.randomUUID(),
       subjects: [...subjects],
@@ -219,6 +220,7 @@ export default function StudyPlanner() {
       createdAt: new Date().toISOString(),
       totalStudyHours: +totalHrs.toFixed(1),
       weeklyHours: +totalHrs.toFixed(1),
+      totalXP,
     };
     const updated = [plan, ...savedPlans].slice(0, 10);
     setSavedPlans(updated);
