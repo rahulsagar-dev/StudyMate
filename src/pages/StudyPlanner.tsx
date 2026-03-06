@@ -544,11 +544,21 @@ export default function StudyPlanner() {
                   </div>
                   <Separator />
                   <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Total XP Earnable This Week</span>
+                      <span className="text-level font-bold">{totalScheduleXP} XP</span>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="space-y-2">
                     <p className="text-xs text-muted-foreground font-medium">Subject Distribution</p>
                     {subjectHours.map((sh) => (
                       <div key={sh.name} className="flex items-center justify-between text-sm">
                         <span className="text-foreground">{sh.name}</span>
-                        <span className="text-muted-foreground">{sh.hours}h</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground">{sh.hours}h</span>
+                          <span className="text-level font-medium text-xs">{sh.xp} XP</span>
+                        </div>
                       </div>
                     ))}
                   </div>
