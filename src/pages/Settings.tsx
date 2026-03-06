@@ -37,7 +37,7 @@ import {
 export default function Settings() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
-
+  const { settings: pomodoroSettings, updateSettings: updatePomodoroSettings } = usePomodoro();
   // Toggle states
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
