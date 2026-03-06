@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useProfile } from "@/hooks/useProfile";
 import { useStudySessions } from "@/hooks/useStudySessions";
 import { useMemo } from "react";
+import { TopBarPomodoro } from "./TopBarPomodoro";
 
 interface TopBarProps {
   className?: string;
@@ -56,6 +57,9 @@ export function TopBar({ className }: TopBarProps) {
             <p className="text-sm font-medium text-foreground">{yesterdayXp} XP</p>
           </div>
         </div>
+
+        {/* Pomodoro Timer */}
+        <TopBarPomodoro />
 
         {/* Level Badge */}
         <div className="level-badge">

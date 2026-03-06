@@ -208,6 +208,39 @@ export type Database = {
         }
         Relationships: []
       }
+      pomodoro_sessions: {
+        Row: {
+          completed: boolean
+          completed_at: string | null
+          created_at: string
+          cycle_position: number
+          id: string
+          session_length: number
+          user_id: string
+          xp_earned: number
+        }
+        Insert: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          cycle_position?: number
+          id?: string
+          session_length?: number
+          user_id: string
+          xp_earned?: number
+        }
+        Update: {
+          completed?: boolean
+          completed_at?: string | null
+          created_at?: string
+          cycle_position?: number
+          id?: string
+          session_length?: number
+          user_id?: string
+          xp_earned?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

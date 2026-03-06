@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Settings as SettingsIcon, Bell, Moon, Globe, Shield, HelpCircle, LogOut, Clock, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePomodoro } from "@/contexts/PomodoroContext";
 import {
   Dialog,
   DialogContent,
@@ -36,7 +37,7 @@ import {
 export default function Settings() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
-
+  const { settings: pomodoroSettings, updateSettings: updatePomodoroSettings } = usePomodoro();
   // Toggle states
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(true);
@@ -254,15 +255,17 @@ export default function Settings() {
             </button>
           </div>
 
-          {/* Break Interval */}
+          {/* Pomodoro Settings */}
           <div className="px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-2.5 rounded-xl bg-secondary">
                 <Timer className="h-5 w-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium text-foreground">Break Interval</p>
-                <p className="text-sm text-muted-foreground">{breakInterval} minutes (Pomodoro)</p>
+                <p className="font-medium text-foreground">Pomodoro Timer</p>
+                <p className="text-sm text-muted-foreground">
+                  {pomodoroSettings.focusMinutes}m focus · {pomodoroSettings.shortBreakMinutes}m break · {pomodoroSettings.sessionsBeforeLongBreak} sessions/cycle
+                </p>
               </div>
             </div>
             <button
@@ -455,35 +458,53 @@ export default function Settings() {
         </DialogContent>
       </Dialog>
 
-      {/* Break Interval Dialog */}
+      {/* Pomodoro Settings Dialog */}
       <Dialog open={breakIntervalOpen} onOpenChange={setBreakIntervalOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
-            <DialogTitle>Set Break Interval</DialogTitle>
+            <DialogTitle>Pomodoro Settings</DialogTitle>
             <DialogDescription>
-              How long do you want to study before taking a break?
+              Customize your Pomodoro timer durations and cycle length.
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="breakInterval">Minutes</Label>
-            <Select value={breakInterval} onValueChange={setBreakInterval}>
-              <SelectTrigger className="mt-2">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="15">15 minutes</SelectItem>
-                <SelectItem value="25">25 minutes (Pomodoro)</SelectItem>
-                <SelectItem value="30">30 minutes</SelectItem>
-                <SelectItem value="45">45 minutes</SelectItem>
-                <SelectItem value="60">60 minutes</SelectItem>
-              </SelectContent>
-            </Select>
+          <div className="py-4 space-y-4">
+            <div>
+              <Label>Focus Duration (minutes)</Label>
+              <Input
+                type="number" min={5} max={90} className="mt-1"
+                value={pomodoroSettings.focusMinutes}
+                onChange={(e) => updatePomodoroSettings({ focusMinutes: Math.max(5, Math.min(90, Number(e.target.value))) })}
+              />
+            </div>
+            <div>
+              <Label>Short Break (minutes)</Label>
+              <Input
+                type="number" min={1} max={30} className="mt-1"
+                value={pomodoroSettings.shortBreakMinutes}
+                onChange={(e) => updatePomodoroSettings({ shortBreakMinutes: Math.max(1, Math.min(30, Number(e.target.value))) })}
+              />
+            </div>
+            <div>
+              <Label>Long Break (minutes)</Label>
+              <Input
+                type="number" min={5} max={60} className="mt-1"
+                value={pomodoroSettings.longBreakMinutes}
+                onChange={(e) => updatePomodoroSettings({ longBreakMinutes: Math.max(5, Math.min(60, Number(e.target.value))) })}
+              />
+            </div>
+            <div>
+              <Label>Sessions before Long Break</Label>
+              <Input
+                type="number" min={2} max={8} className="mt-1"
+                value={pomodoroSettings.sessionsBeforeLongBreak}
+                onChange={(e) => updatePomodoroSettings({ sessionsBeforeLongBreak: Math.max(2, Math.min(8, Number(e.target.value))) })}
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setBreakIntervalOpen(false)}>
-              Cancel
+              Close
             </Button>
-            <Button onClick={handleSaveBreakInterval}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
