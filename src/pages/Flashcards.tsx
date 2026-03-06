@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { AmbientBackground } from "@/components/AmbientBackground";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain, ChevronLeft, ChevronRight, RotateCcw, Save, Trash2, Play,
@@ -258,8 +259,9 @@ export default function Flashcards() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="max-w-4xl mx-auto space-y-6 pb-8"
+      className="max-w-4xl mx-auto space-y-6 pb-8 relative"
     >
+      <AmbientBackground variant="flashcards" />
       {/* 1. Header Row */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
