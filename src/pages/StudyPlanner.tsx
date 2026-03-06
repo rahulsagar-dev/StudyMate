@@ -273,15 +273,18 @@ export default function StudyPlanner() {
     toast({ title: "PDF export feature coming soon!" });
   };
 
+  // TODO: Later connect XP system with global user progression system
+  // (levels, achievements, streaks, leaderboard)
   const syncToTasks = async () => {
+    const totalXP = schedule.reduce((s, t) => s + t.xpReward, 0);
     for (const session of schedule) {
       await addTask(
         `Study: ${session.subject} (${session.startTime} - ${session.endTime})`,
         "major-project",
-        session.difficulty === "difficult" ? 30 : session.difficulty === "moderate" ? 20 : 10
+        session.xpReward
       );
     }
-    toast({ title: "Tasks synced!", description: `${schedule.length} study sessions added to dashboard` });
+    toast({ title: "Tasks synced!", description: `${schedule.length} study tasks synced to Dashboard (+${totalXP} XP potential)` });
   };
 
   // Analytics
