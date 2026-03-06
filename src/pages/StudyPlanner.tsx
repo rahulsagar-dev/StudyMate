@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { AmbientBackground } from "@/components/AmbientBackground";
 import { motion } from "framer-motion";
 import {
   GraduationCap, Settings, Calendar, BarChart3, Plus, Trash2,
