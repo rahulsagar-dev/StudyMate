@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { AmbientBackground } from "@/components/AmbientBackground";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Brain, ChevronLeft, ChevronRight, RotateCcw, Save, Trash2, Play,
