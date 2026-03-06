@@ -203,8 +203,8 @@ export default function StudyPlanner() {
     const result = generateSchedule(subjects, dailyHours, freeSlots);
     setSchedule(result);
     setGenerated(true);
-    setGenerating(false);
-    toast({ title: "Timetable generated!", description: `${result.length} sessions scheduled` });
+    const totalXP = result.reduce((s, t) => s + t.xpReward, 0);
+    toast({ title: "Timetable generated!", description: `${result.length} sessions scheduled · ${totalXP} XP potential` });
   };
 
   const saveSchedule = () => {
