@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useGoogleCalendar } from "@/hooks/useGoogleCalendar";
+import { AmbientBackground } from "@/components/AmbientBackground";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
