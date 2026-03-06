@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Flame, TrendingUp } from "lucide-react";
+import { Flame, TrendingUp, Brain } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Tooltip,
@@ -10,6 +10,7 @@ import {
  import { useStudySessions } from "@/hooks/useStudySessions";
  import { useProfile } from "@/hooks/useProfile";
  import { useAuth } from "@/contexts/AuthContext";
+ import { useStudyActivity } from "@/hooks/useStudyActivity";
  import { Skeleton } from "@/components/ui/skeleton";
 
 const CELL_SIZE = 10;
