@@ -55,6 +55,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </ActivityTrackerProvider>
       </PomodoroProvider>
     </AuthProvider>
   </QueryClientProvider>
