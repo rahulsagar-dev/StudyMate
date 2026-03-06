@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Settings as SettingsIcon, Bell, Moon, Globe, Shield, HelpCircle, LogOut, Clock, Timer } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePomodoro } from "@/contexts/PomodoroContext";
 import {
   Dialog,
   DialogContent,
