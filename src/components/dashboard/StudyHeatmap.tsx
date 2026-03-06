@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Flame, TrendingUp } from "lucide-react";
+import { Flame, TrendingUp, Brain } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Tooltip,
@@ -10,6 +10,7 @@ import {
  import { useStudySessions } from "@/hooks/useStudySessions";
  import { useProfile } from "@/hooks/useProfile";
  import { useAuth } from "@/contexts/AuthContext";
+ import { useStudyActivity } from "@/hooks/useStudyActivity";
  import { Skeleton } from "@/components/ui/skeleton";
 
 const CELL_SIZE = 10;
@@ -118,10 +119,11 @@ export function StudyHeatmap() {
    const { user } = useAuth();
    const { profile, loading: profileLoading } = useProfile();
    const { getActivityMap, loading: sessionsLoading } = useStudySessions(2026);
+   const { activityMap: studyActivityMap, stats: activityStats } = useStudyActivity();
   
    const activityData = useMemo(() => getActivityMap(), [getActivityMap]);
    const monthGroups = useMemo(() => generateMonthGroups(activityData, 2026), [activityData]);
-   
+    
    // Use streaks from profile (calculated by database)
    const currentStreak = profile?.current_streak || 0;
    const longestStreak = profile?.longest_streak || 0;
@@ -224,7 +226,9 @@ export function StudyHeatmap() {
                       <div key={weekIndex} className="flex flex-col" style={{ gap: CELL_GAP }}>
                         {week.map((day, dayIndex) => {
                           const intensity = getIntensityLevel(day.studyMinutes);
-                          const hasData = day.studyMinutes > 0;
+                          const dateKey = day.date.toISOString().split('T')[0];
+                          const actData = studyActivityMap.get(dateKey);
+                          const hasData = day.studyMinutes > 0 || (actData && (actData.activeMinutes > 0 || actData.pomodoroSessions > 0));
                           
                           if (!day.isCurrentYear) {
                             return (
@@ -264,6 +268,8 @@ export function StudyHeatmap() {
                                   </p>
                                   {hasData ? (
                                     <div className="space-y-0.5 text-muted-foreground">
+                                      <p>🕐 Time Spent: {formatStudyTime(actData?.activeMinutes || 0)}</p>
+                                      <p>🍅 Pomodoro Sessions: {actData?.pomodoroSessions || 0}</p>
                                       <p>📚 {formatStudyTime(day.studyMinutes)} study</p>
                                       <p>⚡ {day.xpEarned} XP earned</p>
                                       <p>✅ {day.tasksCompleted} tasks completed</p>
@@ -333,6 +339,32 @@ export function StudyHeatmap() {
           <span className="text-[10px] text-muted-foreground/70 ml-1">More</span>
         </div>
       </div>
+
+      {/* Focus Score */}
+      {(() => {
+        const today = new Date().toISOString().split("T")[0];
+        const todayData = studyActivityMap.get(today);
+        if (!todayData || (todayData.activeMinutes === 0 && todayData.pomodoroSessions === 0)) return null;
+        const timeScore = Math.min(100, (todayData.activeMinutes / 300) * 100);
+        const pomScore = Math.min(100, (todayData.pomodoroSessions / 8) * 100);
+        const score = Math.round(timeScore * 0.4 + pomScore * 0.6);
+        const label = score >= 80 ? "Outstanding focus today" : score >= 60 ? "Great focus today" : score >= 40 ? "Good progress" : "Building momentum";
+        return (
+          <div className="flex items-center gap-3 mt-4 px-4 py-3 rounded-xl bg-primary/5 border border-primary/20">
+            <Brain className="h-5 w-5 text-primary flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">Focus Score Today</span>
+                <span className="text-lg font-bold text-primary">{score}%</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <div className="w-full h-1.5 rounded-full bg-muted mt-1.5">
+                <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${score}%` }} />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
