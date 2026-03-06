@@ -58,6 +58,9 @@ export function TopBar({ className }: TopBarProps) {
           </div>
         </div>
 
+        {/* Pomodoro Timer */}
+        <TopBarPomodoro />
+
         {/* Level Badge */}
         <div className="level-badge">
           <span className="text-xs opacity-80">LVL</span>
