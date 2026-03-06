@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils";
 import { useProfile } from "@/hooks/useProfile";
 import { useStudySessions } from "@/hooks/useStudySessions";
 import { useMemo } from "react";
+import { TopBarPomodoro } from "./TopBarPomodoro";
 
 interface TopBarProps {
   className?: string;
