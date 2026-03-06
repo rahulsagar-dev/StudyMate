@@ -639,6 +639,7 @@ export default function StudyPlanner() {
                               <div className="flex items-center gap-1 ml-auto shrink-0">
                                 <Badge variant="outline" className="text-xs">{session.durationHrs}h</Badge>
                                 <Badge variant="outline" className="text-xs capitalize">{session.difficulty}</Badge>
+                                <Badge className="text-xs bg-level/15 text-level border-level/30 hover:bg-level/20">+{session.xpReward} XP</Badge>
                               </div>
                             </motion.div>
                           ))}
