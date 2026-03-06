@@ -289,12 +289,17 @@ export default function StudyPlanner() {
 
   // Analytics
   const totalPlannedHrs = schedule.reduce((s, t) => s + t.durationHrs, 0);
+  const totalScheduleXP = schedule.reduce((s, t) => s + t.xpReward, 0);
   const availableHrs = dailyHours * 7;
   const utilization = availableHrs > 0 ? Math.round((totalPlannedHrs / availableHrs) * 100) : 0;
-  const subjectHours = subjects.map((sub) => ({
-    name: sub.name,
-    hours: +schedule.filter((s) => s.subject === sub.name).reduce((sum, s) => sum + s.durationHrs, 0).toFixed(1),
-  }));
+  const subjectHours = subjects.map((sub) => {
+    const sessions = schedule.filter((s) => s.subject === sub.name);
+    return {
+      name: sub.name,
+      hours: +sessions.reduce((sum, s) => sum + s.durationHrs, 0).toFixed(1),
+      xp: sessions.reduce((sum, s) => sum + s.xpReward, 0),
+    };
+  });
 
   const daySchedules = DAYS.map((day) => ({
     day,
