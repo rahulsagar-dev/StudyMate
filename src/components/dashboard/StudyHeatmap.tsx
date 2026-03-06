@@ -119,10 +119,11 @@ export function StudyHeatmap() {
    const { user } = useAuth();
    const { profile, loading: profileLoading } = useProfile();
    const { getActivityMap, loading: sessionsLoading } = useStudySessions(2026);
+   const { activityMap: studyActivityMap, stats: activityStats } = useStudyActivity();
   
    const activityData = useMemo(() => getActivityMap(), [getActivityMap]);
    const monthGroups = useMemo(() => generateMonthGroups(activityData, 2026), [activityData]);
-   
+    
    // Use streaks from profile (calculated by database)
    const currentStreak = profile?.current_streak || 0;
    const longestStreak = profile?.longest_streak || 0;
