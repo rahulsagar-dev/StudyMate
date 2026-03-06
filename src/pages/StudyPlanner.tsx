@@ -137,6 +137,7 @@ function generateSchedule(subjects: Subject[], dailyHours: number, freeSlots: st
           durationHrs: +(sess.total / 60).toFixed(2),
           breakMin: sess.break_,
           studyMin: sess.study,
+          xpReward: DIFF_XP[sub.difficulty],
         });
 
         cursor += sess.total;
