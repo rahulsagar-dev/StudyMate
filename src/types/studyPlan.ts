@@ -1,9 +1,28 @@
-export interface StudyTask {
+export interface Subject {
   id: string;
-  title: string;
-  date: string;
-  duration: number; // minutes
-  priority: "low" | "medium" | "high";
-  completed: boolean;
+  name: string;
+  difficulty: "easy" | "moderate" | "difficult";
+}
+
+export interface TimeSlot {
+  day: string;
+  startTime: string;
+  endTime: string;
+  subject: string;
+  difficulty: "easy" | "moderate" | "difficult";
+  durationHrs: number;
+  breakMin: number;
+  studyMin: number;
+}
+
+export interface SchedulePlan {
+  id: string;
+  subjects: Subject[];
+  dailyHours: number;
+  planType: "week" | "month";
+  freeSlots: string;
+  schedule: TimeSlot[];
   createdAt: string;
+  totalStudyHours: number;
+  weeklyHours: number;
 }
