@@ -339,6 +339,32 @@ export function StudyHeatmap() {
           <span className="text-[10px] text-muted-foreground/70 ml-1">More</span>
         </div>
       </div>
+
+      {/* Focus Score */}
+      {(() => {
+        const today = new Date().toISOString().split("T")[0];
+        const todayData = studyActivityMap.get(today);
+        if (!todayData || (todayData.activeMinutes === 0 && todayData.pomodoroSessions === 0)) return null;
+        const timeScore = Math.min(100, (todayData.activeMinutes / 300) * 100);
+        const pomScore = Math.min(100, (todayData.pomodoroSessions / 8) * 100);
+        const score = Math.round(timeScore * 0.4 + pomScore * 0.6);
+        const label = score >= 80 ? "Outstanding focus today" : score >= 60 ? "Great focus today" : score >= 40 ? "Good progress" : "Building momentum";
+        return (
+          <div className="flex items-center gap-3 mt-4 px-4 py-3 rounded-xl bg-primary/5 border border-primary/20">
+            <Brain className="h-5 w-5 text-primary flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-foreground">Focus Score Today</span>
+                <span className="text-lg font-bold text-primary">{score}%</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <div className="w-full h-1.5 rounded-full bg-muted mt-1.5">
+                <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: `${score}%` }} />
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
