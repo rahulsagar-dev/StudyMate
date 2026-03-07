@@ -206,7 +206,7 @@ export function StudyHeatmap() {
             </div>
 
             {/* Month Groups */}
-            <div className="flex">
+            <div className="flex flex-1 justify-between">
               {monthGroups.map((monthGroup, monthIndex) => (
                 <div 
                   key={monthGroup.month} 
