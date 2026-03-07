@@ -285,6 +285,7 @@ export function useAIChat() {
     stopSpeaking,
     clearMessages,
     messageCount: messages.length,
+    speakText,
     messageLimit: MESSAGE_LIMIT,
   };
 }
