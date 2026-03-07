@@ -189,7 +189,7 @@ export function StudyHeatmap() {
       {/* Heatmap Container */}
       <TooltipProvider delayDuration={100}>
         <div className="overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border scrollbar-track-transparent">
-          <div className="inline-flex min-w-max">
+          <div className="flex w-full">
             {/* Day Labels Column */}
             <div className="flex flex-col flex-shrink-0 pr-2 pt-5">
               {dayLabels.map((day, i) => (
