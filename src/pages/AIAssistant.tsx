@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Bot, Mic, MessageSquare, Type, Trash2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +26,7 @@ export default function AIAssistant() {
     startRecording,
     stopRecording,
     stopSpeaking,
+    speakText,
     clearMessages,
     messageCount,
     messageLimit,
@@ -86,10 +86,8 @@ export default function AIAssistant() {
         messages={messages}
         isLoading={isLoading}
         isSpeaking={isSpeaking}
-        onSpeak={mode !== "text-text" ? (text) => {
-          const { speakText } = useAIChatActions();
-          speakText(text);
-        } : undefined}
+        onSpeak={speakText}
+        onStopSpeaking={stopSpeaking}
       />
 
       {/* Input */}
