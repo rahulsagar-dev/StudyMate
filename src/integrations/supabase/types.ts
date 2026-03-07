@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_assistant_chats: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          message: string
+          mode: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message: string
+          mode?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          mode?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_error_logs: {
         Row: {
           created_at: string
