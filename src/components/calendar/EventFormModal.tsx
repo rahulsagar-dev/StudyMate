@@ -73,7 +73,7 @@ export function EventFormModal({ open, onOpenChange, onSave, onUpdate, onDelete,
       setEndTime("10:00");
       setEventType("study_session");
       setSubject("");
-      setColor("");
+      setColor("auto");
     }
   }, [editEvent, defaultDate, open]);
 
