@@ -297,6 +297,45 @@ export default function StudyPlanner() {
     toast({ title: "Tasks synced!", description: `${schedule.length} study tasks synced to Dashboard (+${totalXP} XP potential)` });
   };
 
+  const syncToCalendar = () => {
+    // Map schedule days to actual dates (next occurrence of each day)
+    const dayMap: Record<string, number> = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+    const now = new Date();
+    const events = schedule.map((session) => {
+      const targetDay = dayMap[session.day] ?? 1;
+      const diff = (targetDay - now.getDay() + 7) % 7 || 7;
+      const eventDate = new Date(now);
+      eventDate.setDate(now.getDate() + diff);
+      const dateStr = eventDate.toISOString().split("T")[0];
+
+      // Parse time from "3:00 PM" format to "15:00"
+      const parse12 = (t: string) => {
+        const match = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (!match) return "09:00";
+        let h = parseInt(match[1]);
+        const m = match[2];
+        const ap = match[3].toUpperCase();
+        if (ap === "PM" && h < 12) h += 12;
+        if (ap === "AM" && h === 12) h = 0;
+        return `${String(h).padStart(2, "0")}:${m}`;
+      };
+
+      return {
+        title: `Study – ${session.subject}`,
+        description: `${session.difficulty} difficulty · ${session.studyMin}min study + ${session.breakMin}min break · ${session.xpReward} XP`,
+        date: dateStr,
+        start_time: parse12(session.startTime),
+        end_time: parse12(session.endTime),
+        event_type: "study_session" as const,
+        subject: session.subject,
+        color: null,
+        source: "planner" as const,
+      };
+    });
+    addBulkEvents.mutate(events);
+    setSyncDialogOpen(false);
+  };
+
   // Analytics
   const totalPlannedHrs = schedule.reduce((s, t) => s + t.durationHrs, 0);
   const totalScheduleXP = schedule.reduce((s, t) => s + t.xpReward, 0);
