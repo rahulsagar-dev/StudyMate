@@ -160,6 +160,10 @@ function generateSchedule(subjects: Subject[], dailyHours: number, freeSlots: st
 export default function StudyPlanner() {
   const { toast } = useToast();
   const { addTask } = useTasks();
+  const { user } = useAuth();
+  const today = new Date();
+  const { addBulkEvents } = useCalendarEvents(today.getFullYear(), today.getMonth());
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
 
   // Subjects input
   const [subjects, setSubjects] = useState<Subject[]>([]);
