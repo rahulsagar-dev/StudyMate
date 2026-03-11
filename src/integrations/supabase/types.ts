@@ -71,6 +71,51 @@ export type Database = {
         }
         Relationships: []
       }
+      calendar_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          date: string
+          description: string | null
+          end_time: string
+          event_type: string
+          id: string
+          source: string
+          start_time: string
+          subject: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          date: string
+          description?: string | null
+          end_time: string
+          event_type?: string
+          id?: string
+          source?: string
+          start_time: string
+          subject?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          end_time?: string
+          event_type?: string
+          id?: string
+          source?: string
+          start_time?: string
+          subject?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string
