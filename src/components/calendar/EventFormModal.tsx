@@ -23,7 +23,7 @@ const EVENT_TYPES = [
 ];
 
 const COLOR_OPTIONS = [
-  { value: "", label: "Auto (by type)" },
+  { value: "auto", label: "Auto (by type)" },
   { value: "hsl(180, 70%, 50%)", label: "Cyan" },
   { value: "hsl(142, 70%, 45%)", label: "Green" },
   { value: "hsl(265, 70%, 60%)", label: "Purple" },
