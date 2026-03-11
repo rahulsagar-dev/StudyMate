@@ -23,7 +23,7 @@ const EVENT_TYPES = [
 ];
 
 const COLOR_OPTIONS = [
-  { value: "", label: "Auto (by type)" },
+  { value: "auto", label: "Auto (by type)" },
   { value: "hsl(180, 70%, 50%)", label: "Cyan" },
   { value: "hsl(142, 70%, 45%)", label: "Green" },
   { value: "hsl(265, 70%, 60%)", label: "Purple" },
@@ -64,7 +64,7 @@ export function EventFormModal({ open, onOpenChange, onSave, onUpdate, onDelete,
       setEndTime(editEvent.end_time.slice(0, 5));
       setEventType(editEvent.event_type);
       setSubject(editEvent.subject || "");
-      setColor(editEvent.color || "");
+      setColor(editEvent.color || "auto");
     } else {
       setTitle("");
       setDescription("");
@@ -73,7 +73,7 @@ export function EventFormModal({ open, onOpenChange, onSave, onUpdate, onDelete,
       setEndTime("10:00");
       setEventType("study_session");
       setSubject("");
-      setColor("");
+      setColor("auto");
     }
   }, [editEvent, defaultDate, open]);
 
@@ -108,7 +108,7 @@ export function EventFormModal({ open, onOpenChange, onSave, onUpdate, onDelete,
       end_time: endTime,
       event_type: eventType,
       subject: subject.trim() || null,
-      color: color || null,
+      color: color === "auto" ? null : color,
       source: "manual",
     };
 
