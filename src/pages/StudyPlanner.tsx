@@ -19,6 +19,13 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useTasks } from "@/hooks/useTasks";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import type { Subject, TimeSlot, SchedulePlan } from "@/types/studyPlan";
 import type { Subject, TimeSlot, SchedulePlan } from "@/types/studyPlan";
 
 const STORAGE_KEY = "scheduler-plans";
