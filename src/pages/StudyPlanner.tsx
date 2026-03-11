@@ -449,8 +449,34 @@ export default function StudyPlanner() {
             <ListTodo className="h-4 w-4" />
             Sync Tasks with Dashboard
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setSyncDialogOpen(true)}
+            disabled={schedule.length === 0}
+          >
+            <CalendarPlus className="h-4 w-4" />
+            Sync to Calendar
+          </Button>
         </div>
       </div>
+
+      {/* Calendar sync confirmation dialog */}
+      <AlertDialog open={syncDialogOpen} onOpenChange={setSyncDialogOpen}>
+        <AlertDialogContent className="bg-card border-border/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync schedule with Calendar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will add {schedule.length} study sessions to your Calendar as events. They'll appear with a "Planner" badge.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, keep planner only</AlertDialogCancel>
+            <AlertDialogAction onClick={syncToCalendar}>Yes, add sessions to calendar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Input Section */}
