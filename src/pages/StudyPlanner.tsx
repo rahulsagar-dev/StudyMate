@@ -26,7 +26,6 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Subject, TimeSlot, SchedulePlan } from "@/types/studyPlan";
-import type { Subject, TimeSlot, SchedulePlan } from "@/types/studyPlan";
 
 const STORAGE_KEY = "scheduler-plans";
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
