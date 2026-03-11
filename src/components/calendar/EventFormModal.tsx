@@ -108,7 +108,7 @@ export function EventFormModal({ open, onOpenChange, onSave, onUpdate, onDelete,
       end_time: endTime,
       event_type: eventType,
       subject: subject.trim() || null,
-      color: color || null,
+      color: color === "auto" ? null : color,
       source: "manual",
     };
 
