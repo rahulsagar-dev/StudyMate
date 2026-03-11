@@ -64,7 +64,7 @@ export function EventFormModal({ open, onOpenChange, onSave, onUpdate, onDelete,
       setEndTime(editEvent.end_time.slice(0, 5));
       setEventType(editEvent.event_type);
       setSubject(editEvent.subject || "");
-      setColor(editEvent.color || "");
+      setColor(editEvent.color || "auto");
     } else {
       setTitle("");
       setDescription("");
