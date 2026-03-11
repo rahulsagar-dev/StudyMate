@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_assistant_chats: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          id: string
+          message: string
+          mode: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message: string
+          mode?: string
+          role?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          message?: string
+          mode?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_error_logs: {
         Row: {
           created_at: string
@@ -38,6 +68,51 @@ export type Database = {
           id?: string
           input_text?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      calendar_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          date: string
+          description: string | null
+          end_time: string
+          event_type: string
+          id: string
+          source: string
+          start_time: string
+          subject: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          date: string
+          description?: string | null
+          end_time: string
+          event_type?: string
+          id?: string
+          source?: string
+          start_time: string
+          subject?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          date?: string
+          description?: string | null
+          end_time?: string
+          event_type?: string
+          id?: string
+          source?: string
+          start_time?: string
+          subject?: string | null
+          title?: string
+          user_id?: string
         }
         Relationships: []
       }

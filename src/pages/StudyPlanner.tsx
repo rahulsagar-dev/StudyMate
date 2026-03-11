@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   GraduationCap, Settings, Calendar, BarChart3, Plus, Trash2,
-  FileDown, Download, Save, History, AlertCircle, Copy, Eye, ArrowRight, ListTodo
+  FileDown, Download, Save, History, AlertCircle, Copy, Eye, ArrowRight, ListTodo, CalendarPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,12 @@ import {
 } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 import { useTasks } from "@/hooks/useTasks";
+import { useCalendarEvents } from "@/hooks/useCalendarEvents";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { Subject, TimeSlot, SchedulePlan } from "@/types/studyPlan";
 
 const STORAGE_KEY = "scheduler-plans";
@@ -154,6 +160,10 @@ function generateSchedule(subjects: Subject[], dailyHours: number, freeSlots: st
 export default function StudyPlanner() {
   const { toast } = useToast();
   const { addTask } = useTasks();
+  const { user } = useAuth();
+  const today = new Date();
+  const { addBulkEvents } = useCalendarEvents(today.getFullYear(), today.getMonth());
+  const [syncDialogOpen, setSyncDialogOpen] = useState(false);
 
   // Subjects input
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -287,6 +297,45 @@ export default function StudyPlanner() {
     toast({ title: "Tasks synced!", description: `${schedule.length} study tasks synced to Dashboard (+${totalXP} XP potential)` });
   };
 
+  const syncToCalendar = () => {
+    // Map schedule days to actual dates (next occurrence of each day)
+    const dayMap: Record<string, number> = { Sunday: 0, Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
+    const now = new Date();
+    const events = schedule.map((session) => {
+      const targetDay = dayMap[session.day] ?? 1;
+      const diff = (targetDay - now.getDay() + 7) % 7 || 7;
+      const eventDate = new Date(now);
+      eventDate.setDate(now.getDate() + diff);
+      const dateStr = eventDate.toISOString().split("T")[0];
+
+      // Parse time from "3:00 PM" format to "15:00"
+      const parse12 = (t: string) => {
+        const match = t.match(/(\d+):(\d+)\s*(AM|PM)/i);
+        if (!match) return "09:00";
+        let h = parseInt(match[1]);
+        const m = match[2];
+        const ap = match[3].toUpperCase();
+        if (ap === "PM" && h < 12) h += 12;
+        if (ap === "AM" && h === 12) h = 0;
+        return `${String(h).padStart(2, "0")}:${m}`;
+      };
+
+      return {
+        title: `Study – ${session.subject}`,
+        description: `${session.difficulty} difficulty · ${session.studyMin}min study + ${session.breakMin}min break · ${session.xpReward} XP`,
+        date: dateStr,
+        start_time: parse12(session.startTime),
+        end_time: parse12(session.endTime),
+        event_type: "study_session" as const,
+        subject: session.subject,
+        color: null,
+        source: "planner" as const,
+      };
+    });
+    addBulkEvents.mutate(events);
+    setSyncDialogOpen(false);
+  };
+
   // Analytics
   const totalPlannedHrs = schedule.reduce((s, t) => s + t.durationHrs, 0);
   const totalScheduleXP = schedule.reduce((s, t) => s + t.xpReward, 0);
@@ -400,8 +449,34 @@ export default function StudyPlanner() {
             <ListTodo className="h-4 w-4" />
             Sync Tasks with Dashboard
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setSyncDialogOpen(true)}
+            disabled={schedule.length === 0}
+          >
+            <CalendarPlus className="h-4 w-4" />
+            Sync to Calendar
+          </Button>
         </div>
       </div>
+
+      {/* Calendar sync confirmation dialog */}
+      <AlertDialog open={syncDialogOpen} onOpenChange={setSyncDialogOpen}>
+        <AlertDialogContent className="bg-card border-border/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sync schedule with Calendar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will add {schedule.length} study sessions to your Calendar as events. They'll appear with a "Planner" badge.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, keep planner only</AlertDialogCancel>
+            <AlertDialogAction onClick={syncToCalendar}>Yes, add sessions to calendar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Input Section */}
