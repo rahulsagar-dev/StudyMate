@@ -382,7 +382,7 @@ export default function Whiteboard() {
       <div className="flex-1 relative overflow-hidden">
         <Excalidraw
           excalidrawAPI={(api) => setExcalidrawAPI(api)}
-          theme="dark"
+          theme="light"
           onChange={scheduleAutoSave}
           UIOptions={{
             canvasActions: {
