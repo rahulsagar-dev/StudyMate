@@ -3,83 +3,70 @@ import { StudyHeatmap } from "@/components/dashboard/StudyHeatmap";
 import { TaskPanel } from "@/components/dashboard/TaskPanel";
 import { CalendarWidget } from "@/components/dashboard/CalendarWidget";
 import { AnalyticsChart } from "@/components/dashboard/AnalyticsChart";
-import { useAuth } from "@/contexts/AuthContext";
-import { Sparkles } from "lucide-react";
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const greeting = getGreeting();
-
   return (
-    <div className="space-y-6">
-      {/* Welcome Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">
-            {greeting}{user?.email ? `, ${user.email.split("@")[0]}` : ""}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Here's your study overview for today
-          </p>
-        </div>
-      </div>
-
+    <div className="space-y-6 stagger-children">
       {/* Quick Stats */}
       <QuickStats />
 
-      {/* Two-Column Layout: Tasks + Calendar */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <TaskPanel />
-        <CalendarWidget />
-      </div>
-
-      {/* Study Heatmap */}
-      <StudyHeatmap />
-
-      {/* Bottom Row: Analytics + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <AnalyticsChart />
+      {/* Main Grid */}
+      <div className="grid grid-cols-12 gap-6">
+        {/* Heatmap - Full Width */}
+        <div className="col-span-12">
+          <StudyHeatmap />
         </div>
-        <div className="bg-card rounded-2xl border border-border/50 p-6">
-          <h3 className="text-lg font-display font-semibold text-foreground mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-2 gap-3">
-            <ActionCard
-              title="Start Quiz"
-              description="Test your knowledge"
-              gradient="primary"
-              href="/quizzes"
-            />
-            <ActionCard
-              title="Flashcards"
-              description="Review cards"
-              gradient="xp"
-              href="/flashcards"
-            />
-            <ActionCard
-              title="Summarize"
-              description="AI-powered notes"
-              gradient="level"
-              href="/summarizer"
-            />
-            <ActionCard
-              title="Study Plan"
-              description="Organize sessions"
-              gradient="achievement"
-              href="/study-planner"
-            />
+
+        {/* Tasks Panel */}
+        <div className="col-span-12 lg:col-span-4">
+          <TaskPanel />
+        </div>
+
+        {/* Calendar Widget */}
+        <div className="col-span-12 lg:col-span-4">
+          <CalendarWidget />
+        </div>
+
+        {/* Analytics Chart - Spans 2 columns on mobile, 4 on desktop */}
+        <div className="col-span-12 lg:col-span-4">
+          <div className="bg-card rounded-2xl border border-border/50 p-6 h-full">
+            <h3 className="text-lg font-display font-semibold text-foreground mb-4">Quick Actions</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <ActionCard
+                title="Start Quiz"
+                description="Test your knowledge"
+                gradient="primary"
+                href="/quizzes"
+              />
+              <ActionCard
+                title="Flashcards"
+                description="Review cards"
+                gradient="xp"
+                href="/flashcards"
+              />
+              <ActionCard
+                title="Summarize"
+                description="AI-powered notes"
+                gradient="level"
+                href="/summarizer"
+              />
+              <ActionCard
+                title="Study Plan"
+                description="Organize sessions"
+                gradient="achievement"
+                href="/study-planner"
+              />
+            </div>
           </div>
+        </div>
+
+        {/* Analytics */}
+        <div className="col-span-12">
+          <AnalyticsChart />
         </div>
       </div>
     </div>
   );
-}
-
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
 }
 
 function ActionCard({
