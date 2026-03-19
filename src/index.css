@@ -358,6 +358,34 @@
   .whiteboard-container .excalidraw button.ToolIcon_type_button {
     padding: 4px !important;
   }
+
+  /* Constrain Excalidraw welcome/splash SVGs */
+  .whiteboard-container .excalidraw .welcome-screen-center {
+    max-width: 280px !important;
+    margin: 0 auto !important;
+  }
+
+  .whiteboard-container .excalidraw .welcome-screen-center svg {
+    max-width: 120px !important;
+    max-height: 120px !important;
+    width: auto !important;
+    height: auto !important;
+  }
+
+  .whiteboard-container .excalidraw .welcome-screen-center__logo svg {
+    max-width: 100px !important;
+    max-height: 100px !important;
+  }
+
+  /* Prevent any SVG in the UI layer from blowing up */
+  .whiteboard-container .excalidraw .layer-ui__wrapper svg {
+    max-width: 100% !important;
+    max-height: 100% !important;
+  }
+
+  .whiteboard-container .excalidraw .welcome-screen-decor {
+    display: none !important;
+  }
 }
 
 @layer utilities {
