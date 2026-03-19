@@ -637,6 +637,44 @@ export type Database = {
           },
         ]
       }
+      whiteboards: {
+        Row: {
+          app_state: Json
+          created_at: string
+          elements: Json
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_state?: Json
+          created_at?: string
+          elements?: Json
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_state?: Json
+          created_at?: string
+          elements?: Json
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whiteboards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       xp_transactions: {
         Row: {
           amount: number

@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Target,
+  PenTool,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,6 +39,7 @@ const toolsItems = [
   { title: "Flashcards", url: "/flashcards", icon: Layers },
   { title: "Quizzes", url: "/quizzes", icon: Brain },
   { title: "Study Planner", url: "/study-planner", icon: CalendarDays },
+  { title: "Whiteboard", url: "/whiteboard", icon: PenTool },
 ];
 
 const gamificationItems = [

@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +24,8 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+
+const Whiteboard = lazy(() => import("./pages/Whiteboard"));
 
 const queryClient = new QueryClient();
 
@@ -51,6 +54,7 @@ const App = () => (
             <Route path="/analytics" element={<MainLayout><Analytics /></MainLayout>} />
             <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
             <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
+            <Route path="/whiteboard" element={<MainLayout><Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}><Whiteboard /></Suspense></MainLayout>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
