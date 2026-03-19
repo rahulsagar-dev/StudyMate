@@ -231,6 +231,35 @@ export default function Whiteboard() {
           className="max-w-[200px] h-7 text-xs bg-background"
         />
 
+        {/* Canvas Background Color Picker */}
+        <div className="flex items-center gap-1 ml-2">
+          <span className="text-[10px] text-muted-foreground hidden sm:inline">BG:</span>
+          {[
+            { color: "#ffffff", label: "White" },
+            { color: "#fff8f0", label: "Cream" },
+            { color: "#fef3e2", label: "Peach" },
+            { color: "#f5f0e8", label: "Warm Beige" },
+            { color: "#f0f4f8", label: "Light Blue" },
+            { color: "#f0fdf4", label: "Mint" },
+            { color: "#1e1e2e", label: "Dark" },
+            { color: "#0f172a", label: "Slate" },
+          ].map((bg) => (
+            <button
+              key={bg.color}
+              title={bg.label}
+              className="w-5 h-5 rounded-sm border border-border hover:scale-110 transition-transform"
+              style={{ backgroundColor: bg.color }}
+              onClick={() => {
+                if (excalidrawAPI) {
+                  excalidrawAPI.updateScene({
+                    appState: { viewBackgroundColor: bg.color },
+                  });
+                }
+              }}
+            />
+          ))}
+        </div>
+
         <div className="flex items-center gap-1 ml-auto">
           <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={handleNew}>
             New
