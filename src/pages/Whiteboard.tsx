@@ -1,0 +1,373 @@
+import { useState, useCallback, useRef, useEffect } from "react";
+import { Excalidraw } from "@excalidraw/excalidraw";
+import type { ExcalidrawImperativeAPI } from "@excalidraw/excalidraw/types";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Save, FolderOpen, Sparkles, Download, Trash2, Loader2 } from "lucide-react";
+import { useWhiteboards } from "@/hooks/useWhiteboards";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { format } from "date-fns";
+
+export default function Whiteboard() {
+  const { user } = useAuth();
+  const { whiteboards, isLoading, loadWhiteboard, save, isSaving, deleteWhiteboard } = useWhiteboards();
+  const [excalidrawAPI, setExcalidrawAPI] = useState<ExcalidrawImperativeAPI | null>(null);
+  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [title, setTitle] = useState("Untitled Whiteboard");
+  const [loadDialogOpen, setLoadDialogOpen] = useState(false);
+  const [aiDialogOpen, setAiDialogOpen] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [diagramType, setDiagramType] = useState("flowchart");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasChanges = useRef(false);
+
+  // Auto-save debounced
+  const scheduleAutoSave = useCallback(() => {
+    if (!user || !excalidrawAPI) return;
+    hasChanges.current = true;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      if (!hasChanges.current || !excalidrawAPI) return;
+      try {
+        const elements = excalidrawAPI.getSceneElements();
+        const appState = excalidrawAPI.getAppState();
+        const result = await save({
+          id: currentId ?? undefined,
+          title,
+          elements: elements as any[],
+          app_state: {
+            viewBackgroundColor: appState.viewBackgroundColor,
+            zoom: appState.zoom,
+            scrollX: appState.scrollX,
+            scrollY: appState.scrollY,
+          },
+        });
+        if (!currentId && result.data) setCurrentId(result.data.id);
+        hasChanges.current = false;
+      } catch (err) {
+        console.error("Auto-save failed:", err);
+      }
+    }, 30000);
+  }, [user, excalidrawAPI, currentId, title, save]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    };
+  }, []);
+
+  const handleSave = async () => {
+    if (!user) {
+      toast.error("Please log in to save whiteboards");
+      return;
+    }
+    if (!excalidrawAPI) return;
+
+    try {
+      const elements = excalidrawAPI.getSceneElements();
+      const appState = excalidrawAPI.getAppState();
+      const result = await save({
+        id: currentId ?? undefined,
+        title,
+        elements: elements as any[],
+        app_state: {
+          viewBackgroundColor: appState.viewBackgroundColor,
+          zoom: appState.zoom,
+          scrollX: appState.scrollX,
+          scrollY: appState.scrollY,
+        },
+      });
+
+      if (result.isNew && result.data) {
+        setCurrentId(result.data.id);
+        // Award XP for new whiteboard save
+        try {
+          await supabase.rpc("award_xp", {
+            p_user_id: user.id,
+            p_amount: 15,
+            p_source: "whiteboard_save",
+            p_source_id: result.data.id,
+          });
+          toast.success("Whiteboard saved! +15 XP");
+        } catch {
+          toast.success("Whiteboard saved!");
+        }
+      } else {
+        toast.success("Whiteboard saved!");
+      }
+      hasChanges.current = false;
+    } catch (err) {
+      toast.error("Failed to save whiteboard");
+    }
+  };
+
+  const handleLoad = async (id: string) => {
+    try {
+      const wb = await loadWhiteboard(id);
+      setCurrentId(wb.id);
+      setTitle(wb.title);
+      if (excalidrawAPI) {
+        excalidrawAPI.updateScene({
+          elements: wb.elements,
+        });
+        if (wb.app_state?.viewBackgroundColor) {
+          excalidrawAPI.updateScene({
+            appState: {
+              viewBackgroundColor: wb.app_state.viewBackgroundColor,
+            },
+          });
+        }
+      }
+      setLoadDialogOpen(false);
+      toast.success(`Loaded "${wb.title}"`);
+    } catch {
+      toast.error("Failed to load whiteboard");
+    }
+  };
+
+  const handleNew = () => {
+    setCurrentId(null);
+    setTitle("Untitled Whiteboard");
+    if (excalidrawAPI) {
+      excalidrawAPI.resetScene();
+    }
+  };
+
+  const handleAIGenerate = async () => {
+    if (!aiPrompt.trim()) return;
+    if (!user) {
+      toast.error("Please log in to use AI generation");
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-diagram", {
+        body: { prompt: aiPrompt, diagramType },
+      });
+
+      if (error) throw error;
+      if (data?.error) {
+        toast.error(data.error);
+        return;
+      }
+
+      if (data?.elements && excalidrawAPI) {
+        const existingElements = excalidrawAPI.getSceneElements();
+        excalidrawAPI.updateScene({
+          elements: [...existingElements, ...data.elements],
+        });
+
+        // Award XP
+        try {
+          await supabase.rpc("award_xp", {
+            p_user_id: user.id,
+            p_amount: 25,
+            p_source: "whiteboard_ai_generate",
+          });
+          toast.success("Diagram generated! +25 XP");
+        } catch {
+          toast.success("Diagram generated!");
+        }
+      }
+
+      setAiDialogOpen(false);
+      setAiPrompt("");
+    } catch (err) {
+      toast.error("Failed to generate diagram");
+      console.error(err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!excalidrawAPI) return;
+    try {
+      const blob = await (await import("@excalidraw/excalidraw")).exportToBlob({
+        elements: excalidrawAPI.getSceneElements(),
+        appState: { ...excalidrawAPI.getAppState(), exportWithDarkMode: true },
+        files: excalidrawAPI.getFiles(),
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${title}.png`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Exported as PNG");
+    } catch {
+      toast.error("Failed to export");
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-[calc(100vh-4rem)]">
+      {/* Toolbar */}
+      <div className="flex items-center gap-2 p-3 border-b border-border bg-card/50">
+        <Input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="max-w-[240px] h-8 text-sm bg-background"
+        />
+
+        <div className="flex items-center gap-1.5 ml-auto">
+          <Button variant="outline" size="sm" onClick={handleNew}>
+            New
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            Save
+          </Button>
+
+          {/* Load Dialog */}
+          <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <FolderOpen className="h-4 w-4" /> Load
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Load Whiteboard</DialogTitle>
+              </DialogHeader>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : whiteboards.length === 0 ? (
+                <p className="text-muted-foreground text-sm text-center py-8">No saved whiteboards yet.</p>
+              ) : (
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {whiteboards.map((wb) => (
+                    <div
+                      key={wb.id}
+                      className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-accent/50 cursor-pointer transition-colors"
+                      onClick={() => handleLoad(wb.id)}
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{wb.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(new Date(wb.updated_at), "MMM d, yyyy h:mm a")}
+                        </p>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteWhiteboard(wb.id).then(() => toast.success("Deleted"));
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* AI Generate Dialog */}
+          <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="bg-primary">
+                <Sparkles className="h-4 w-4" /> AI Generate
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Generate Diagram with AI</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground">Diagram Type</label>
+                  <Select value={diagramType} onValueChange={setDiagramType}>
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="flowchart">Flowchart</SelectItem>
+                      <SelectItem value="mindmap">Mind Map</SelectItem>
+                      <SelectItem value="diagram">General Diagram</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground">Describe your diagram</label>
+                  <Textarea
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="e.g. A flowchart showing the water cycle process..."
+                    className="mt-1.5"
+                    rows={4}
+                  />
+                </div>
+                <Button
+                  onClick={handleAIGenerate}
+                  disabled={isGenerating || !aiPrompt.trim()}
+                  className="w-full"
+                >
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" /> Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" /> Generate
+                    </>
+                  )}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          <Button variant="outline" size="sm" onClick={handleExport}>
+            <Download className="h-4 w-4" /> Export
+          </Button>
+        </div>
+      </div>
+
+      {/* Excalidraw Canvas */}
+      <div className="flex-1 relative">
+        <Excalidraw
+          excalidrawAPI={(api) => setExcalidrawAPI(api)}
+          theme="dark"
+          onChange={scheduleAutoSave}
+          UIOptions={{
+            canvasActions: {
+              loadScene: false,
+              export: false,
+              saveAsImage: false,
+            },
+          }}
+          initialData={{
+            appState: {
+              viewBackgroundColor: "#0f172a",
+            },
+          }}
+        />
+      </div>
+    </div>
+  );
+}
