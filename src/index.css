@@ -319,6 +319,45 @@
   .flip-card-back {
     transform: rotateY(180deg);
   }
+
+  /* Excalidraw Overrides — compact UI */
+  .whiteboard-container .excalidraw {
+    --ui-font: 'Inter', sans-serif;
+  }
+
+  .whiteboard-container .excalidraw .Island {
+    background: hsl(var(--card)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  .whiteboard-container .excalidraw .App-toolbar .ToolIcon__icon {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .whiteboard-container .excalidraw .App-toolbar .ToolIcon__icon svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .whiteboard-container .excalidraw .App-menu,
+  .whiteboard-container .excalidraw .mobile-misc-tools-container {
+    gap: 2px !important;
+  }
+
+  .whiteboard-container .excalidraw .layer-ui__wrapper__footer {
+    padding: 4px !important;
+  }
+
+  .whiteboard-container .excalidraw .HintViewer {
+    font-size: 11px !important;
+  }
+
+  .whiteboard-container .excalidraw button.ToolIcon_type_button {
+    padding: 4px !important;
+  }
 }
 
 @layer utilities {

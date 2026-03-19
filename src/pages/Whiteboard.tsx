@@ -221,29 +221,29 @@ export default function Whiteboard() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)]">
+    <div className="flex flex-col h-[calc(100vh-4rem)] whiteboard-container">
       {/* Toolbar */}
-      <div className="flex items-center gap-2 p-3 border-b border-border bg-card/50">
+      <div className="flex items-center gap-2 p-2 border-b border-border bg-card/50">
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          className="max-w-[240px] h-8 text-sm bg-background"
+          className="max-w-[200px] h-7 text-xs bg-background"
         />
 
-        <div className="flex items-center gap-1.5 ml-auto">
-          <Button variant="outline" size="sm" onClick={handleNew}>
+        <div className="flex items-center gap-1 ml-auto">
+          <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={handleNew}>
             New
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSave} disabled={isSaving}>
-            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Save
+          <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={handleSave} disabled={isSaving}>
+            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">Save</span>
           </Button>
 
           {/* Load Dialog */}
           <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm">
-                <FolderOpen className="h-4 w-4" /> Load
+              <Button variant="outline" size="sm" className="h-7 text-xs px-2">
+                <FolderOpen className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Load</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -291,8 +291,8 @@ export default function Whiteboard() {
           {/* AI Generate Dialog */}
           <Dialog open={aiDialogOpen} onOpenChange={setAiDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-primary">
-                <Sparkles className="h-4 w-4" /> AI Generate
+              <Button size="sm" className="h-7 text-xs px-2 bg-primary">
+                <Sparkles className="h-3.5 w-3.5" /> <span className="hidden sm:inline">AI Generate</span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -342,14 +342,14 @@ export default function Whiteboard() {
             </DialogContent>
           </Dialog>
 
-          <Button variant="outline" size="sm" onClick={handleExport}>
-            <Download className="h-4 w-4" /> Export
+          <Button variant="outline" size="sm" className="h-7 text-xs px-2" onClick={handleExport}>
+            <Download className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Export</span>
           </Button>
         </div>
       </div>
 
       {/* Excalidraw Canvas */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         <Excalidraw
           excalidrawAPI={(api) => setExcalidrawAPI(api)}
           theme="dark"
