@@ -2,6 +2,9 @@ import { useState, useRef } from "react";
 import { Bot, X, Send, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { streamChat, type ChatMessage } from "@/lib/streamChat";
+import { detectActions, stripActionTags } from "@/lib/aiActions";
+import { ActionButtons } from "@/components/ai-tutor/ActionButtons";
+import { useUserContext, buildContextPrompt } from "@/hooks/useUserContext";
 import ReactMarkdown from "react-markdown";
 
 export function FloatingAIButton() {
@@ -10,6 +13,7 @@ export function FloatingAIButton() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isStreaming, setIsStreaming] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const userCtx = useUserContext();
 
   const scrollToBottom = () => {
     setTimeout(() => {
@@ -43,6 +47,7 @@ export function FloatingAIButton() {
     try {
       await streamChat({
         messages: [...messages, userMsg],
+        userContext: buildContextPrompt(userCtx),
         onDelta: upsert,
         onDone: () => setIsStreaming(false),
         onError: (err) => { upsert(`\n\n⚠️ ${err}`); setIsStreaming(false); },
@@ -75,7 +80,7 @@ export function FloatingAIButton() {
             </div>
             <div>
               <h3 className="font-semibold text-white">StudyMate AI</h3>
-              <p className="text-xs text-white/70">Your personal study assistant</p>
+              <p className="text-xs text-white/70">Your smart study assistant</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -98,34 +103,43 @@ export function FloatingAIButton() {
                 <Bot className="h-4 w-4 text-primary" />
               </div>
               <div className="bg-secondary rounded-2xl rounded-tl-none p-3 max-w-[80%]">
-                <p className="text-sm text-foreground">Hey! 👋 I'm your AI study assistant. Ask me anything!</p>
+                <p className="text-sm text-foreground">Hey! 👋 I can help you study, create flashcards, add tasks, and more!</p>
               </div>
             </div>
           )}
 
-          {messages.map((msg, i) => (
-            <div key={i} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
-              {msg.role === "assistant" && (
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                  <Bot className="h-4 w-4 text-primary" />
-                </div>
-              )}
-              <div className={cn(
-                "max-w-[80%] rounded-2xl p-3 text-sm",
-                msg.role === "user"
-                  ? "bg-primary text-primary-foreground rounded-br-none"
-                  : "bg-secondary text-foreground rounded-tl-none"
-              )}>
-                {msg.role === "assistant" ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+          {messages.map((msg, i) => {
+            const isLast = i === messages.length - 1;
+            const actions = msg.role === "assistant" && !isStreaming ? detectActions(msg.content) : [];
+            const displayContent = msg.role === "assistant" ? stripActionTags(msg.content) : msg.content;
+
+            return (
+              <div key={i} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+                {msg.role === "assistant" && (
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <Bot className="h-4 w-4 text-primary" />
                   </div>
-                ) : (
-                  <p>{msg.content}</p>
                 )}
+                <div className="max-w-[80%]">
+                  <div className={cn(
+                    "rounded-2xl p-3 text-sm",
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground rounded-br-none"
+                      : "bg-secondary text-foreground rounded-tl-none"
+                  )}>
+                    {msg.role === "assistant" ? (
+                      <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                        <ReactMarkdown>{displayContent}</ReactMarkdown>
+                      </div>
+                    ) : (
+                      <p>{displayContent}</p>
+                    )}
+                  </div>
+                  {actions.length > 0 && <ActionButtons actions={actions} compact />}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
             <div className="flex gap-3">
@@ -151,7 +165,7 @@ export function FloatingAIButton() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask me anything..."
+              placeholder="Try: 'Create flashcards for Biology'"
               disabled={isStreaming}
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none px-2"
             />
