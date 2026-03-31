@@ -124,13 +124,13 @@ export interface Task {
      }
    };
  
-   return {
-     tasks,
-     loading,
-     error,
-     addTask,
-     toggleTask,
-     deleteTask,
-     refetch: fetchTasks,
-   };
+    return {
+      tasks,
+      loading,
+      error,
+      addTask,
+      completeTask,
+      deleteTask,
+      refetch: fetchTasks,
+    };
  }
