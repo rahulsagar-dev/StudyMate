@@ -41,6 +41,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<MainLayout><Dashboard /></MainLayout>} />
             <Route path="/focus" element={<MainLayout><FocusMode /></MainLayout>} />
             <Route path="/ai-assistant" element={<MainLayout><AIAssistant /></MainLayout>} />
