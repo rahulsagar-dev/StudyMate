@@ -179,7 +179,7 @@ export function TaskPanel() {
                    "task-card cursor-pointer relative group",
                   task.completed && "opacity-60"
                 )}
-                 onClick={() => handleToggleTask(task.id)}
+                 onClick={() => !task.completed && handleCompleteTask(task.id)}
               >
                 <button
                   className={cn(
