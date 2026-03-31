@@ -42,7 +42,10 @@ export function ActionButtons({ actions, compact = false }: ActionButtonsProps) 
           xp_reward: 20,
         }).then(({ error }) => {
           if (error) toast({ title: "Error", description: "Failed to save task", variant: "destructive" });
-          else window.dispatchEvent(new CustomEvent("xp-changed"));
+          else {
+            window.dispatchEvent(new CustomEvent("tasks-changed"));
+            window.dispatchEvent(new CustomEvent("xp-changed"));
+          }
         });
         break;
 
