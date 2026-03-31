@@ -67,11 +67,18 @@
        )
        .subscribe();
  
-     return () => {
-       supabase.removeChannel(channel);
-     };
-   }, [user, fetchSessions]);
- 
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, fetchSessions]);
+
+  // Listen for cross-hook XP change events
+  useEffect(() => {
+    const handler = () => fetchSessions();
+    window.addEventListener("xp-changed", handler);
+    return () => window.removeEventListener("xp-changed", handler);
+  }, [fetchSessions]);
+
    // Convert sessions to activity map for heatmap
    const getActivityMap = useCallback(() => {
      const map = new Map<string, { studyMinutes: number; xpEarned: number; tasksCompleted: number }>();

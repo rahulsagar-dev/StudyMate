@@ -88,6 +88,13 @@ export function useAnalytics() {
     fetchData();
   }, [fetchData]);
 
+  // Listen for cross-hook XP change events
+  useEffect(() => {
+    const handler = () => fetchData();
+    window.addEventListener("xp-changed", handler);
+    return () => window.removeEventListener("xp-changed", handler);
+  }, [fetchData]);
+
   const analytics = useMemo<AnalyticsData>(() => {
     // Total study hours this month
     const totalMinutes = sessions.reduce((sum, s) => sum + (s.study_minutes || 0), 0);

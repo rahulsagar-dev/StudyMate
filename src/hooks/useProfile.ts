@@ -88,11 +88,18 @@
        )
        .subscribe();
  
-     return () => {
-       supabase.removeChannel(channel);
-     };
-   }, [user]);
- 
+      return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
+  // Listen for cross-hook XP change events
+  useEffect(() => {
+    const handler = () => fetchProfile();
+    window.addEventListener("xp-changed", handler);
+    return () => window.removeEventListener("xp-changed", handler);
+  }, [fetchProfile]);
+
    const getLevelTitle = (level: number) => LEVEL_TITLES[level] || "Unknown";
  
    const getLevelProgress = (xp: number, level: number) => {
