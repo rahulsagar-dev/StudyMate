@@ -99,8 +99,8 @@ export interface Task {
            )
          );
           toast({ title: `+${task.xp_reward} XP!`, description: `Task completed: ${task.title}` });
-          // Notify other hooks to refetch
-          window.dispatchEvent(new CustomEvent("xp-changed"));
+          // Notify other hooks to refetch after a short delay to ensure DB commit
+          setTimeout(() => window.dispatchEvent(new CustomEvent("xp-changed")), 500);
         } else {
          // Uncomplete the task
          const { error } = await supabase.rpc("uncomplete_task", { p_task_id: taskId });
