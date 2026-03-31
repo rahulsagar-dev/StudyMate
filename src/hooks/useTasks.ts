@@ -111,8 +111,9 @@ export interface Task {
              t.id === taskId ? { ...t, completed: false, completed_at: null } : t
            )
          );
-         toast({ title: "Task uncompleted", description: `${task.xp_reward} XP removed` });
-       }
+          toast({ title: "Task uncompleted", description: `${task.xp_reward} XP removed` });
+          window.dispatchEvent(new CustomEvent("xp-changed"));
+        }
      } catch (err) {
        console.error("Error toggling task:", err);
        toast({ title: "Error", description: "Failed to update task", variant: "destructive" });
