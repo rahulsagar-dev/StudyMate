@@ -112,7 +112,7 @@ export interface Task {
            )
          );
           toast({ title: "Task uncompleted", description: `${task.xp_reward} XP removed` });
-          window.dispatchEvent(new CustomEvent("xp-changed"));
+          setTimeout(() => window.dispatchEvent(new CustomEvent("xp-changed")), 500);
         }
      } catch (err) {
        console.error("Error toggling task:", err);
