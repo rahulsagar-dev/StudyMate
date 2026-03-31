@@ -98,8 +98,10 @@ export interface Task {
              t.id === taskId ? { ...t, completed: true, completed_at: new Date().toISOString() } : t
            )
          );
-         toast({ title: `+${task.xp_reward} XP!`, description: `Task completed: ${task.title}` });
-       } else {
+          toast({ title: `+${task.xp_reward} XP!`, description: `Task completed: ${task.title}` });
+          // Notify other hooks to refetch
+          window.dispatchEvent(new CustomEvent("xp-changed"));
+        } else {
          // Uncomplete the task
          const { error } = await supabase.rpc("uncomplete_task", { p_task_id: taskId });
          if (error) throw error;
