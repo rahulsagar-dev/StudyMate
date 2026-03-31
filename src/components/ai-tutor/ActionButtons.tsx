@@ -33,18 +33,17 @@ export function ActionButtons({ actions, compact = false }: ActionButtonsProps) 
 
       case "add-task":
         if (!user || !action.data?.title) return;
-        try {
-          await supabase.from("tasks").insert({
-            user_id: user.id,
-            title: action.data.title,
-            subject: "quick-win",
-            xp_reward: 20,
-          });
-          toast({ title: "Task added!", description: action.data.title });
-          window.dispatchEvent(new CustomEvent("xp-changed"));
-        } catch {
-          toast({ title: "Error", description: "Failed to add task", variant: "destructive" });
-        }
+        // Optimistic instant feedback
+        toast({ title: "✅ Task added!", description: action.data.title });
+        supabase.from("tasks").insert({
+          user_id: user.id,
+          title: action.data.title,
+          subject: "quick-win",
+          xp_reward: 20,
+        }).then(({ error }) => {
+          if (error) toast({ title: "Error", description: "Failed to save task", variant: "destructive" });
+          else window.dispatchEvent(new CustomEvent("xp-changed"));
+        });
         break;
 
       case "start-quiz":
