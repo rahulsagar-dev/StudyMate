@@ -134,10 +134,12 @@ export default function Auth() {
         <div className="bg-card rounded-2xl border border-border/50 p-8">
           <div className="text-center mb-6">
             <h1 className="text-2xl font-display font-bold text-foreground mb-2">
-              {isLogin ? "Welcome Back" : "Create Account"}
+              {isForgotPassword ? "Reset Password" : isLogin ? "Welcome Back" : "Create Account"}
             </h1>
             <p className="text-muted-foreground">
-              {isLogin
+              {isForgotPassword
+                ? "Enter your email and we'll send you a reset link"
+                : isLogin
                 ? "Sign in to continue your learning journey"
                 : "Start your gamified learning adventure"}
             </p>
