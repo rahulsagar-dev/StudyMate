@@ -25,21 +25,21 @@ import { cn } from "@/lib/utils";
 
 export function TaskPanel() {
    const { user } = useAuth();
-   const { tasks, loading, addTask, toggleTask, deleteTask } = useTasks();
+    const { tasks, loading, addTask, completeTask, deleteTask } = useTasks();
   const [animatingXp, setAnimatingXp] = useState<string | null>(null);
-   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-   const [newTaskTitle, setNewTaskTitle] = useState("");
-    const [newTaskPriority, setNewTaskPriority] = useState("quick-win");
-    const [newTaskXp, setNewTaskXp] = useState("20");
+    const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+    const [newTaskTitle, setNewTaskTitle] = useState("");
+     const [newTaskPriority, setNewTaskPriority] = useState("quick-win");
+     const [newTaskXp, setNewTaskXp] = useState("20");
 
-    const handleToggleTask = async (id: string) => {
-    const task = tasks.find((t) => t.id === id);
-    if (task && !task.completed) {
-      setAnimatingXp(id);
-      setTimeout(() => setAnimatingXp(null), 800);
-    }
-     await toggleTask(id);
-  };
+     const handleCompleteTask = async (id: string) => {
+     const task = tasks.find((t) => t.id === id);
+     if (task && !task.completed) {
+       setAnimatingXp(id);
+       setTimeout(() => setAnimatingXp(null), 800);
+     }
+      await completeTask(id);
+   };
 
    const handleAddTask = async () => {
      if (!newTaskTitle.trim()) return;
@@ -179,7 +179,7 @@ export function TaskPanel() {
                    "task-card cursor-pointer relative group",
                   task.completed && "opacity-60"
                 )}
-                 onClick={() => handleToggleTask(task.id)}
+                 onClick={() => !task.completed && handleCompleteTask(task.id)}
               >
                 <button
                   className={cn(
