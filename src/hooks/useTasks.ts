@@ -86,42 +86,31 @@ export interface Task {
      }
    };
  
-   const toggleTask = async (taskId: string) => {
-     const task = tasks.find((t) => t.id === taskId);
-     if (!task) return;
- 
-     try {
-       if (!task.completed) {
-         // Complete the task using the database function
-         const { error } = await supabase.rpc("complete_task", { p_task_id: taskId });
-         if (error) throw error;
-         
-         setTasks((prev) =>
-           prev.map((t) =>
-             t.id === taskId ? { ...t, completed: true, completed_at: new Date().toISOString() } : t
-           )
-         );
-          toast({ title: `+${task.xp_reward} XP!`, description: `Task completed: ${task.title}` });
-          // Notify other hooks to refetch after a short delay to ensure DB commit
-          setTimeout(() => window.dispatchEvent(new CustomEvent("xp-changed")), 500);
-        } else {
-         // Uncomplete the task
-         const { error } = await supabase.rpc("uncomplete_task", { p_task_id: taskId });
-         if (error) throw error;
-         
-         setTasks((prev) =>
-           prev.map((t) =>
-             t.id === taskId ? { ...t, completed: false, completed_at: null } : t
-           )
-         );
-          toast({ title: "Task uncompleted", description: `${task.xp_reward} XP removed` });
-          setTimeout(() => window.dispatchEvent(new CustomEvent("xp-changed")), 500);
-        }
-     } catch (err) {
-       console.error("Error toggling task:", err);
-       toast({ title: "Error", description: "Failed to update task", variant: "destructive" });
-     }
-   };
+    const completeTask = async (taskId: string) => {
+      const task = tasks.find((t) => t.id === taskId);
+      if (!task || task.completed) return;
+
+      try {
+        const { error } = await supabase.rpc("complete_task", { p_task_id: taskId });
+        if (error) throw error;
+        
+        setTasks((prev) =>
+          prev.map((t) =>
+            t.id === taskId ? { ...t, completed: true, completed_at: new Date().toISOString() } : t
+          )
+        );
+        toast({ title: `+${task.xp_reward} XP!`, description: `Task completed: ${task.title}` });
+        setTimeout(() => window.dispatchEvent(new CustomEvent("xp-changed")), 500);
+
+        // Auto-remove from list after 1.5 seconds
+        setTimeout(() => {
+          setTasks((prev) => prev.filter((t) => t.id !== taskId));
+        }, 1500);
+      } catch (err) {
+        console.error("Error completing task:", err);
+        toast({ title: "Error", description: "Failed to complete task", variant: "destructive" });
+      }
+    };
  
    const deleteTask = async (taskId: string) => {
      try {
