@@ -55,9 +55,12 @@ export interface Task {
      }
    }, [user]);
  
-   useEffect(() => {
-     fetchTasks();
-   }, [fetchTasks]);
+    useEffect(() => {
+      fetchTasks();
+      const handler = () => fetchTasks();
+      window.addEventListener("tasks-changed", handler);
+      return () => window.removeEventListener("tasks-changed", handler);
+    }, [fetchTasks]);
  
    const addTask = async (title: string, subject: string, xpReward: number = 20) => {
      if (!user) return;
