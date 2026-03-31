@@ -18,8 +18,31 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate the user
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!LOVABLE_API_KEY) throw new Error("Missing configuration");
 
     const { prompt, diagramType = "diagram" } = await req.json();
     if (!prompt || typeof prompt !== "string") {
@@ -226,7 +249,7 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
   } catch (e) {
     console.error("generate-diagram error:", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
+      JSON.stringify({ error: "Failed to generate diagram. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
