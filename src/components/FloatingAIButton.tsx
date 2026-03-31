@@ -1,10 +1,64 @@
-import { useState } from "react";
-import { Bot, X, Send, Mic } from "lucide-react";
+import { useState, useRef } from "react";
+import { Bot, X, Send, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { streamChat, type ChatMessage } from "@/lib/streamChat";
+import ReactMarkdown from "react-markdown";
 
 export function FloatingAIButton() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    }, 50);
+  };
+
+  const sendMessage = async () => {
+    const trimmed = message.trim();
+    if (!trimmed || isStreaming) return;
+
+    const userMsg: ChatMessage = { role: "user", content: trimmed };
+    setMessages(prev => [...prev, userMsg]);
+    setMessage("");
+    setIsStreaming(true);
+    scrollToBottom();
+
+    let assistantContent = "";
+    const upsert = (chunk: string) => {
+      assistantContent += chunk;
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant") {
+          return prev.map((m, i) => i === prev.length - 1 ? { ...m, content: assistantContent } : m);
+        }
+        return [...prev, { role: "assistant", content: assistantContent }];
+      });
+      scrollToBottom();
+    };
+
+    try {
+      await streamChat({
+        messages: [...messages, userMsg],
+        onDelta: upsert,
+        onDone: () => setIsStreaming(false),
+        onError: (err) => { upsert(`\n\n⚠️ ${err}`); setIsStreaming(false); },
+      });
+    } catch {
+      upsert("\n\n⚠️ Something went wrong.");
+      setIsStreaming(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
 
   return (
     <>
@@ -24,43 +78,69 @@ export function FloatingAIButton() {
               <p className="text-xs text-white/70">Your personal study assistant</p>
             </div>
           </div>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 rounded-lg hover:bg-white/20 transition-colors"
-          >
-            <X className="h-4 w-4 text-white" />
-          </button>
+          <div className="flex items-center gap-1">
+            {messages.length > 0 && (
+              <button onClick={() => setMessages([])} className="p-2 rounded-lg hover:bg-white/20 transition-colors">
+                <Trash2 className="h-4 w-4 text-white" />
+              </button>
+            )}
+            <button onClick={() => setIsOpen(false)} className="p-2 rounded-lg hover:bg-white/20 transition-colors">
+              <X className="h-4 w-4 text-white" />
+            </button>
+          </div>
         </div>
 
         {/* Messages */}
-        <div className="h-80 p-4 overflow-y-auto space-y-4">
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <Bot className="h-4 w-4 text-primary" />
+        <div ref={scrollRef} className="h-80 p-4 overflow-y-auto space-y-4">
+          {messages.length === 0 && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
+              <div className="bg-secondary rounded-2xl rounded-tl-none p-3 max-w-[80%]">
+                <p className="text-sm text-foreground">Hey! 👋 I'm your AI study assistant. Ask me anything!</p>
+              </div>
             </div>
-            <div className="bg-secondary rounded-2xl rounded-tl-none p-3 max-w-[80%]">
-              <p className="text-sm text-foreground">
-                Hey! 👋 I'm your AI study assistant. I can help you with:
-              </p>
-              <ul className="text-sm text-muted-foreground mt-2 space-y-1">
-                <li>• Generate flashcards</li>
-                <li>• Create practice quizzes</li>
-                <li>• Summarize your notes</li>
-                <li>• Plan your study schedule</li>
-              </ul>
-            </div>
-          </div>
+          )}
 
-          <div className="flex gap-3">
-            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-              <Bot className="h-4 w-4 text-primary" />
+          {messages.map((msg, i) => (
+            <div key={i} className={cn("flex gap-3", msg.role === "user" ? "justify-end" : "justify-start")}>
+              {msg.role === "assistant" && (
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                  <Bot className="h-4 w-4 text-primary" />
+                </div>
+              )}
+              <div className={cn(
+                "max-w-[80%] rounded-2xl p-3 text-sm",
+                msg.role === "user"
+                  ? "bg-primary text-primary-foreground rounded-br-none"
+                  : "bg-secondary text-foreground rounded-tl-none"
+              )}>
+                {msg.role === "assistant" ? (
+                  <div className="prose prose-sm dark:prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                  </div>
+                ) : (
+                  <p>{msg.content}</p>
+                )}
+              </div>
             </div>
-            <div className="bg-secondary rounded-2xl rounded-tl-none p-3 max-w-[80%]">
-              <p className="text-sm text-foreground">
-                Try saying: "Create flashcards for photosynthesis" or "Quiz me on World War II"
-              </p>
+          ))}
+
+          {isStreaming && messages[messages.length - 1]?.role !== "assistant" && (
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                <Bot className="h-4 w-4 text-primary" />
+              </div>
+              <div className="bg-secondary rounded-2xl rounded-tl-none p-3">
+                <span className="inline-flex gap-1">
+                  <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" />
+                  <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                  <span className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                </span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Input */}
@@ -70,25 +150,18 @@ export function FloatingAIButton() {
               type="text"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder="Ask me anything..."
+              disabled={isStreaming}
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none px-2"
             />
-            <button className="p-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground">
-              <Mic className="h-4 w-4" />
-            </button>
-            <button className="p-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity">
+            <button
+              onClick={sendMessage}
+              disabled={!message.trim() || isStreaming}
+              className="p-2 rounded-lg bg-primary text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
               <Send className="h-4 w-4" />
             </button>
-          </div>
-          <div className="flex gap-2 mt-2">
-            {["Show flashcards", "Generate quiz", "Study planner"].map((suggestion) => (
-              <button
-                key={suggestion}
-                className="px-3 py-1.5 text-xs bg-secondary hover:bg-accent rounded-full text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {suggestion}
-              </button>
-            ))}
           </div>
         </div>
       </div>
@@ -96,16 +169,9 @@ export function FloatingAIButton() {
       {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "floating-button",
-          isOpen && "rotate-0"
-        )}
+        className={cn("floating-button", isOpen && "rotate-0")}
       >
-        {isOpen ? (
-          <X className="h-6 w-6 text-primary-foreground" />
-        ) : (
-          <Bot className="h-6 w-6 text-primary-foreground" />
-        )}
+        {isOpen ? <X className="h-6 w-6 text-primary-foreground" /> : <Bot className="h-6 w-6 text-primary-foreground" />}
       </button>
     </>
   );

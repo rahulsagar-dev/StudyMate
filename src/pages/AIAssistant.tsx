@@ -1,12 +1,56 @@
-import { Bot } from "lucide-react";
-import { UnderConstruction } from "@/components/UnderConstruction";
+import { Bot, MessageSquare, Mic, MicIcon } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
+import { VoiceMode } from "@/components/ai-tutor/VoiceMode";
+import { ChatMode } from "@/components/ai-tutor/ChatMode";
+import { VoiceInputMode } from "@/components/ai-tutor/VoiceInputMode";
+import { motion } from "framer-motion";
 
 export default function AIAssistant() {
   return (
-    <UnderConstruction
-      title="AI Assistant Coming Soon"
-      description="Get ready to supercharge your learning! Our AI assistant will help you study smarter, answer questions, and guide you through difficult concepts."
-      icon={<Bot className="h-12 w-12 text-primary" />}
-    />
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="w-12 h-12 rounded-xl bg-primary/15 flex items-center justify-center">
+          <Bot className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">AI Tutor</h1>
+          <p className="text-sm text-muted-foreground">Your personal study assistant</p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <Card className="overflow-hidden">
+        <Tabs defaultValue="chat">
+          <TabsList className="w-full justify-start rounded-none border-b border-border bg-card h-12 p-0">
+            <TabsTrigger value="voice" className="gap-2 data-[state=active]:bg-secondary rounded-none h-full border-b-2 border-transparent data-[state=active]:border-primary">
+              <MicIcon className="h-4 w-4" /> Voice Mode
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="gap-2 data-[state=active]:bg-secondary rounded-none h-full border-b-2 border-transparent data-[state=active]:border-primary">
+              <MessageSquare className="h-4 w-4" /> Chat Mode
+            </TabsTrigger>
+            <TabsTrigger value="voice-input" className="gap-2 data-[state=active]:bg-secondary rounded-none h-full border-b-2 border-transparent data-[state=active]:border-primary">
+              <Mic className="h-4 w-4" /> Voice Input
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="voice" className="m-0">
+            <VoiceMode />
+          </TabsContent>
+          <TabsContent value="chat" className="m-0">
+            <ChatMode />
+          </TabsContent>
+          <TabsContent value="voice-input" className="m-0">
+            <VoiceInputMode />
+          </TabsContent>
+        </Tabs>
+      </Card>
+    </motion.div>
   );
 }
