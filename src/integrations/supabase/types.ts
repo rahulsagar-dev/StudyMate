@@ -325,9 +325,11 @@ export type Database = {
           id: string
           last_activity_date: string | null
           longest_streak: number
+          strong_topics: string[] | null
           total_xp: number
           updated_at: string
           username: string | null
+          weak_topics: string[] | null
           weekly_goal_xp: number
         }
         Insert: {
@@ -338,9 +340,11 @@ export type Database = {
           id: string
           last_activity_date?: string | null
           longest_streak?: number
+          strong_topics?: string[] | null
           total_xp?: number
           updated_at?: string
           username?: string | null
+          weak_topics?: string[] | null
           weekly_goal_xp?: number
         }
         Update: {
@@ -351,9 +355,11 @@ export type Database = {
           id?: string
           last_activity_date?: string | null
           longest_streak?: number
+          strong_topics?: string[] | null
           total_xp?: number
           updated_at?: string
           username?: string | null
+          weak_topics?: string[] | null
           weekly_goal_xp?: number
         }
         Relationships: []
