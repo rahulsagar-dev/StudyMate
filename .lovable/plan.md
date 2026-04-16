@@ -1,51 +1,55 @@
 
+The user wants an IEEE-format research paper about StudyMate. They've given me freedom on the exact topic angle but want it well-structured and "paper length" (standard IEEE conference paper = 6-8 double-column pages).
 
-# AI Study Whiteboard — Implementation Plan
+Plan: Generate a publication-quality IEEE conference paper as a PDF using ReportLab with proper IEEE formatting (two-column layout, Times Roman, 10pt body, numbered sections, IEEE reference style).
 
-## Summary
-Add a full-featured whiteboard page at `/whiteboard` with Excalidraw canvas, AI diagram generation via Lovable AI Gateway, Supabase persistence, and XP rewards.
+## Topic Angle (improvised)
+**"StudyMate: A Gamified, AI-Augmented Study Assistant for Enhancing Engagement and Self-Regulated Learning in Students with Attention Deficits"**
 
-## Steps
+This frames StudyMate as a research contribution at the intersection of:
+- AI in Education (LLM tutoring + smart actions)
+- Gamification (XP, levels, streaks)
+- HCI for neurodivergent users (ADHD focus)
+- Full-stack web architecture (React + Supabase + Edge Functions)
 
-### 1. Database Migration — `whiteboards` table
-Create table with columns: `id` (uuid PK), `user_id` (uuid, not null), `title` (text), `elements` (jsonb, default '[]'), `app_state` (jsonb, default '{}'), `created_at`, `updated_at`. Enable RLS with standard user-scoped policies for SELECT, INSERT, UPDATE, DELETE. Add `handle_updated_at` trigger.
+## Paper Structure (IEEE standard, ~7-8 pages)
 
-### 2. Edge Function — `generate-diagram`
-- File: `supabase/functions/generate-diagram/index.ts`
-- Accepts `{ prompt, diagramType }` from client
-- Calls Lovable AI Gateway (`google/gemini-3-flash-preview`) with tool calling to extract structured Excalidraw element JSON
-- System prompt instructs model to return arrays of elements with `type`, `x`, `y`, `width`, `height`, `text`, `strokeColor`, etc.
-- Different prompt templates per diagram type (flowchart, mindmap, diagram)
-- Handles 429/402 errors, returns them to client
-- Register in `config.toml` with `verify_jwt = false`
+1. **Abstract** (~200 words)
+2. **Index Terms** (IEEE keywords)
+3. **I. Introduction** — problem, motivation, contributions
+4. **II. Related Work** — AI tutors, gamification in EdTech, ADHD assistive tech
+5. **III. System Architecture** — frontend, backend, AI gateway, data model (with ASCII diagram)
+6. **IV. Core Subsystems**
+   - A. AI Tutor & Smart Action System
+   - B. Gamification Engine (XP, levels, streaks)
+   - C. Study Tools (Summarizer, Flashcards, Quizzes, Whiteboard)
+   - D. Focus Mode with anti-cheat
+7. **V. Implementation Details** — streaming SSE, RLS security, real-time sync via custom events
+8. **VI. Evaluation Methodology** — proposed metrics (engagement, retention, task completion)
+9. **VII. Discussion** — design tradeoffs, limitations
+10. **VIII. Future Work** — voice mode, leaderboards, spaced repetition
+11. **IX. Conclusion**
+12. **References** (~15-20 IEEE-style citations to real seminal works on gamification, LLMs in education, ADHD interventions)
 
-### 3. Whiteboard Page — `src/pages/Whiteboard.tsx`
-- Lazy-loaded with `React.lazy()` to avoid loading Excalidraw bundle on other pages
-- Layout: top toolbar + full-height Excalidraw canvas
-- Toolbar buttons: Save, Load (dialog listing saved whiteboards), AI Generate (prompt dialog), Export PNG
-- Excalidraw configured with `theme: "dark"`, collaboration UI disabled
-- Use `excalidrawAPI` ref for `updateScene()` when injecting AI-generated elements
-- Auto-save: debounced at 30s using `onChange` callback
-- Load dialog: fetches user's whiteboards from Supabase, shows title + last modified
+## Technical Approach
 
-### 4. Supabase Hook — `src/hooks/useWhiteboards.ts`
-- CRUD operations using `supabase` client against `whiteboards` table
-- Uses React Query for caching/invalidation
-- Save function upserts elements + appState
-- List function for load dialog
+- **Tool**: Python + ReportLab (already in skill knowledge)
+- **Layout**: Two-column IEEE format (page size US Letter, ~0.75" margins, two cols with gutter)
+- **Fonts**: Times-Roman 10pt body, Times-Bold for headings, 24pt title
+- **Section numbering**: Roman numerals (I, II, III) per IEEE
+- **Subsections**: A, B, C
+- **References**: Numbered [1], [2] in IEEE style — cite real papers (Deterding gamification, Vaswani transformers, Brown GPT-3, Anderson cognitive tutors, etc.)
+- **Generate body text** using AI Gateway skill for substantive academic prose, then assemble into ReportLab
+- **QA**: Convert PDF to images, inspect every page for layout issues, fix and regenerate
 
-### 5. Routing & Navigation
-- Add lazy route in `App.tsx`: `const Whiteboard = React.lazy(() => import('./pages/Whiteboard'))`
-- Wrap in `<Suspense>` + `<MainLayout>`
-- Add "Whiteboard" to `toolsItems` in `AppSidebar.tsx` with `PenTool` icon from lucide-react
+## Steps for implementation
+1. Use the AI Gateway skill to draft each section with academic tone (one call per section to avoid token limits)
+2. Write a Python script that builds the IEEE-formatted PDF using ReportLab's Platypus with a two-column `BaseDocTemplate`
+3. Output to `/mnt/documents/StudyMate_IEEE_Paper.pdf`
+4. QA: convert to images, inspect all pages, fix issues
+5. Deliver as `<lov-artifact>`
 
-### 6. Gamification
-- Award 15 XP on first save of a new whiteboard (call `award_xp` RPC with source `'whiteboard_save'`)
-- Award 25 XP on AI diagram generation (call `award_xp` with source `'whiteboard_ai_generate'`)
+## Disclaimer
+The paper will be AI-drafted with real citations to real papers, but you should verify all references before any academic submission since I cannot guarantee perfect citation accuracy.
 
-## Technical Notes
-- Excalidraw is ~1MB; code-splitting via `React.lazy` is critical
-- The `@excalidraw/excalidraw` package will be installed as a dependency
-- AI tool calling schema will define element properties to ensure valid Excalidraw JSON output
-- The edge function uses `LOVABLE_API_KEY` (already available as a secret)
-
+This is a research/artifact-generation task — once approved, I'll switch to default mode and execute the script.
