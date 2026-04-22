@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { EquippedAvatar } from "@/components/EquippedAvatar";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -152,12 +153,11 @@ export function AppSidebar() {
             isActive("/profile") && "bg-sidebar-accent"
           )}
         >
-          <Avatar className="h-9 w-9 shrink-0 ring-2 ring-primary/20">
-            <AvatarImage src="/placeholder.svg" />
-            <AvatarFallback className="bg-primary/20 text-primary font-semibold">
-              {userInitial}
-            </AvatarFallback>
-          </Avatar>
+          <EquippedAvatar
+            fallbackInitial={userInitial}
+            fallbackUrl="/placeholder.svg"
+            className="h-9 w-9 shrink-0 ring-2 ring-primary/20"
+          />
           <div className={cn(
             "flex-1 min-w-0 transition-all duration-300",
             collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
