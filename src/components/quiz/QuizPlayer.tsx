@@ -309,18 +309,40 @@ export default function QuizPlayer({ quiz, mode, onComplete, onBookmark, bookmar
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="text-[10px] capitalize">{question.type.replace("_", "/")}</Badge>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onBookmark(question.id)}
-            >
-              {bookmarkedIds.has(question.id) ? (
-                <BookmarkCheck className="h-4 w-4 text-achievement" />
-              ) : (
-                <Bookmark className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-1">
+              {/* Hint Token button — only when user has tokens AND not yet revealed AND not yet answered */}
+              {hintTokensLeft > 0 && !hintRevealed[question.id] && !hasAnswered && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs text-achievement hover:bg-achievement/10"
+                  onClick={async () => {
+                    try {
+                      await consume("power-hint-token");
+                      setHintRevealed((p) => ({ ...p, [question.id]: true }));
+                      toast.success("Hint revealed!", { description: `${hintTokensLeft - 1} hint token(s) left.` });
+                    } catch (e: any) {
+                      toast.error("Could not use hint", { description: e?.message });
+                    }
+                  }}
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Hint ({hintTokensLeft})
+                </Button>
               )}
-            </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => onBookmark(question.id)}
+              >
+                {bookmarkedIds.has(question.id) ? (
+                  <BookmarkCheck className="h-4 w-4 text-achievement" />
+                ) : (
+                  <Bookmark className="h-4 w-4 text-muted-foreground" />
+                )}
+              </Button>
+            </div>
           </div>
           <CardTitle className="text-lg font-semibold leading-relaxed mt-2">
             {question.question}
@@ -328,6 +350,23 @@ export default function QuizPlayer({ quiz, mode, onComplete, onBookmark, bookmar
         </CardHeader>
         <CardContent className="space-y-4">
           {renderQuestion()}
+
+          {/* Hint reveal */}
+          {hintRevealed[question.id] && !hasAnswered && (
+            <div className="p-3 rounded-lg bg-achievement/10 border border-achievement/30 flex items-start gap-2 animate-fade-in-up">
+              <Sparkles className="h-4 w-4 text-achievement shrink-0 mt-0.5" />
+              <div className="text-xs">
+                <p className="font-semibold text-achievement mb-1">Hint</p>
+                <p className="text-muted-foreground">
+                  {question.type === "mcq" && question.options.length >= 4
+                    ? `It's not "${question.options.find((_, i) => i !== question.correctAnswer)}" or "${question.options.filter((_, i) => i !== question.correctAnswer)[1]}". Two options eliminated.`
+                    : question.explanation
+                      ? `Think about this: ${question.explanation.split(".")[0]}.`
+                      : `The answer starts with "${String(question.options[question.correctAnswer] ?? "").charAt(0).toUpperCase()}".`}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Practice mode explanation */}
           {isPractice && hasAnswered && question.explanation && (
