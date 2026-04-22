@@ -88,6 +88,65 @@
     --gradient-level: linear-gradient(135deg, hsl(265 70% 60%), hsl(280 70% 55%));
     --gradient-card: linear-gradient(180deg, hsl(220 20% 12%), hsl(220 20% 10%));
   }
+
+  /* ============================================================ */
+  /* STORE THEMES — applied to <html> when user equips a theme    */
+  /* ============================================================ */
+
+  /* Aurora — cool teal-violet */
+  .theme-aurora {
+    --background: 245 30% 7%;
+    --card: 245 25% 11%;
+    --card-elevated: 245 25% 13%;
+    --primary: 175 75% 55%;
+    --primary-glow: 265 75% 65%;
+    --ring: 175 75% 55%;
+    --gradient-primary: linear-gradient(135deg, hsl(175 75% 55%), hsl(265 75% 65%));
+  }
+
+  /* Ember — warm sunset */
+  .theme-ember {
+    --background: 18 30% 7%;
+    --card: 18 25% 11%;
+    --card-elevated: 18 25% 13%;
+    --primary: 18 90% 60%;
+    --primary-glow: 0 85% 65%;
+    --ring: 18 90% 60%;
+    --gradient-primary: linear-gradient(135deg, hsl(18 90% 60%), hsl(340 85% 60%));
+  }
+
+  /* Arctic — crisp icy blues */
+  .theme-arctic {
+    --background: 210 40% 9%;
+    --card: 210 35% 13%;
+    --card-elevated: 210 35% 15%;
+    --primary: 200 95% 65%;
+    --primary-glow: 220 90% 70%;
+    --ring: 200 95% 65%;
+    --gradient-primary: linear-gradient(135deg, hsl(200 95% 65%), hsl(220 90% 70%));
+  }
+
+  /* Solstice — golden hour */
+  .theme-solstice {
+    --background: 35 25% 7%;
+    --card: 35 22% 11%;
+    --card-elevated: 35 22% 13%;
+    --primary: 42 95% 60%;
+    --primary-glow: 25 90% 60%;
+    --ring: 42 95% 60%;
+    --gradient-primary: linear-gradient(135deg, hsl(42 95% 60%), hsl(25 90% 60%));
+  }
+
+  /* Midnight Pro — pitch black w/ neon */
+  .theme-midnight {
+    --background: 240 20% 3%;
+    --card: 240 18% 6%;
+    --card-elevated: 240 18% 8%;
+    --primary: 280 90% 65%;
+    --primary-glow: 320 95% 65%;
+    --ring: 280 90% 65%;
+    --gradient-primary: linear-gradient(135deg, hsl(280 90% 65%), hsl(320 95% 65%));
+  }
 }
 
 @layer base {

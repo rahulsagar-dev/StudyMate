@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { User, Mail, Calendar, Trophy, Flame, Zap, Edit2, Camera, LogIn, Save, X } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { EquippedAvatar } from "@/components/EquippedAvatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { Button } from "@/components/ui/button";
@@ -97,10 +98,11 @@ export default function Profile() {
       <div className="bg-card rounded-2xl border border-border/50 p-8">
         <div className="flex items-start gap-6">
           <div className="relative group">
-            <Avatar className="h-24 w-24 ring-4 ring-primary/20">
-              <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/20 text-primary text-2xl font-bold">{userInitial}</AvatarFallback>
-            </Avatar>
+            <EquippedAvatar
+              fallbackInitial={userInitial}
+              fallbackUrl={profile?.avatar_url}
+              className="h-24 w-24 ring-4 ring-primary/20"
+            />
           </div>
 
           <div className="flex-1">
