@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import {
   ChevronLeft, ChevronRight, Bookmark, BookmarkCheck, CheckCircle2, XCircle,
-  Clock, Send, Lightbulb, AlertTriangle
+  Clock, Send, Lightbulb, AlertTriangle, Sparkles
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import { useStore } from "@/hooks/useStore";
+import { toast } from "sonner";
 import type { Quiz, QuizMode, QuizAnswer, Confidence } from "@/types/quiz";
 
 interface QuizPlayerProps {
@@ -32,8 +34,12 @@ export default function QuizPlayer({ quiz, mode, onComplete, onBookmark, bookmar
   const [flashcardRevealed, setFlashcardRevealed] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [timeLimit] = useState(mode === "timed" ? quiz.questions.length * 30 : 0); // 30s per question
+  const [hintRevealed, setHintRevealed] = useState<Record<string, boolean>>({});
   const startTimeRef = useRef(Date.now());
   const questionStartRef = useRef(Date.now());
+
+  const { ownedQty, consume } = useStore();
+  const hintTokensLeft = ownedQty("power-hint-token");
 
   const question = quiz.questions[currentIndex];
   const answer = answers[question.id];
