@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PomodoroProvider } from "@/contexts/PomodoroContext";
 import { ActivityTrackerProvider } from "@/contexts/ActivityTrackerContext";
+import { CosmeticsProvider } from "@/contexts/CosmeticsContext";
 import { MainLayout } from "@/components/layout/MainLayout";
 import Dashboard from "./pages/Dashboard";
 import AIAssistant from "./pages/AIAssistant";
@@ -33,6 +34,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <CosmeticsProvider>
       <PomodoroProvider>
       <ActivityTrackerProvider>
       <TooltipProvider>
@@ -63,6 +65,7 @@ const App = () => (
       </TooltipProvider>
       </ActivityTrackerProvider>
       </PomodoroProvider>
+      </CosmeticsProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
