@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_boosts: {
+        Row: {
+          activated_at: string
+          expires_at: string
+          id: string
+          item_id: string
+          multiplier: number
+          scope: string
+          user_id: string
+        }
+        Insert: {
+          activated_at?: string
+          expires_at: string
+          id?: string
+          item_id: string
+          multiplier?: number
+          scope?: string
+          user_id: string
+        }
+        Update: {
+          activated_at?: string
+          expires_at?: string
+          id?: string
+          item_id?: string
+          multiplier?: number
+          scope?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "active_boosts_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "store_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_assistant_chats: {
         Row: {
           conversation_id: string
@@ -495,6 +533,60 @@ export type Database = {
           },
         ]
       }
+      store_items: {
+        Row: {
+          accent: string | null
+          category: string
+          created_at: string
+          description: string
+          duration_minutes: number | null
+          effect_value: number | null
+          icon: string
+          id: string
+          item_type: string
+          name: string
+          price: number
+          rarity: string
+          scope: string | null
+          single_use: boolean | null
+          sort_order: number | null
+        }
+        Insert: {
+          accent?: string | null
+          category: string
+          created_at?: string
+          description: string
+          duration_minutes?: number | null
+          effect_value?: number | null
+          icon: string
+          id: string
+          item_type: string
+          name: string
+          price: number
+          rarity: string
+          scope?: string | null
+          single_use?: boolean | null
+          sort_order?: number | null
+        }
+        Update: {
+          accent?: string | null
+          category?: string
+          created_at?: string
+          description?: string
+          duration_minutes?: number | null
+          effect_value?: number | null
+          icon?: string
+          id?: string
+          item_type?: string
+          name?: string
+          price?: number
+          rarity?: string
+          scope?: string | null
+          single_use?: boolean | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       study_activity: {
         Row: {
           active_minutes: number
@@ -643,6 +735,74 @@ export type Database = {
           },
         ]
       }
+      user_cosmetics: {
+        Row: {
+          equipped_avatar: string | null
+          equipped_theme: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          equipped_avatar?: string | null
+          equipped_theme?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          equipped_avatar?: string | null
+          equipped_theme?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_cosmetics_equipped_avatar_fkey"
+            columns: ["equipped_avatar"]
+            isOneToOne: false
+            referencedRelation: "store_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_cosmetics_equipped_theme_fkey"
+            columns: ["equipped_theme"]
+            isOneToOne: false
+            referencedRelation: "store_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_inventory: {
+        Row: {
+          acquired_at: string
+          id: string
+          item_id: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          acquired_at?: string
+          id?: string
+          item_id: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          acquired_at?: string
+          id?: string
+          item_id?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_inventory_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "store_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whiteboards: {
         Row: {
           app_state: Json
@@ -732,6 +892,13 @@ export type Database = {
       }
       calculate_level: { Args: { xp: number }; Returns: number }
       complete_task: { Args: { p_task_id: string }; Returns: undefined }
+      consume_inventory_item: { Args: { p_item_id: string }; Returns: Json }
+      equip_cosmetic: { Args: { p_item_id: string }; Returns: Json }
+      get_xp_multiplier: {
+        Args: { p_scope?: string; p_user_id: string }
+        Returns: number
+      }
+      purchase_store_item: { Args: { p_item_id: string }; Returns: Json }
       uncomplete_task: { Args: { p_task_id: string }; Returns: undefined }
       update_streak: { Args: { p_user_id: string }; Returns: undefined }
     }
