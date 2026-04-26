@@ -23,6 +23,7 @@ import { Save, FolderOpen, Sparkles, Download, Trash2, Loader2 } from "lucide-re
 import { useWhiteboards } from "@/hooks/useWhiteboards";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { WhiteboardListener } from "@/components/VoiceAgent/WhiteboardListener";
 import { toast } from "sonner";
 import { format } from "date-fns";
 

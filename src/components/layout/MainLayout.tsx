@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { AppSidebar } from "./AppSidebar";
 import { TopBar } from "./TopBar";
 import { FloatingAIButton } from "@/components/FloatingAIButton";
+import { FloatingVoiceButton } from "@/components/VoiceAgent/FloatingVoiceButton";
 import { MotivationPopup } from "@/components/MotivationPopup";
 
 interface MainLayoutProps {
@@ -24,6 +25,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
 
       <FloatingAIButton />
+      <FloatingVoiceButton />
       <MotivationPopup />
     </div>
   );
