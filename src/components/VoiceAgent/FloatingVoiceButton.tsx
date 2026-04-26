@@ -12,19 +12,19 @@ export function FloatingVoiceButton() {
 
   return (
     <>
-      {/* Floating button */}
+      {/* Floating button — sits next to the chat bot (bottom-right) */}
       <button
         onClick={() => setOpen(true)}
         title="Talk to Aria"
         className={cn(
-          "fixed bottom-6 left-6 z-40 w-14 h-14 rounded-full",
+          "fixed bottom-7 right-24 z-40 w-12 h-12 rounded-full",
           "bg-gradient-to-br from-primary to-primary/70 text-primary-foreground",
-          "shadow-2xl shadow-primary/30 hover:scale-110 active:scale-95 transition-all",
+          "shadow-lg shadow-primary/30 hover:scale-110 active:scale-95 transition-all",
           "flex items-center justify-center",
         )}
       >
-        <Mic className="h-6 w-6" />
-        <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse" />
+        <Mic className="h-5 w-5" />
+        <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background animate-pulse" />
       </button>
 
       {/* Modal */}
