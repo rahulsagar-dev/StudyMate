@@ -3,7 +3,6 @@ import {
   LiveKitRoom,
   useVoiceAssistant,
   useConnectionState,
-  BarVisualizer,
   VoiceAssistantControlBar,
   RoomAudioRenderer,
   DisconnectButton,
@@ -12,6 +11,8 @@ import { ConnectionState } from "livekit-client";
 import "@livekit/components-styles";
 import { supabase } from "@/integrations/supabase/client";
 import { Mic, Loader2, X, AlertCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { VoiceOrb } from "./VoiceOrb";
 
 interface TokenData {
   token: string;
@@ -22,51 +23,52 @@ interface TokenData {
 
 // Inner component — only rendered inside LiveKitRoom context
 function AgentInterface({ onEnd }: { onEnd: () => void }) {
-  const { state, audioTrack, agent } = useVoiceAssistant();
+  const { state, agent } = useVoiceAssistant();
   const connectionState = useConnectionState();
 
   const stateLabel =
     !agent && connectionState === ConnectionState.Connected
-      ? "Waiting for Aria to join..."
-      : {
-      connecting: "Joining room...",
-      initializing: "Waking Aria up...",
-      idle: "Aria is ready",
-      listening: "Aria is listening...",
-      thinking: "Aria is thinking...",
-      speaking: "Aria is speaking...",
-      disconnected: "Disconnected",
-    }[state] ?? "Connected";
+      ? "Waking Aria up…"
+      : ({
+          connecting: "Connecting…",
+          initializing: "Waking Aria up…",
+          idle: "Ready when you are",
+          listening: "Listening…",
+          thinking: "Thinking…",
+          speaking: "Speaking…",
+          disconnected: "Disconnected",
+        }[state] ?? "Connected");
 
   return (
-    <div className="flex flex-col items-center gap-6 py-6">
-      {/* Visualizer */}
-      <div className="w-full h-32 rounded-xl bg-secondary/50 border border-border/50 flex items-center justify-center px-6">
-        <BarVisualizer
-          state={state}
-          barCount={7}
-          trackRef={audioTrack}
-          className="w-full h-full"
-          options={{ minHeight: 12 }}
-        />
-      </div>
+    <div className="flex flex-col items-center gap-8 py-4">
+      {/* The orb */}
+      <VoiceOrb size={220} />
 
       {/* Status */}
-      <div className="text-center">
-        <p className="text-sm font-medium text-foreground">{stateLabel}</p>
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={stateLabel}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.3 }}
+          className="text-center"
+        >
+          <p className="text-base font-medium text-white/90 tracking-wide">
+            {stateLabel}
+          </p>
+        </motion.div>
+      </AnimatePresence>
 
-      {/* Mic controls (mute/unmute) */}
-      <div className="flex justify-center">
+      {/* Mic controls */}
+      <div className="flex justify-center [&_button]:!bg-white/10 [&_button]:!backdrop-blur-md [&_button]:!border-white/20 [&_button]:!text-white">
         <VoiceAssistantControlBar controls={{ leave: false }} />
       </div>
 
-      {/* Audio renderer — required for agent audio to play */}
       <RoomAudioRenderer />
 
-      {/* End session */}
       <DisconnectButton onClick={onEnd}>
-        <span className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-destructive text-destructive-foreground text-sm font-medium hover:opacity-90 transition-opacity">
+        <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-all">
           <X className="h-4 w-4" /> End Session
         </span>
       </DisconnectButton>
@@ -86,15 +88,16 @@ export function VoiceAgent({ onClose }: VoiceAgentProps) {
   const startSession = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) throw new Error("Please log in first");
 
-      const { data, error: invokeError } = await supabase.functions.invoke<TokenData>(
-        "livekit-token",
-        { method: "POST" },
-      );
+      const { data, error: invokeError } =
+        await supabase.functions.invoke<TokenData>("livekit-token", {
+          method: "POST",
+        });
 
       if (invokeError) throw invokeError;
       if (!data?.token) throw new Error("No token returned");
@@ -114,42 +117,55 @@ export function VoiceAgent({ onClose }: VoiceAgentProps) {
     onClose?.();
   }, [onClose]);
 
-  // Not connected yet — show start button
   if (!tokenData) {
     return (
-      <div className="flex flex-col items-center gap-4 py-6">
+      <div className="flex flex-col items-center gap-6 py-6">
+        {/* Idle orb preview */}
+        <VoiceOrb size={180} state="idle" />
+
         {error && (
-          <div className="w-full flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full flex items-start gap-2 p-3 rounded-xl bg-destructive/10 backdrop-blur-md border border-destructive/30 text-destructive text-sm"
+          >
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>{error}</span>
-          </div>
+          </motion.div>
         )}
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.04 }}
+          whileTap={{ scale: 0.96 }}
           onClick={startSession}
           disabled={isLoading}
-          className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground font-medium hover:opacity-90 active:scale-95 transition-all disabled:opacity-60"
+          className="relative inline-flex items-center gap-2 px-7 py-3.5 rounded-full font-medium text-white overflow-hidden disabled:opacity-60 group"
+          style={{
+            background:
+              "linear-gradient(135deg, hsl(265 90% 65%), hsl(220 90% 60%))",
+            boxShadow: "0 10px 40px hsl(265 90% 65% / 0.5)",
+          }}
         >
+          <span className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
           {isLoading ? (
             <>
-              <Loader2 className="h-5 w-5 animate-spin" /> Connecting...
+              <Loader2 className="h-5 w-5 animate-spin" /> Connecting…
             </>
           ) : (
             <>
               <Mic className="h-5 w-5" /> Talk to Aria
             </>
           )}
-        </button>
+        </motion.button>
 
-        <p className="text-xs text-muted-foreground text-center max-w-sm">
-          Aria will greet you by name, check your upcoming exams, and teach at
-          your level using your progress data.
+        <p className="text-xs text-white/60 text-center max-w-sm">
+          Aria knows your XP, streak, weak topics & exams — and can quiz you
+          live.
         </p>
       </div>
     );
   }
 
-  // Connected — render LiveKit room
   return (
     <LiveKitRoom
       token={tokenData.token}
