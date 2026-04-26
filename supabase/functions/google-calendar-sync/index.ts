@@ -35,7 +35,8 @@ async function refreshTokenIfNeeded(
 
   const tokens = await res.json();
   if (!res.ok) {
-    throw new Error(`Token refresh failed: ${JSON.stringify(tokens)}`);
+    console.error("Token refresh failed:", tokens);
+    throw new Error("token_refresh_failed");
   }
 
   const newExpiry = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
@@ -110,7 +111,8 @@ Deno.serve(async (req) => {
       .order("date", { ascending: false });
 
     if (sessionsError) {
-      throw new Error(`Failed to fetch sessions: ${sessionsError.message}`);
+      console.error("Failed to fetch sessions:", sessionsError);
+      throw new Error("sessions_fetch_failed");
     }
 
     if (!sessions || sessions.length === 0) {
@@ -172,10 +174,12 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("Sync error:", err);
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return new Response(JSON.stringify({ error: message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: "Sync failed. Please try again." }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   }
 });

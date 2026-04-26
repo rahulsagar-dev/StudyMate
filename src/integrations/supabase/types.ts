@@ -321,6 +321,30 @@ export type Database = {
         }
         Relationships: []
       }
+      oauth_states: {
+        Row: {
+          created_at: string
+          expires_at: string
+          redirect_url: string
+          state_token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          redirect_url: string
+          state_token?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          redirect_url?: string
+          state_token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pomodoro_sessions: {
         Row: {
           completed: boolean
