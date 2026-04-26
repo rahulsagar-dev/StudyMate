@@ -1,53 +1,83 @@
-import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import { VoiceAgent } from "@/components/VoiceAgent/VoiceAgent";
 
 export function VoiceMode() {
   return (
-    <div className="flex flex-col items-center justify-center py-10 px-6 gap-6">
-      {/* Animated halo */}
-      <div className="relative">
+    <div className="relative overflow-hidden rounded-b-lg">
+      {/* Immersive dark background */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, hsl(265 50% 15%) 0%, hsl(240 60% 8%) 60%, hsl(0 0% 4%) 100%)",
+        }}
+      />
+
+      {/* Animated mesh blobs */}
+      <motion.div
+        className="absolute top-10 left-10 w-72 h-72 rounded-full opacity-40 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, hsl(265 90% 65%), transparent 70%)",
+          filter: "blur(60px)",
+        }}
+        animate={{ x: [0, 80, -40, 0], y: [0, -60, 40, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute bottom-10 right-10 w-72 h-72 rounded-full opacity-40 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(circle, hsl(220 90% 60%), transparent 70%)",
+          filter: "blur(60px)",
+        }}
+        animate={{ x: [0, -80, 40, 0], y: [0, 60, -40, 0] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      {/* Subtle grid overlay */}
+      <div
+        className="absolute inset-0 opacity-[0.03] pointer-events-none"
+        style={{
+          backgroundImage:
+            "linear-gradient(hsl(0 0% 100%) 1px, transparent 1px), linear-gradient(90deg, hsl(0 0% 100%) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center justify-center py-16 px-6">
         <motion.div
-          animate={{ scale: [1, 1.15, 1], opacity: [0.6, 0.3, 0.6] }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute inset-0 w-32 h-32 rounded-full bg-primary/20 blur-2xl"
-        />
-        <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-2xl shadow-primary/30">
-          <Sparkles className="h-14 w-14 text-primary-foreground" />
-        </div>
-      </div>
-
-      {/* Title */}
-      <div className="text-center space-y-1.5">
-        <h2 className="text-2xl font-display font-bold text-foreground">
-          Talk to Aria
-        </h2>
-        <p className="text-sm text-muted-foreground max-w-md">
-          Real-time voice tutor. Aria knows your XP, streak, weak topics, and
-          upcoming exams — and can quiz you, draw on the whiteboard, and create
-          flashcards while you talk.
-        </p>
-      </div>
-
-      {/* Live agent */}
-      <div className="w-full max-w-md">
-        <VoiceAgent />
-      </div>
-
-      {/* Info */}
-      <Card className="max-w-md w-full border-border/50">
-        <CardContent className="p-4 text-xs text-muted-foreground space-y-1">
-          <p>
-            <span className="font-medium text-foreground">Tip:</span> While Aria
-            is speaking you can interrupt at any time — just start talking.
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-8"
+        >
+          <h2 className="text-3xl font-display font-bold text-white tracking-wide">
+            Talk to Aria
+          </h2>
+          <p className="text-sm text-white/60 mt-2 max-w-md">
+            Real-time voice tutor — knows your XP, streak, weak topics & exams.
+            Interrupt anytime, just start talking.
           </p>
-          <p>
-            New flashcards, summaries, quizzes and tasks she creates appear
-            automatically on their respective pages.
-          </p>
-        </CardContent>
-      </Card>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="w-full max-w-lg rounded-3xl p-8"
+          style={{
+            background:
+              "linear-gradient(135deg, hsl(0 0% 100% / 0.05), hsl(0 0% 100% / 0.02))",
+            backdropFilter: "blur(20px)",
+            border: "1px solid hsl(0 0% 100% / 0.1)",
+            boxShadow: "0 20px 60px hsl(0 0% 0% / 0.4)",
+          }}
+        >
+          <VoiceAgent />
+        </motion.div>
+      </div>
     </div>
   );
 }
