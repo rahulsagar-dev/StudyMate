@@ -45,6 +45,21 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Verify ownership of the document before any service-role mutation
+    const { data: ownedDoc, error: ownerErr } = await supabase
+      .from("documents")
+      .select("id")
+      .eq("id", document_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (ownerErr || !ownedDoc) {
+      return new Response(
+        JSON.stringify({ error: "Forbidden" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Update status to processing
     const serviceClient = createClient(
       supabaseUrl,
@@ -54,7 +69,8 @@ Deno.serve(async (req) => {
     await serviceClient
       .from("documents")
       .update({ processing_status: "processing" })
-      .eq("id", document_id);
+      .eq("id", document_id)
+      .eq("user_id", user.id);
 
     // Download file from storage
     const { data: fileData, error: downloadError } = await supabase.storage
@@ -65,7 +81,8 @@ Deno.serve(async (req) => {
       await serviceClient
         .from("documents")
         .update({ processing_status: "error" })
-        .eq("id", document_id);
+        .eq("id", document_id)
+        .eq("user_id", user.id);
 
       return new Response(
         JSON.stringify({ error: "Failed to download file" }),
@@ -99,7 +116,8 @@ Deno.serve(async (req) => {
         parsed_at: new Date().toISOString(),
         processing_status: "completed",
       })
-      .eq("id", document_id);
+      .eq("id", document_id)
+      .eq("user_id", user.id);
 
     return new Response(
       JSON.stringify({
