@@ -2,11 +2,13 @@ import { useState, useCallback } from "react";
 import {
   LiveKitRoom,
   useVoiceAssistant,
+  useConnectionState,
   BarVisualizer,
   VoiceAssistantControlBar,
   RoomAudioRenderer,
   DisconnectButton,
 } from "@livekit/components-react";
+import { ConnectionState } from "livekit-client";
 import "@livekit/components-styles";
 import { supabase } from "@/integrations/supabase/client";
 import { Mic, Loader2, X, AlertCircle } from "lucide-react";
@@ -20,11 +22,14 @@ interface TokenData {
 
 // Inner component — only rendered inside LiveKitRoom context
 function AgentInterface({ onEnd }: { onEnd: () => void }) {
-  const { state, audioTrack } = useVoiceAssistant();
+  const { state, audioTrack, agent } = useVoiceAssistant();
+  const connectionState = useConnectionState();
 
   const stateLabel =
-    {
-      connecting: "Connecting to Aria...",
+    !agent && connectionState === ConnectionState.Connected
+      ? "Waiting for Aria to join..."
+      : {
+      connecting: "Joining room...",
       initializing: "Waking Aria up...",
       idle: "Aria is ready",
       listening: "Aria is listening...",
