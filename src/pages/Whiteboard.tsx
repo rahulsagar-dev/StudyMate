@@ -41,6 +41,22 @@ export default function Whiteboard() {
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasChanges = useRef(false);
 
+  // Receive elements pushed by the AI voice agent (Aria) via Supabase Realtime
+  const handleAgentDraw = useCallback(
+    (elements: unknown[]) => {
+      if (!excalidrawAPI) return;
+      try {
+        const existing = excalidrawAPI.getSceneElements();
+        excalidrawAPI.updateScene({
+          elements: [...existing, ...(elements as never[])],
+        });
+      } catch (e) {
+        console.error("Failed to apply agent whiteboard update:", e);
+      }
+    },
+    [excalidrawAPI],
+  );
+
   // Auto-save debounced
   const scheduleAutoSave = useCallback(() => {
     if (!user || !excalidrawAPI) return;
@@ -398,6 +414,12 @@ export default function Whiteboard() {
             },
           }}
         />
+        {user?.id && (
+          <WhiteboardListener
+            userId={user.id}
+            onElementsReceived={handleAgentDraw}
+          />
+        )}
       </div>
     </div>
   );
