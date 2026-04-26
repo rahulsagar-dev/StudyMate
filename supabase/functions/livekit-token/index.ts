@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { AccessToken } from "npm:livekit-server-sdk@2.9.4";
+import { RoomConfiguration } from "npm:@livekit/protocol@1.41.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -56,13 +57,18 @@ serve(async (req) => {
       );
     }
 
-    // One room per user — agent joins this same room
-    const roomName = `study-room-${userId}`;
+    // Fresh room per session so room metadata is applied and LiveKit can dispatch the agent.
+    const roomName = `study-room-${userId}-${crypto.randomUUID()}`;
 
     const at = new AccessToken(apiKey, apiSecret, {
       identity: userId,
-      metadata: userId, // Python agent reads ctx.room.metadata to fetch user data
+      metadata: userId,
       ttl: "2h",
+    });
+
+    // The Python agent reads the Supabase UUID from ctx.room.metadata.
+    at.roomConfig = new RoomConfiguration({
+      metadata: userId,
     });
 
     at.addGrant({
