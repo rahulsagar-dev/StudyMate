@@ -23,6 +23,7 @@ import { Save, FolderOpen, Sparkles, Download, Trash2, Loader2 } from "lucide-re
 import { useWhiteboards } from "@/hooks/useWhiteboards";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { WhiteboardListener } from "@/components/VoiceAgent/WhiteboardListener";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -39,6 +40,22 @@ export default function Whiteboard() {
   const [isGenerating, setIsGenerating] = useState(false);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasChanges = useRef(false);
+
+  // Receive elements pushed by the AI voice agent (Aria) via Supabase Realtime
+  const handleAgentDraw = useCallback(
+    (elements: unknown[]) => {
+      if (!excalidrawAPI) return;
+      try {
+        const existing = excalidrawAPI.getSceneElements();
+        excalidrawAPI.updateScene({
+          elements: [...existing, ...(elements as never[])],
+        });
+      } catch (e) {
+        console.error("Failed to apply agent whiteboard update:", e);
+      }
+    },
+    [excalidrawAPI],
+  );
 
   // Auto-save debounced
   const scheduleAutoSave = useCallback(() => {
@@ -397,6 +414,12 @@ export default function Whiteboard() {
             },
           }}
         />
+        {user?.id && (
+          <WhiteboardListener
+            userId={user.id}
+            onElementsReceived={handleAgentDraw}
+          />
+        )}
       </div>
     </div>
   );
