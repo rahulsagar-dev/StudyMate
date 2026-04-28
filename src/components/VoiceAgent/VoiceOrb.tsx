@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { useVoiceAssistant } from "@livekit/components-react";
+import { useVoiceAssistant, useMaybeRoomContext } from "@livekit/components-react";
 
 /**
  * Premium animated voice orb — reactive to AI agent audio levels.
@@ -11,8 +11,19 @@ interface VoiceOrbProps {
   state?: "idle" | "listening" | "thinking" | "speaking" | "connecting";
 }
 
-export function VoiceOrb({ size = 240, state: externalState }: VoiceOrbProps) {
+// Inner component — only mounted when inside a LiveKit Room context
+function ConnectedVoiceOrb(props: VoiceOrbProps) {
   const { state: agentState, audioTrack } = useVoiceAssistant();
+  return <VoiceOrbView {...props} agentState={agentState} audioTrack={audioTrack as any} />;
+}
+
+export function VoiceOrb(props: VoiceOrbProps) {
+  const room = useMaybeRoomContext();
+  if (room) return <ConnectedVoiceOrb {...props} />;
+  return <VoiceOrbView {...props} />;
+}
+
+function VoiceOrbView({ size = 240, state: externalState, agentState, audioTrack }: VoiceOrbProps & { agentState?: string; audioTrack?: any }) {
   const state = externalState ?? agentState ?? "idle";
 
   const [intensity, setIntensity] = useState(0);
