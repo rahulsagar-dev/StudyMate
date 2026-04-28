@@ -10,6 +10,7 @@ import { useUserContext, buildContextPrompt } from "@/hooks/useUserContext";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { ImmersiveBackground } from "@/components/ai-tutor/ImmersiveBackground";
 
 export function ChatMode() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
