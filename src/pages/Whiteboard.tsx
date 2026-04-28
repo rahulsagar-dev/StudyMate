@@ -49,18 +49,43 @@ export default function Whiteboard() {
         console.warn("[Whiteboard] Agent draw arrived but Excalidraw not ready yet");
         return;
       }
-      const elements = Array.isArray(raw)
+      const rawElements = Array.isArray(raw)
         ? raw
         : Array.isArray((raw as { elements?: unknown[] })?.elements)
           ? (raw as { elements: unknown[] }).elements
           : [];
-      if (!elements.length) {
+      if (!rawElements.length) {
         console.log("[Whiteboard] Agent draw with empty elements — ignoring");
         return;
       }
+      // Sanitize incoming elements to prevent Excalidraw infinite-recursion
+      // crashes caused by orphan containerId refs, duplicate ids, or zero-size
+      // text containers (triggers updateWysiwygStyle -> mutateElement loop).
+      const seenIds = new Set<string>();
+      const validIds = new Set<string>();
+      for (const el of rawElements as any[]) {
+        if (el && typeof el === "object" && el.id) validIds.add(el.id);
+      }
+      const incomingElements = (rawElements as any[])
+        .filter((el) => el && typeof el === "object" && el.type)
+        .map((el) => {
+          // Ensure unique id
+          let id = String(el.id ?? `gen_${Math.random().toString(36).slice(2)}`);
+          while (seenIds.has(id)) id = `${id}_${Math.random().toString(36).slice(2, 6)}`;
+          seenIds.add(id);
+          // Enforce min dimensions to avoid 0-width text wysiwyg loops
+          const width = Math.max(20, Number(el.width) || 100);
+          const height = Math.max(20, Number(el.height) || 40);
+          // Drop orphan container references
+          const containerId =
+            el.containerId && validIds.has(el.containerId) ? el.containerId : null;
+          const boundElements = Array.isArray(el.boundElements)
+            ? el.boundElements.filter((b: any) => b?.id && validIds.has(b.id))
+            : [];
+          return { ...el, id, width, height, containerId, boundElements };
+        }) as never[];
       try {
         const existing = excalidrawAPI.getSceneElements();
-        const incomingElements = elements as never[];
         excalidrawAPI.updateScene({
           elements: [...existing, ...incomingElements],
         });
