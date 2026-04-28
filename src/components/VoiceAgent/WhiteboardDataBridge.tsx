@@ -55,7 +55,7 @@ export function inferDiagramType(text: string): "flowchart" | "mindmap" | "diagr
 export function WhiteboardDataBridge() {
   const room = useRoomContext();
   const processedSegmentIds = useRef<Set<string>>(new Set());
-  const pendingFallbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingFallbackTimer = useRef<number | null>(null);
   const lastDrawDataAt = useRef(0);
   const lastUserWhiteboardPrompt = useRef<{ text: string; at: number } | null>(null);
   const fallbackInFlight = useRef(false);
@@ -157,7 +157,7 @@ export function WhiteboardDataBridge() {
     room.on(RoomEvent.DataReceived, handleData);
     room.on(RoomEvent.TranscriptionReceived, handleTranscription);
     return () => {
-      if (pendingFallbackTimer.current) clearTimeout(pendingFallbackTimer.current);
+      if (pendingFallbackTimer.current) window.clearTimeout(pendingFallbackTimer.current);
       room.off(RoomEvent.DataReceived, handleData);
       room.off(RoomEvent.TranscriptionReceived, handleTranscription);
     };
