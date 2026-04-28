@@ -92,21 +92,20 @@ serve(async (req) => {
       ttl: "2h",
     });
 
-    // The Python agent reads userId + whiteboardId from ctx.job.metadata (JSON).
-    // Using RoomAgentDispatch passes metadata to the agent's JobContext, which
-    // is what livekit-agents Python expects. Room metadata is also set as a
-    // fallback so the agent can read ctx.room.metadata if it prefers.
-    at.roomConfig = new RoomConfiguration({
-      metadata: agentMetadata,
-      agents: agentName
-        ? [
-            new RoomAgentDispatch({
-              agentName,
-              metadata: agentMetadata,
-            }),
-          ]
-        : [],
-    });
+    // The Python agent reads userId + whiteboardId from ctx.job.metadata (JSON)
+    // only when explicit dispatch is configured. If no agent name is configured,
+    // omit roomConfig completely so unnamed/automatic agents still join normally.
+    if (agentName) {
+      at.roomConfig = new RoomConfiguration({
+        metadata: agentMetadata,
+        agents: [
+          new RoomAgentDispatch({
+            agentName,
+            metadata: agentMetadata,
+          }),
+        ],
+      });
+    }
 
     at.addGrant({
       roomJoin: true,
