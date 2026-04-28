@@ -508,7 +508,7 @@ export default function Whiteboard() {
           }}
           initialData={{
             appState: {
-              viewBackgroundColor: "#0f172a",
+              viewBackgroundColor: "#ffffff",
             },
           }}
         />
