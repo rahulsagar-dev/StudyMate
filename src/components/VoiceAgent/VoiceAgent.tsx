@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Mic, Loader2, X, AlertCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VoiceOrb } from "./VoiceOrb";
+import { WhiteboardDataBridge } from "./WhiteboardDataBridge";
 
 interface TokenData {
   token: string;
@@ -193,6 +194,7 @@ export function VoiceAgent({ onClose }: VoiceAgentProps) {
       data-lk-theme="default"
     >
       <AgentInterface onEnd={endSession} />
+      <WhiteboardDataBridge />
     </LiveKitRoom>
   );
 }
