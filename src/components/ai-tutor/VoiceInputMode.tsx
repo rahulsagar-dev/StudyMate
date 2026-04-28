@@ -7,6 +7,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
+import { ImmersiveBackground } from "@/components/ai-tutor/ImmersiveBackground";
 
 export function VoiceInputMode() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
