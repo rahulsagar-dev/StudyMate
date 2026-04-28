@@ -1,5 +1,7 @@
-import { useCallback } from "react";
-import { useDataChannel } from "@livekit/components-react";
+import { useEffect } from "react";
+import { useRoomContext } from "@livekit/components-react";
+import { RoomEvent } from "livekit-client";
+import type { DataPacket_Kind, RemoteParticipant } from "livekit-client";
 
 function extractElements(value: unknown): unknown[] | null {
   if (Array.isArray(value)) return value;
@@ -25,27 +27,39 @@ function extractElements(value: unknown): unknown[] | null {
  *   - [ ...elements ]
  */
 export function WhiteboardDataBridge() {
-  useDataChannel(
-    useCallback((m) => {
-    if (!m?.payload) return;
-    try {
-      const text = new TextDecoder().decode(m.payload);
-      const parsed = JSON.parse(text);
-      const elements = extractElements(parsed);
-      console.log("[WhiteboardDataBridge] received from agent:", {
-        topic: m.topic,
-        bytes: m.payload.byteLength,
-        elementCount: elements?.length ?? 0,
-      });
-      if (!elements || elements.length === 0) return;
-      window.dispatchEvent(
-        new CustomEvent("aria:whiteboard-draw", { detail: { elements } }),
-      );
-    } catch (err) {
-      console.warn("[WhiteboardDataBridge] failed to parse payload", err);
-    }
-    }, []),
-  );
+  const room = useRoomContext();
+
+  useEffect(() => {
+    const handleData = (
+      payload: Uint8Array,
+      participant?: RemoteParticipant,
+      _kind?: DataPacket_Kind,
+      topic?: string,
+    ) => {
+      try {
+        const text = new TextDecoder().decode(payload);
+        const parsed = JSON.parse(text);
+        const elements = extractElements(parsed);
+        console.log("[WhiteboardDataBridge] received from agent:", {
+          topic,
+          from: participant?.identity,
+          bytes: payload.byteLength,
+          elementCount: elements?.length ?? 0,
+        });
+        if (!elements || elements.length === 0) return;
+        window.dispatchEvent(
+          new CustomEvent("aria:whiteboard-draw", { detail: { elements } }),
+        );
+      } catch (err) {
+        console.warn("[WhiteboardDataBridge] failed to parse payload", err);
+      }
+    };
+
+    room.on(RoomEvent.DataReceived, handleData);
+    return () => {
+      room.off(RoomEvent.DataReceived, handleData);
+    };
+  }, [room]);
 
   return null;
 }
