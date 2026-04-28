@@ -62,11 +62,11 @@ serve(async (req) => {
       whiteboard_id: whiteboardId,
     });
 
-    // Optional: name of the registered Python agent worker. If your worker
-    // sets `agent_name="aria"` (or similar), set AGENT_NAME secret to enable
-    // explicit dispatch. Otherwise we still pass the metadata via the agents
-    // entry which works with automatic dispatch in most setups.
-    const agentName = Deno.env.get("LIVEKIT_AGENT_NAME") ?? "";
+    // Optional: name of the registered Python agent worker. If the worker sets
+    // `agent_name="aria"` (or similar), set LIVEKIT_AGENT_NAME to enable
+    // explicit dispatch. If it is not set, do NOT create an empty dispatch —
+    // that prevents automatic agents from joining and leaves Aria stuck listening.
+    const agentName = Deno.env.get("LIVEKIT_AGENT_NAME")?.trim() ?? "";
 
     const apiKey = Deno.env.get("LIVEKIT_API_KEY");
     const apiSecret = Deno.env.get("LIVEKIT_API_SECRET");
@@ -92,19 +92,20 @@ serve(async (req) => {
       ttl: "2h",
     });
 
-    // The Python agent reads userId + whiteboardId from ctx.job.metadata (JSON).
-    // Using RoomAgentDispatch passes metadata to the agent's JobContext, which
-    // is what livekit-agents Python expects. Room metadata is also set as a
-    // fallback so the agent can read ctx.room.metadata if it prefers.
-    at.roomConfig = new RoomConfiguration({
-      metadata: agentMetadata,
-      agents: [
-        new RoomAgentDispatch({
-          agentName,
-          metadata: agentMetadata,
-        }),
-      ],
-    });
+    // The Python agent reads userId + whiteboardId from ctx.job.metadata (JSON)
+    // only when explicit dispatch is configured. If no agent name is configured,
+    // omit roomConfig completely so unnamed/automatic agents still join normally.
+    if (agentName) {
+      at.roomConfig = new RoomConfiguration({
+        metadata: agentMetadata,
+        agents: [
+          new RoomAgentDispatch({
+            agentName,
+            metadata: agentMetadata,
+          }),
+        ],
+      });
+    }
 
     at.addGrant({
       roomJoin: true,
