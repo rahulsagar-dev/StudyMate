@@ -92,20 +92,20 @@ serve(async (req) => {
       ttl: "2h",
     });
 
-    // The Python agent reads userId + whiteboardId from ctx.job.metadata (JSON)
-    // only when explicit dispatch is configured. If no agent name is configured,
-    // omit roomConfig completely so unnamed/automatic agents still join normally.
-    if (agentName) {
-      at.roomConfig = new RoomConfiguration({
-        metadata: agentMetadata,
-        agents: [
-          new RoomAgentDispatch({
-            agentName,
-            metadata: agentMetadata,
-          }),
-        ],
-      });
-    }
+    // Always attach room metadata so automatic LiveKit agents can read it from
+    // ctx.job.metadata. Only add an explicit agent dispatch when a valid agent
+    // name is configured; an empty dispatch breaks automatic agent pickup.
+    at.roomConfig = new RoomConfiguration({
+      metadata: agentMetadata,
+      agents: agentName
+        ? [
+            new RoomAgentDispatch({
+              agentName,
+              metadata: agentMetadata,
+            }),
+          ]
+        : undefined,
+    });
 
     at.addGrant({
       roomJoin: true,
