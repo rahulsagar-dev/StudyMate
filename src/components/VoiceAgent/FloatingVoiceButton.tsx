@@ -116,107 +116,109 @@ export function FloatingVoiceButton() {
         )}
       </AnimatePresence>
 
-      {/* Docked panel — no backdrop, page stays interactive */}
-      <AnimatePresence>
-        {open && !minimized && (
+      {/* Docked panel — stays mounted while open so the LiveKit session
+          survives minimize. We just hide it visually when minimized. */}
+      {open && (
+        <motion.div
+          initial={{ opacity: 0, x: 40, scale: 0.95 }}
+          animate={
+            minimized
+              ? { opacity: 0, x: 40, scale: 0.95, pointerEvents: "none" as const }
+              : { opacity: 1, x: 0, scale: 1, pointerEvents: "auto" as const }
+          }
+          transition={{ type: "spring", stiffness: 220, damping: 26 }}
+          aria-hidden={minimized}
+          className={
+            isMobile
+              ? "fixed inset-x-2 bottom-2 z-50 max-h-[80vh] rounded-3xl overflow-hidden flex flex-col"
+              : "fixed right-4 bottom-24 z-50 w-[380px] max-h-[78vh] rounded-3xl overflow-hidden flex flex-col"
+          }
+          style={{
+            background:
+              "linear-gradient(160deg, hsl(265 50% 12% / 0.92), hsl(240 60% 8% / 0.92))",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            border: "1px solid hsl(0 0% 100% / 0.12)",
+            boxShadow:
+              "0 24px 80px hsl(0 0% 0% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.08)",
+          }}
+        >
+          {/* Subtle ambient blobs inside the panel */}
           <motion.div
-            layoutId="voice-orb"
-            initial={{ opacity: 0, x: 40, scale: 0.95 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 40, scale: 0.95 }}
-            transition={{ type: "spring", stiffness: 220, damping: 26 }}
-            className={
-              isMobile
-                ? "fixed inset-x-2 bottom-2 z-50 max-h-[80vh] rounded-3xl overflow-hidden flex flex-col"
-                : "fixed right-4 bottom-24 z-50 w-[380px] max-h-[78vh] rounded-3xl overflow-hidden flex flex-col"
-            }
+            className="absolute -top-16 -left-16 w-56 h-56 rounded-full opacity-30 pointer-events-none"
             style={{
               background:
-                "linear-gradient(160deg, hsl(265 50% 12% / 0.92), hsl(240 60% 8% / 0.92))",
-              backdropFilter: "blur(24px)",
-              WebkitBackdropFilter: "blur(24px)",
-              border: "1px solid hsl(0 0% 100% / 0.12)",
-              boxShadow:
-                "0 24px 80px hsl(0 0% 0% / 0.55), inset 0 1px 0 hsl(0 0% 100% / 0.08)",
+                "radial-gradient(circle, hsl(265 90% 65%), transparent 70%)",
+              filter: "blur(40px)",
             }}
-          >
-            {/* Subtle ambient blobs inside the panel */}
-            <motion.div
-              className="absolute -top-16 -left-16 w-56 h-56 rounded-full opacity-30 pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(circle, hsl(265 90% 65%), transparent 70%)",
-                filter: "blur(40px)",
-              }}
-              animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
-              transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-            />
-            <motion.div
-              className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full opacity-30 pointer-events-none"
-              style={{
-                background:
-                  "radial-gradient(circle, hsl(220 90% 60%), transparent 70%)",
-                filter: "blur(40px)",
-              }}
-              animate={{ x: [0, -30, 0], y: [0, -20, 0] }}
-              transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-            />
+            animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
+            transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full opacity-30 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(circle, hsl(220 90% 60%), transparent 70%)",
+              filter: "blur(40px)",
+            }}
+            animate={{ x: [0, -30, 0], y: [0, -20, 0] }}
+            transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
+          />
 
-            {/* Header */}
-            <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10 z-10">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, hsl(265 90% 65%), hsl(220 90% 60%))",
-                    boxShadow: "0 4px 16px hsl(265 90% 65% / 0.5)",
-                  }}
-                >
-                  <Mic className="h-4 w-4 text-white" />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-white leading-tight truncate">
-                    Aria
-                  </h3>
-                  <p className="text-[11px] text-white/60 leading-tight truncate">
-                    Teaching on · {pageLabel}
-                  </p>
-                </div>
+          {/* Header */}
+          <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10 z-10">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div
+                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                style={{
+                  background:
+                    "linear-gradient(135deg, hsl(265 90% 65%), hsl(220 90% 60%))",
+                  boxShadow: "0 4px 16px hsl(265 90% 65% / 0.5)",
+                }}
+              >
+                <Mic className="h-4 w-4 text-white" />
               </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => setMinimized(true)}
-                  title="Minimize"
-                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 transition-colors"
-                >
-                  <Minus className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    setOpen(false);
-                    setMinimized(false);
-                  }}
-                  title="Close"
-                  className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-white leading-tight truncate">
+                  Aria
+                </h3>
+                <p className="text-[11px] text-white/60 leading-tight truncate">
+                  Teaching on · {pageLabel}
+                </p>
               </div>
             </div>
-
-            {/* Body — scrollable, contains VoiceAgent */}
-            <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4">
-              <VoiceAgent
-                onClose={() => {
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                onClick={() => setMinimized(true)}
+                title="Minimize (keeps Aria listening)"
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 transition-colors"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <button
+                onClick={() => {
                   setOpen(false);
                   setMinimized(false);
                 }}
-              />
+                title="End session"
+                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-white/80 transition-colors"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+
+          {/* Body — scrollable, contains VoiceAgent (stays mounted across minimize) */}
+          <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4">
+            <VoiceAgent
+              onClose={() => {
+                setOpen(false);
+                setMinimized(false);
+              }}
+            />
+          </div>
+        </motion.div>
+      )}
     </>
   );
 }
