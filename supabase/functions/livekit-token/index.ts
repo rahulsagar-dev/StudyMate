@@ -78,13 +78,13 @@ serve(async (req) => {
 
     const at = new AccessToken(apiKey, apiSecret, {
       identity: userId,
-      metadata: userId,
+      metadata: agentMetadata,
       ttl: "2h",
     });
 
-    // The Python agent reads the Supabase UUID from ctx.room.metadata.
+    // The Python agent reads userId + whiteboardId from ctx.room.metadata (JSON).
     at.roomConfig = new RoomConfiguration({
-      metadata: userId,
+      metadata: agentMetadata,
     });
 
     at.addGrant({
