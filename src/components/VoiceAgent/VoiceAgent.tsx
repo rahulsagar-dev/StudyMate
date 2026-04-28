@@ -193,8 +193,10 @@ export function VoiceAgent({ onClose }: VoiceAgentProps) {
       onDisconnected={endSession}
       data-lk-theme="default"
     >
-      <AgentInterface onEnd={endSession} />
-      <WhiteboardDataBridge />
+      <div>
+        <AgentInterface onEnd={endSession} />
+        <WhiteboardDataBridge />
+      </div>
     </LiveKitRoom>
   );
 }
