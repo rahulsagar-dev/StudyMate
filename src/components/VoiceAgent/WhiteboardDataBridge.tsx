@@ -1,5 +1,19 @@
-import { useEffect } from "react";
+import { useCallback } from "react";
 import { useDataChannel } from "@livekit/components-react";
+
+function extractElements(value: unknown): unknown[] | null {
+  if (Array.isArray(value)) return value;
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  if (Array.isArray(record.elements)) return record.elements;
+  if (Array.isArray(record.excalidrawElements)) return record.excalidrawElements;
+  if (Array.isArray(record.diagram)) return record.diagram;
+  return (
+    extractElements(record.payload) ??
+    extractElements(record.data) ??
+    extractElements(record.scene)
+  );
+}
 
 /**
  * Bridges LiveKit data messages from the Python agent (Aria) to the
@@ -11,20 +25,13 @@ import { useDataChannel } from "@livekit/components-react";
  *   - [ ...elements ]
  */
 export function WhiteboardDataBridge() {
-  const { message: msgDraw } = useDataChannel("whiteboard.draw");
-  const { message: msgWb } = useDataChannel("whiteboard");
-
-  useEffect(() => {
-    const m = msgDraw ?? msgWb;
+  useDataChannel(
+    useCallback((m) => {
     if (!m?.payload) return;
     try {
       const text = new TextDecoder().decode(m.payload);
       const parsed = JSON.parse(text);
-      const elements = Array.isArray(parsed)
-        ? parsed
-        : Array.isArray(parsed?.elements)
-          ? parsed.elements
-          : null;
+      const elements = extractElements(parsed);
       console.log("[WhiteboardDataBridge] received from agent:", {
         topic: m.topic,
         bytes: m.payload.byteLength,
@@ -37,7 +44,8 @@ export function WhiteboardDataBridge() {
     } catch (err) {
       console.warn("[WhiteboardDataBridge] failed to parse payload", err);
     }
-  }, [msgDraw, msgWb]);
+    }, []),
+  );
 
   return null;
 }
