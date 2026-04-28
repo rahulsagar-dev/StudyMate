@@ -66,6 +66,13 @@ export default function Whiteboard() {
       if (!hasChanges.current || !excalidrawAPI) return;
       try {
         const elements = excalidrawAPI.getSceneElements();
+        // Guard: never overwrite a saved board with an empty canvas
+        // (prevents clobbering Aria's drawings during her teaching session)
+        if (elements.length === 0 && currentId) {
+          console.log("[Whiteboard] Skipping auto-save: empty canvas on existing board");
+          hasChanges.current = false;
+          return;
+        }
         const appState = excalidrawAPI.getAppState();
         const result = await save({
           id: currentId ?? undefined,

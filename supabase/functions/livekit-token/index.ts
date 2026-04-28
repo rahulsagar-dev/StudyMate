@@ -42,6 +42,22 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub as string;
 
+    // Optional: client passes the active whiteboard id so the agent can target it directly
+    let whiteboardId: string | null = null;
+    try {
+      const body = await req.json().catch(() => ({}));
+      if (body?.whiteboardId && typeof body.whiteboardId === "string") {
+        whiteboardId = body.whiteboardId;
+      }
+    } catch {
+      // no body, fine
+    }
+
+    const agentMetadata = JSON.stringify({
+      userId,
+      whiteboardId,
+    });
+
     const apiKey = Deno.env.get("LIVEKIT_API_KEY");
     const apiSecret = Deno.env.get("LIVEKIT_API_SECRET");
     const livekitUrl = Deno.env.get("LIVEKIT_URL");

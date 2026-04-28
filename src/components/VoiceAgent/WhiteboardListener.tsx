@@ -29,8 +29,10 @@ export function WhiteboardListener({
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
+          console.log("[WhiteboardListener] INSERT received:", payload);
           const elements = (payload.new as { elements?: unknown })?.elements;
-          if (elements && Array.isArray(elements)) {
+          if (elements && Array.isArray(elements) && elements.length > 0) {
+            console.log(`[WhiteboardListener] Applying ${elements.length} elements from agent`);
             onElementsReceived(elements);
           }
         },
@@ -44,13 +46,17 @@ export function WhiteboardListener({
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
+          console.log("[WhiteboardListener] UPDATE received:", payload);
           const elements = (payload.new as { elements?: unknown })?.elements;
-          if (elements && Array.isArray(elements)) {
+          if (elements && Array.isArray(elements) && elements.length > 0) {
+            console.log(`[WhiteboardListener] Applying ${elements.length} elements from agent`);
             onElementsReceived(elements);
           }
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log(`[WhiteboardListener] Channel status: ${status} (user: ${userId})`);
+      });
 
     return () => {
       supabase.removeChannel(channel);
