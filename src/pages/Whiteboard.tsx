@@ -41,21 +41,80 @@ export default function Whiteboard() {
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasChanges = useRef(false);
 
-  // Receive elements pushed by the AI voice agent (Aria) via Supabase Realtime
+  // Receive elements pushed by the AI voice agent (Aria) — supports both
+  // raw arrays and { elements: [...] } payload shapes.
   const handleAgentDraw = useCallback(
-    (elements: unknown[]) => {
-      if (!excalidrawAPI) return;
+    (raw: unknown) => {
+      if (!excalidrawAPI) {
+        console.warn("[Whiteboard] Agent draw arrived but Excalidraw not ready yet");
+        return;
+      }
+      const elements = Array.isArray(raw)
+        ? raw
+        : Array.isArray((raw as { elements?: unknown[] })?.elements)
+          ? (raw as { elements: unknown[] }).elements
+          : [];
+      if (!elements.length) {
+        console.log("[Whiteboard] Agent draw with empty elements — ignoring");
+        return;
+      }
       try {
         const existing = excalidrawAPI.getSceneElements();
         excalidrawAPI.updateScene({
           elements: [...existing, ...(elements as never[])],
         });
+        console.log(`[Whiteboard] Applied ${elements.length} elements from Aria`);
       } catch (e) {
         console.error("Failed to apply agent whiteboard update:", e);
       }
     },
     [excalidrawAPI],
   );
+
+  // Listen for direct LiveKit data-channel pushes from Aria (low-latency path)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      handleAgentDraw(detail?.elements);
+    };
+    window.addEventListener("aria:whiteboard-draw", handler);
+    return () => window.removeEventListener("aria:whiteboard-draw", handler);
+  }, [handleAgentDraw]);
+
+  // Ensure there is a saved whiteboard row before Aria starts a session so
+  // her writes always have a target id. Creates a row only if user is on a
+  // brand-new untitled board.
+  useEffect(() => {
+    if (!user || !excalidrawAPI) return;
+    let cancelled = false;
+    const ensure = async () => {
+      if (currentId) return;
+      try {
+        const elements = excalidrawAPI.getSceneElements();
+        const appState = excalidrawAPI.getAppState();
+        const result = await save({
+          title,
+          elements: elements as any[],
+          app_state: {
+            viewBackgroundColor: appState.viewBackgroundColor,
+          },
+        });
+        if (!cancelled && result.data) {
+          setCurrentId(result.data.id);
+          console.log("[Whiteboard] Pre-created board for Aria:", result.data.id);
+        }
+      } catch (err) {
+        console.warn("[Whiteboard] Could not pre-create board:", err);
+      }
+    };
+    // small delay so initial render settles
+    const t = setTimeout(ensure, 800);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, excalidrawAPI]);
 
   // Auto-save debounced
   const scheduleAutoSave = useCallback(() => {
