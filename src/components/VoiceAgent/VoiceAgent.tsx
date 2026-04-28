@@ -94,9 +94,25 @@ export function VoiceAgent({ onClose }: VoiceAgentProps) {
       } = await supabase.auth.getSession();
       if (!session) throw new Error("Please log in first");
 
+      // If we're on the whiteboard, attach the most recently updated board id
+      // so Aria can write directly to it instead of creating a new row.
+      let whiteboardId: string | null = null;
+      if (typeof window !== "undefined" && window.location.pathname.startsWith("/whiteboard")) {
+        const { data: wb } = await supabase
+          .from("whiteboards")
+          .select("id")
+          .eq("user_id", session.user.id)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        whiteboardId = wb?.id ?? null;
+        console.log("[VoiceAgent] Attaching whiteboardId for Aria:", whiteboardId);
+      }
+
       const { data, error: invokeError } =
         await supabase.functions.invoke<TokenData>("livekit-token", {
           method: "POST",
+          body: { whiteboardId },
         });
 
       if (invokeError) throw invokeError;

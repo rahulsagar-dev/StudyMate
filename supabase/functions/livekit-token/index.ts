@@ -42,6 +42,22 @@ serve(async (req) => {
 
     const userId = claimsData.claims.sub as string;
 
+    // Optional: client passes the active whiteboard id so the agent can target it directly
+    let whiteboardId: string | null = null;
+    try {
+      const body = await req.json().catch(() => ({}));
+      if (body?.whiteboardId && typeof body.whiteboardId === "string") {
+        whiteboardId = body.whiteboardId;
+      }
+    } catch {
+      // no body, fine
+    }
+
+    const agentMetadata = JSON.stringify({
+      userId,
+      whiteboardId,
+    });
+
     const apiKey = Deno.env.get("LIVEKIT_API_KEY");
     const apiSecret = Deno.env.get("LIVEKIT_API_SECRET");
     const livekitUrl = Deno.env.get("LIVEKIT_URL");
@@ -62,13 +78,13 @@ serve(async (req) => {
 
     const at = new AccessToken(apiKey, apiSecret, {
       identity: userId,
-      metadata: userId,
+      metadata: agentMetadata,
       ttl: "2h",
     });
 
-    // The Python agent reads the Supabase UUID from ctx.room.metadata.
+    // The Python agent reads userId + whiteboardId from ctx.room.metadata (JSON).
     at.roomConfig = new RoomConfiguration({
-      metadata: userId,
+      metadata: agentMetadata,
     });
 
     at.addGrant({
