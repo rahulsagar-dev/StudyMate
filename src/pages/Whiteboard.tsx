@@ -95,7 +95,7 @@ export default function Whiteboard() {
           animate: true,
         });
         hasChanges.current = true;
-        console.log(`[Whiteboard] Applied ${elements.length} elements from Aria`);
+        console.log(`[Whiteboard] Applied ${incomingElements.length}/${rawElements.length} elements from Aria`);
       } catch (e) {
         console.error("Failed to apply agent whiteboard update:", e);
       }
