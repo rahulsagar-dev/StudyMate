@@ -11,17 +11,19 @@ interface VoiceOrbProps {
   state?: "idle" | "listening" | "thinking" | "speaking" | "connecting";
 }
 
-function ConnectedOrbData() {
-  return useVoiceAssistant();
+// Inner component — only mounted when inside a LiveKit Room context
+function ConnectedVoiceOrb(props: VoiceOrbProps) {
+  const { state: agentState, audioTrack } = useVoiceAssistant();
+  return <VoiceOrbView {...props} agentState={agentState} audioTrack={audioTrack as any} />;
 }
 
-export function VoiceOrb({ size = 240, state: externalState }: VoiceOrbProps) {
+export function VoiceOrb(props: VoiceOrbProps) {
   const room = useMaybeRoomContext();
-  const connected = !!room;
-  // Only call useVoiceAssistant when inside a Room context
-  const assistant = connected ? ConnectedOrbData() : { state: undefined, audioTrack: undefined };
-  const agentState = assistant.state;
-  const audioTrack = assistant.audioTrack as any;
+  if (room) return <ConnectedVoiceOrb {...props} />;
+  return <VoiceOrbView {...props} />;
+}
+
+function VoiceOrbView({ size = 240, state: externalState, agentState, audioTrack }: VoiceOrbProps & { agentState?: string; audioTrack?: any }) {
   const state = externalState ?? agentState ?? "idle";
 
   const [intensity, setIntensity] = useState(0);
