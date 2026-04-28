@@ -60,9 +60,16 @@ export default function Whiteboard() {
       }
       try {
         const existing = excalidrawAPI.getSceneElements();
+        const incomingElements = elements as never[];
         excalidrawAPI.updateScene({
-          elements: [...existing, ...(elements as never[])],
+          elements: [...existing, ...incomingElements],
         });
+        excalidrawAPI.scrollToContent(incomingElements, {
+          fitToViewport: true,
+          viewportZoomFactor: 0.9,
+          animate: true,
+        });
+        hasChanges.current = true;
         console.log(`[Whiteboard] Applied ${elements.length} elements from Aria`);
       } catch (e) {
         console.error("Failed to apply agent whiteboard update:", e);
