@@ -1,55 +1,53 @@
+I checked the current app, database, logs, and LiveKit request. The main problem is now visible:
 
-The user wants an IEEE-format research paper about StudyMate. They've given me freedom on the exact topic angle but want it well-structured and "paper length" (standard IEEE conference paper = 6-8 double-column pages).
+- The browser is correctly requesting `livekit-token` with the active whiteboard id: `5f8bf4e7-c910-4222-9792-30f4b0917aa9`.
+- The token response includes `whiteboardId`, so the frontend-to-token part is working.
+- But the database still shows the latest whiteboard rows have `element_count = 0`; no diagram elements are being written.
+- There are no `WhiteboardListener` console logs, meaning the page is not receiving any `INSERT`/`UPDATE` event with elements.
+- The LiveKit token currently sets room metadata only, but its `roomConfig.agents` array is empty. LiveKit’s docs say metadata for the Python agent should be passed through an agent dispatch entry, and the Python agent should read `ctx.job.metadata`. If your Python code reads `ctx.job.metadata`, it is currently getting nothing useful.
 
-Plan: Generate a publication-quality IEEE conference paper as a PDF using ReportLab with proper IEEE formatting (two-column layout, Times Roman, 10pt body, numbered sections, IEEE reference style).
+Plan to fix it:
 
-## Topic Angle (improvised)
-**"StudyMate: A Gamified, AI-Augmented Study Assistant for Enhancing Engagement and Self-Regulated Learning in Students with Attention Deficits"**
+1. Fix LiveKit token agent dispatch
+   - Update `supabase/functions/livekit-token/index.ts` to import and use `RoomAgentDispatch`.
+   - Add an explicit `agents` entry in `RoomConfiguration`, with the metadata JSON containing:
+     - `userId`
+     - `whiteboardId`
+     - optionally snake_case aliases too: `user_id`, `whiteboard_id`, so your Python file works whether it expects camelCase or snake_case.
+   - Keep the unique room name per session, because LiveKit only applies token-based agent dispatch on room creation.
 
-This frames StudyMate as a research contribution at the intersection of:
-- AI in Education (LLM tutoring + smart actions)
-- Gamification (XP, levels, streaks)
-- HCI for neurodivergent users (ADHD focus)
-- Full-stack web architecture (React + Supabase + Edge Functions)
+2. Make the whiteboard target more reliable
+   - In `src/pages/Whiteboard.tsx`, expose the currently loaded/saved whiteboard id to the voice agent flow, instead of relying only on “most recently updated whiteboard”.
+   - If the user is on a brand-new empty whiteboard, create/save the whiteboard before starting Aria so there is always a real `whiteboardId` to send.
 
-## Paper Structure (IEEE standard, ~7-8 pages)
+3. Add a direct LiveKit data-channel fallback
+   - Add a small listener inside the LiveKit room that listens for agent messages on a topic like `whiteboard.draw`.
+   - If your Python agent publishes diagram elements through LiveKit data messages instead of Supabase, the frontend will apply them immediately to Excalidraw.
+   - Keep the existing Supabase Realtime listener too, so both paths work:
 
-1. **Abstract** (~200 words)
-2. **Index Terms** (IEEE keywords)
-3. **I. Introduction** — problem, motivation, contributions
-4. **II. Related Work** — AI tutors, gamification in EdTech, ADHD assistive tech
-5. **III. System Architecture** — frontend, backend, AI gateway, data model (with ASCII diagram)
-6. **IV. Core Subsystems**
-   - A. AI Tutor & Smart Action System
-   - B. Gamification Engine (XP, levels, streaks)
-   - C. Study Tools (Summarizer, Flashcards, Quizzes, Whiteboard)
-   - D. Focus Mode with anti-cheat
-7. **V. Implementation Details** — streaming SSE, RLS security, real-time sync via custom events
-8. **VI. Evaluation Methodology** — proposed metrics (engagement, retention, task completion)
-9. **VII. Discussion** — design tradeoffs, limitations
-10. **VIII. Future Work** — voice mode, leaderboards, spaced repetition
-11. **IX. Conclusion**
-12. **References** (~15-20 IEEE-style citations to real seminal works on gamification, LLMs in education, ADHD interventions)
+```text
+Python agent -> Supabase whiteboards update -> WhiteboardListener -> Excalidraw
+Python agent -> LiveKit data message -> VoiceAgent bridge -> Excalidraw
+```
 
-## Technical Approach
+4. Normalize diagram elements before applying
+   - Add a shared helper that accepts either:
+     - a raw array of Excalidraw elements, or
+     - an object like `{ elements: [...] }`
+   - Apply valid non-empty elements and log clear messages if payload shape is wrong.
 
-- **Tool**: Python + ReportLab (already in skill knowledge)
-- **Layout**: Two-column IEEE format (page size US Letter, ~0.75" margins, two cols with gutter)
-- **Fonts**: Times-Roman 10pt body, Times-Bold for headings, 24pt title
-- **Section numbering**: Roman numerals (I, II, III) per IEEE
-- **Subsections**: A, B, C
-- **References**: Numbered [1], [2] in IEEE style — cite real papers (Deterding gamification, Vaswani transformers, Brown GPT-3, Anderson cognitive tutors, etc.)
-- **Generate body text** using AI Gateway skill for substantive academic prose, then assemble into ReportLab
-- **QA**: Convert PDF to images, inspect every page for layout issues, fix and regenerate
+5. Improve diagnostics visible in console
+   - Log the room name, whiteboard id, and agent metadata at session start.
+   - Log when the LiveKit data-channel listener receives a draw payload.
+   - Log when Supabase Realtime receives a whiteboard update.
 
-## Steps for implementation
-1. Use the AI Gateway skill to draft each section with academic tone (one call per section to avoid token limits)
-2. Write a Python script that builds the IEEE-formatted PDF using ReportLab's Platypus with a two-column `BaseDocTemplate`
-3. Output to `/mnt/documents/StudyMate_IEEE_Paper.pdf`
-4. QA: convert to images, inspect all pages, fix issues
-5. Deliver as `<lov-artifact>`
+Expected result:
+- When you tell Aria to draw, the diagram appears even if the Python agent uses LiveKit data messages.
+- If the Python agent writes to Supabase, it also appears.
+- If nothing appears, the console will clearly show whether the agent is missing dispatch metadata, sending malformed elements, or not sending anything at all.
 
-## Disclaimer
-The paper will be AI-drafted with real citations to real papers, but you should verify all references before any academic submission since I cannot guarantee perfect citation accuracy.
-
-This is a research/artifact-generation task — once approved, I'll switch to default mode and execute the script.
+Technical note for your Python file:
+- After this fix, the Python agent should prefer `ctx.job.metadata` for dispatch metadata.
+- It should parse JSON and look for `whiteboardId` or `whiteboard_id`.
+- If it writes to Supabase, it should update `public.whiteboards.elements` for that id.
+- If it sends via LiveKit, it should publish JSON like `{ "elements": [...] }` on topic `whiteboard.draw`.

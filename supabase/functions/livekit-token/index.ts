@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { AccessToken } from "npm:livekit-server-sdk@2.9.4";
-import { RoomConfiguration } from "npm:@livekit/protocol@1.41.0";
+import { RoomAgentDispatch, RoomConfiguration } from "npm:@livekit/protocol@1.41.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -53,10 +53,20 @@ serve(async (req) => {
       // no body, fine
     }
 
+    // Provide both camelCase and snake_case so the Python agent works
+    // regardless of which key it reads.
     const agentMetadata = JSON.stringify({
       userId,
       whiteboardId,
+      user_id: userId,
+      whiteboard_id: whiteboardId,
     });
+
+    // Optional: name of the registered Python agent worker. If your worker
+    // sets `agent_name="aria"` (or similar), set AGENT_NAME secret to enable
+    // explicit dispatch. Otherwise we still pass the metadata via the agents
+    // entry which works with automatic dispatch in most setups.
+    const agentName = Deno.env.get("LIVEKIT_AGENT_NAME") ?? "";
 
     const apiKey = Deno.env.get("LIVEKIT_API_KEY");
     const apiSecret = Deno.env.get("LIVEKIT_API_SECRET");
@@ -82,9 +92,18 @@ serve(async (req) => {
       ttl: "2h",
     });
 
-    // The Python agent reads userId + whiteboardId from ctx.room.metadata (JSON).
+    // The Python agent reads userId + whiteboardId from ctx.job.metadata (JSON).
+    // Using RoomAgentDispatch passes metadata to the agent's JobContext, which
+    // is what livekit-agents Python expects. Room metadata is also set as a
+    // fallback so the agent can read ctx.room.metadata if it prefers.
     at.roomConfig = new RoomConfiguration({
       metadata: agentMetadata,
+      agents: [
+        new RoomAgentDispatch({
+          agentName,
+          metadata: agentMetadata,
+        }),
+      ],
     });
 
     at.addGrant({
