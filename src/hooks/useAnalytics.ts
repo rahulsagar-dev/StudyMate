@@ -49,6 +49,7 @@ export function useAnalytics() {
   const [tasks, setTasks] = useState<any[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
   const [flashcardCount, setFlashcardCount] = useState(0);
+  const [xpTx, setXpTx] = useState<any[]>([]);
 
   const fetchData = useCallback(async () => {
     if (!user) {
