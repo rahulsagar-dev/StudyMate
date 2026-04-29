@@ -42,6 +42,7 @@ export default function Flashcards() {
   const { toast } = useToast();
   const { user, session } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     flashcardSets, generationHistory, loading: hookLoading,
     createFlashcardSet, deleteFlashcardSet, loadFlashcardsForSet,
