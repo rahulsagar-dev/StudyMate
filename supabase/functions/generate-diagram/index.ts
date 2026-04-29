@@ -214,10 +214,10 @@ CRITICAL RULES:
           height: Math.abs(dy),
           points: [[0, 0], [dx, dy]],
           startBinding: el.startBindingElementId
-            ? { elementId: el.startBindingElementId, focus: 0, gap: 1 }
+            ? { elementId: el.startBindingElementId, focus: 0, gap: 8 }
             : null,
           endBinding: el.endBindingElementId
-            ? { elementId: el.endBindingElementId, focus: 0, gap: 1 }
+            ? { elementId: el.endBindingElementId, focus: 0, gap: 8 }
             : null,
           lastCommittedPoint: null,
           startArrowhead: null,
