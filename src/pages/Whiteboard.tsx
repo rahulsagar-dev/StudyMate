@@ -58,9 +58,15 @@ export default function Whiteboard() {
         console.log("[Whiteboard] Agent draw with empty elements — ignoring");
         return;
       }
-      // Sanitize incoming elements to prevent Excalidraw infinite-recursion
-      // crashes caused by orphan containerId refs, duplicate ids, or zero-size
-      // text containers (triggers updateWysiwygStyle -> mutateElement loop).
+      // Sanitize incoming elements: unique ids across the batch, valid sizes,
+      // no orphan container refs, and visible colors on the white canvas.
+      // Light strokes like #e2e8f0 / "transparent" / "white" become invisible,
+      // so we force them to a dark slate so Aria's drawings actually show up.
+      const FORCE_DARK_RE = /^(transparent|#fff(fff)?|#e2e8f0|#f1f5f9|#f8fafc|#cbd5e1|white)$/i;
+      const fixColor = (c: any, fallback: string) => {
+        if (!c || typeof c !== "string") return fallback;
+        return FORCE_DARK_RE.test(c.trim()) ? fallback : c;
+      };
       const seenIds = new Set<string>();
       const validIds = new Set<string>();
       for (const el of rawElements as any[]) {
@@ -69,33 +75,37 @@ export default function Whiteboard() {
       const incomingElements = (rawElements as any[])
         .filter((el) => el && typeof el === "object" && el.type)
         .map((el) => {
-          // Ensure unique id
           let id = String(el.id ?? `gen_${Math.random().toString(36).slice(2)}`);
           while (seenIds.has(id)) id = `${id}_${Math.random().toString(36).slice(2, 6)}`;
           seenIds.add(id);
-          // Enforce min dimensions to avoid 0-width text wysiwyg loops
           const width = Math.max(20, Number(el.width) || 100);
           const height = Math.max(20, Number(el.height) || 40);
-          // Drop orphan container references
           const containerId =
             el.containerId && validIds.has(el.containerId) ? el.containerId : null;
           const boundElements = Array.isArray(el.boundElements)
             ? el.boundElements.filter((b: any) => b?.id && validIds.has(b.id))
             : [];
-          return { ...el, id, width, height, containerId, boundElements };
+          // Force visible colors on white canvas
+          const strokeColor = fixColor(el.strokeColor, "#1e293b");
+          const backgroundColor =
+            el.type === "text" || el.type === "arrow" || el.type === "line"
+              ? el.backgroundColor || "transparent"
+              : fixColor(el.backgroundColor, "#f1f5f9");
+          return { ...el, id, width, height, containerId, boundElements, strokeColor, backgroundColor };
         }) as never[];
       try {
-        const existing = excalidrawAPI.getSceneElements();
-        excalidrawAPI.updateScene({
-          elements: [...existing, ...incomingElements],
-        });
+        // REPLACE, don't append. Aria sends a complete diagram each turn;
+        // appending stacks duplicate-id elements (which Excalidraw silently
+        // dedupes) so new drawings appear hidden under stale ones, and the
+        // scene grows past Realtime's 256KB payload limit (HTTP 413).
+        excalidrawAPI.updateScene({ elements: incomingElements });
         excalidrawAPI.scrollToContent(incomingElements, {
           fitToViewport: true,
           viewportZoomFactor: 0.9,
           animate: true,
         });
         hasChanges.current = true;
-        console.log(`[Whiteboard] Applied ${incomingElements.length}/${rawElements.length} elements from Aria`);
+        console.log(`[Whiteboard] Replaced scene with ${incomingElements.length}/${rawElements.length} elements from Aria`);
       } catch (e) {
         console.error("Failed to apply agent whiteboard update:", e);
       }
