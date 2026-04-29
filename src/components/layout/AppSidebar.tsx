@@ -179,8 +179,8 @@ export function AppSidebar() {
               {user ? userEmail.split("@")[0] : "New User"}
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-level font-semibold">Level 1</span>
-              <Progress value={0} className="h-1.5 flex-1 bg-muted" />
+              <span className="text-xs text-level font-semibold">Level {level}</span>
+              <Progress value={levelProgress} className="h-1.5 flex-1 bg-muted" />
             </div>
           </div>
         </NavLink>
