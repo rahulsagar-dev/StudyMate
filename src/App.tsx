@@ -26,6 +26,7 @@ import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
+import HybridQuizListener from "@/components/quiz/HybridQuizListener";
 
 const Whiteboard = lazy(() => import("./pages/Whiteboard"));
 
@@ -41,6 +42,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <HybridQuizListener />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
