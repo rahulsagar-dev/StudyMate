@@ -62,11 +62,12 @@ serve(async (req) => {
       whiteboard_id: whiteboardId,
     });
 
-    // Optional: name of the registered Python agent worker. If the worker sets
-    // `agent_name="aria"` (or similar), set LIVEKIT_AGENT_NAME to enable
-    // explicit dispatch. If it is not set, do NOT create an empty dispatch —
-    // that prevents automatic agents from joining and leaves Aria stuck listening.
-    const agentName = Deno.env.get("LIVEKIT_AGENT_NAME")?.trim() ?? "";
+    // Name of the registered Python agent worker. Defaults to "aria" so the
+    // worker is always explicitly dispatched into the room. If your worker
+    // registers WITHOUT an agent_name (automatic dispatch mode), set
+    // LIVEKIT_AGENT_NAME to an empty string via the secret to disable explicit
+    // dispatch — but the recommended setup is `agent_name="aria"` in Python.
+    const agentName = (Deno.env.get("LIVEKIT_AGENT_NAME") ?? "aria").trim();
 
     const apiKey = Deno.env.get("LIVEKIT_API_KEY");
     const apiSecret = Deno.env.get("LIVEKIT_API_SECRET");
