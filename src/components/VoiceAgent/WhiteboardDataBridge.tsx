@@ -289,8 +289,14 @@ export function WhiteboardDataBridge() {
         if (!text) continue;
 
         const isLocalUser = participant?.identity === room.localParticipant.identity;
-        if (isLocalUser && isWhiteboardDiagramCommand(text)) {
+        if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
           lastUserWhiteboardPrompt.current = { text, at: Date.now() };
+          if (isBinaryTreePrompt(text)) {
+            const cleanedPrompt = cleanVoicePrompt(text);
+            console.log("[WhiteboardDataBridge] deterministic binary tree prompt:", { cleanedPrompt });
+            dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
+            continue;
+          }
           scheduleDiagramFallback(text, "user-whiteboard-command");
           continue;
         }
@@ -301,6 +307,12 @@ export function WhiteboardDataBridge() {
           isAgentWhiteboardClaim(text) &&
           (!recentUserPrompt || Date.now() - recentUserPrompt.at < 60_000)
         ) {
+          if (recentUserPrompt?.text && isBinaryTreePrompt(recentUserPrompt.text)) {
+            const cleanedPrompt = cleanVoicePrompt(recentUserPrompt.text);
+            console.log("[WhiteboardDataBridge] deterministic binary tree prompt:", { cleanedPrompt });
+            dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
+            continue;
+          }
           scheduleDiagramFallback(recentUserPrompt?.text ?? text, "agent-claimed-whiteboard-draw");
         }
       }
