@@ -47,6 +47,8 @@ export function useAnalytics() {
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<any[]>([]);
+  const [flashcardCount, setFlashcardCount] = useState(0);
 
   const fetchData = useCallback(async () => {
     if (!user) {
@@ -61,7 +63,7 @@ export function useAnalytics() {
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       const endStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, "0")}-${String(endOfMonth.getDate()).padStart(2, "0")}`;
 
-      const [sessionsRes, tasksRes] = await Promise.all([
+      const [sessionsRes, tasksRes, quizRes, setsRes] = await Promise.all([
         supabase
           .from("study_sessions")
           .select("*")
@@ -73,10 +75,31 @@ export function useAnalytics() {
           .select("*")
           .eq("user_id", user.id)
           .eq("completed", true),
+        supabase
+          .from("quiz_attempts")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("flashcard_sets" as any)
+          .select("id")
+          .eq("user_id", user.id),
       ]);
 
       setSessions(sessionsRes.data || []);
       setTasks(tasksRes.data || []);
+      setQuizAttempts(quizRes.data || []);
+
+      const setIds = ((setsRes.data as any[]) || []).map((s: any) => s.id);
+      if (setIds.length > 0) {
+        const { count } = await supabase
+          .from("flashcards" as any)
+          .select("*", { count: "exact", head: true })
+          .in("set_id", setIds);
+        setFlashcardCount(count || 0);
+      } else {
+        setFlashcardCount(0);
+      }
     } catch (err) {
       console.error("Error fetching analytics:", err);
     } finally {
@@ -156,18 +179,30 @@ export function useAnalytics() {
       xp: w.xp,
     }));
 
+    // Quiz stats
+    const quizzesCompleted = quizAttempts.length;
+    const avgScore = quizAttempts.length > 0
+      ? Math.round(
+          quizAttempts.reduce((sum, q) => {
+            const total = q.total_questions || 0;
+            const correct = q.correct_answers ?? q.score ?? 0;
+            return sum + (total > 0 ? (correct / total) * 100 : 0);
+          }, 0) / quizAttempts.length
+        )
+      : 0;
+
     return {
       totalStudyHours,
       studyHoursTrend,
-      quizzesCompleted: 0,
-      flashcardsReviewed: 0,
-      averageScore: 0,
+      quizzesCompleted,
+      flashcardsReviewed: flashcardCount,
+      averageScore: avgScore,
       subjectData,
       dailyPattern,
       monthlyProgress,
       loading,
     };
-  }, [sessions, tasks, loading]);
+  }, [sessions, tasks, quizAttempts, flashcardCount, loading]);
 
   return analytics;
 }
