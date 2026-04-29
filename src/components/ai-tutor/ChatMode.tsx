@@ -21,6 +21,48 @@ export function ChatMode() {
   const abortRef = useRef<AbortController | null>(null);
   const userCtx = useUserContext();
 
+  // Speech-to-text (in-line dictation into the textarea)
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const recognitionRef = useRef<any>(null);
+  const baseInputRef = useRef("");
+
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { setSpeechSupported(false); return; }
+    const recognition = new SR();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.onresult = (e: any) => {
+      let text = "";
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      const prefix = baseInputRef.current ? baseInputRef.current.replace(/\s+$/, "") + " " : "";
+      setInput(prefix + text);
+    };
+    recognition.onerror = (e: any) => {
+      if (e.error === "not-allowed") {
+        toast({ title: "Microphone access denied", description: "Please allow microphone permission.", variant: "destructive" });
+      }
+      setIsListening(false);
+    };
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    return () => { try { recognition.stop(); } catch {} };
+  }, []);
+
+  const toggleMic = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      baseInputRef.current = input;
+      try { recognitionRef.current.start(); setIsListening(true); }
+      catch { /* already started */ }
+    }
+  };
+
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
       scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
