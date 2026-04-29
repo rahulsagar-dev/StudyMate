@@ -227,6 +227,112 @@ export function createBinaryTreeElements(): unknown[] {
   ];
 }
 
+export function createLinkedListElements(opts: { doubly: boolean; count?: number } = { doubly: false }): unknown[] {
+  const doubly = !!opts.doubly;
+  const count = Math.max(3, Math.min(opts.count ?? 4, 6));
+  const prefix = `linked_list_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const nodeWidth = 90;
+  const nodeHeight = 60;
+  const gap = 60;
+  const startX = 80;
+  const baseY = 180;
+
+  const base = (id: string, type: string, x: number, y: number, width: number, height: number) => ({
+    id: `${prefix}_${id}`,
+    type,
+    x,
+    y,
+    width,
+    height,
+    angle: 0,
+    strokeColor: "#1e293b",
+    backgroundColor: type === "rectangle" ? "#f8fafc" : "transparent",
+    fillStyle: "solid",
+    strokeWidth: 2,
+    roughness: 0,
+    opacity: 100,
+    seed: Math.floor(Math.random() * 100000),
+    version: 1,
+    versionNonce: Math.floor(Math.random() * 100000),
+    isDeleted: false,
+    groupIds: [],
+    boundElements: [],
+    locked: false,
+  });
+
+  const text = (id: string, label: string, x: number, y: number, width: number, fontSize = 16) => ({
+    ...base(id, "text", x, y, width, fontSize + 6),
+    text: label,
+    fontSize,
+    fontFamily: 1,
+    textAlign: "center",
+    verticalAlign: "middle",
+    baseline: fontSize - 2,
+    containerId: null,
+  });
+
+  const arrow = (id: string, fromX: number, fromY: number, toX: number, toY: number) => {
+    const x = Math.min(fromX, toX);
+    const y = Math.min(fromY, toY);
+    return {
+      ...base(id, "arrow", x, y, Math.abs(toX - fromX), Math.abs(toY - fromY)),
+      points: [[fromX - x, fromY - y], [toX - x, toY - y]],
+      startBinding: null,
+      endBinding: null,
+      lastCommittedPoint: null,
+      startArrowhead: null,
+      endArrowhead: "arrow",
+    };
+  };
+
+  const elements: unknown[] = [];
+
+  // Title
+  elements.push(text("title", doubly ? "Doubly Linked List" : "Singly Linked List", startX, 90, nodeWidth * count + gap * (count - 1), 20));
+
+  // Nodes (rectangles + value labels)
+  for (let i = 0; i < count; i++) {
+    const x = startX + i * (nodeWidth + gap);
+    elements.push(base(`n${i}`, "rectangle", x, baseY, nodeWidth, nodeHeight));
+    elements.push(text(`n${i}_v`, String((i + 1) * 10), x, baseY + nodeHeight / 2 - 10, nodeWidth, 18));
+  }
+
+  // Arrows between adjacent nodes
+  for (let i = 0; i < count - 1; i++) {
+    const fromX = startX + i * (nodeWidth + gap) + nodeWidth;
+    const toX = startX + (i + 1) * (nodeWidth + gap);
+    if (doubly) {
+      // forward arrow (slightly above center)
+      elements.push(arrow(`a_fwd_${i}`, fromX, baseY + nodeHeight / 2 - 8, toX, baseY + nodeHeight / 2 - 8));
+      // back arrow (slightly below center)
+      elements.push(arrow(`a_back_${i}`, toX, baseY + nodeHeight / 2 + 8, fromX, baseY + nodeHeight / 2 + 8));
+    } else {
+      elements.push(arrow(`a_${i}`, fromX, baseY + nodeHeight / 2, toX, baseY + nodeHeight / 2));
+    }
+  }
+
+  // NULL labels
+  if (doubly) {
+    elements.push(text("null_left", "NULL", startX - gap, baseY + nodeHeight / 2 - 10, gap - 10, 16));
+    elements.push(arrow("a_null_left", startX, baseY + nodeHeight / 2 + 8, startX - gap + 30, baseY + nodeHeight / 2 + 8));
+    const lastX = startX + (count - 1) * (nodeWidth + gap) + nodeWidth;
+    elements.push(text("null_right", "NULL", lastX + 10, baseY + nodeHeight / 2 - 10, gap - 10, 16));
+    elements.push(arrow("a_null_right", lastX, baseY + nodeHeight / 2 - 8, lastX + gap - 30, baseY + nodeHeight / 2 - 8));
+  } else {
+    const lastX = startX + (count - 1) * (nodeWidth + gap) + nodeWidth;
+    elements.push(text("null_right", "NULL", lastX + 10, baseY + nodeHeight / 2 - 10, gap - 10, 16));
+  }
+
+  // Head label
+  elements.push(text("head_label", "HEAD", startX, baseY - 30, nodeWidth, 14));
+  if (doubly) {
+    const lastX = startX + (count - 1) * (nodeWidth + gap);
+    elements.push(text("tail_label", "TAIL", lastX, baseY - 30, nodeWidth, 14));
+  }
+
+  return elements;
+}
+
 /**
  * Bridges LiveKit data messages from the Python agent (Aria) to the
  * Whiteboard page via a window event. Mounted inside <LiveKitRoom>.
