@@ -7,6 +7,7 @@ import QuizSetup from "@/components/quiz/QuizSetup";
 import QuizPlayer from "@/components/quiz/QuizPlayer";
 import QuizResults from "@/components/quiz/QuizResults";
 import QuizReview from "@/components/quiz/QuizReview";
+import QuizHistorySheet from "@/components/quiz/QuizHistorySheet";
 import type { Quiz, QuizMode, Difficulty, QuizAnswer } from "@/types/quiz";
 
 type Phase = "setup" | "playing" | "results" | "review";
