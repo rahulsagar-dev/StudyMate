@@ -16,7 +16,7 @@ LAYOUT REFERENCES:
 - Linked list: rectangles (80x50) spaced 40px apart horizontally. Draw an arrow from the right edge of each node to the left edge of the next. Add a text element "NULL" after the last node's arrow.
 - Stack: vertical column of rectangles (120x50) stacked with no gap. Add a "TOP" text label to the LEFT of the topmost rectangle.
 - Queue: horizontal row of rectangles (80x50) with no gap. Add "FRONT" text label to the LEFT of the first cell and "REAR" text label to the RIGHT of the last cell.
-- Tree / BST: ellipses (60x60) arranged in horizontal levels (root at top, children below). Each level is 100px below the previous. Draw straight lines from each parent ellipse to its children.
+- Tree / BST / Binary tree: ellipses (60x60) arranged in horizontal levels. ROOT at center-top (e.g. x=400, y=80). LEVEL 2: two children at (x=280, y=200) and (x=520, y=200). LEVEL 3 (if 4 grandchildren): (x=200,y=320), (x=360,y=320), (x=440,y=320), (x=600,y=320). Each child must be horizontally OFFSET from its parent — never directly below. Connect every parent to its children with a "line" element going from parent center to child center. Put numeric values inside each node (e.g. "8", "3", "10").
 - Graph: ellipses (60x60) placed at varied positions (not in a strict grid). Connect related nodes with line elements; you may add small text labels near edges for weights.
 - Mind map: one central ellipse (180x80) at the center; 4-6 child ellipses radiating outward, each connected to the center with a line.
 - Flowchart: top-down layout. Use rectangles for process steps and diamonds for decisions. Connect with downward arrows. Start at y=80, vertical spacing 100px.
