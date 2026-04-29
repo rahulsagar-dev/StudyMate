@@ -219,13 +219,17 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
     for (const el of rawElements) {
       if (el.text && !["text", "arrow", "line"].includes(el.type)) {
         const textId = `${el.id}_text`;
+        const fontSize = el.fontSize || 18;
+        const lineHeight = 1.25;
+        const textHeight = fontSize * lineHeight;
         textElements.push({
           id: textId,
           type: "text",
-          x: el.x + 10,
-          y: el.y + el.height / 2 - 10,
-          width: el.width - 20,
-          height: 20,
+          // Centered inside the container — Excalidraw will auto-center bound text
+          x: el.x,
+          y: el.y + el.height / 2 - textHeight / 2,
+          width: el.width,
+          height: textHeight,
           angle: 0,
           strokeColor: "#1e293b",
           backgroundColor: "transparent",
@@ -241,11 +245,13 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
           boundElements: [],
           locked: false,
           text: el.text,
-          fontSize: el.fontSize || 16,
+          originalText: el.text,
+          fontSize,
           fontFamily: 1,
           textAlign: "center",
           verticalAlign: "middle",
-          baseline: 0,
+          baseline: Math.round(fontSize * 0.85),
+          lineHeight,
           containerId: el.id,
         });
 
