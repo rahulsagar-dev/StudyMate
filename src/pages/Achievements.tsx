@@ -1,4 +1,4 @@
-import { Trophy, Lock, Flame, Clock, Target, BookOpen, Zap, Star } from "lucide-react";
+import { Trophy, Lock, Flame, Clock, Target, BookOpen, Zap, Star, Crown, Award, Sparkles, Rocket, Brain, ShieldCheck, Calendar, Gem } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
@@ -20,9 +20,11 @@ interface Stats {
   totalXP: number;
   totalSessions: number;
   totalTasks: number;
+  currentLevel: number;
 }
 
 const ACHIEVEMENTS: Achievement[] = [
+  // ── Sessions ──────────────────────────────────────────
   {
     id: "first_session",
     title: "First Steps",
@@ -31,6 +33,24 @@ const ACHIEVEMENTS: Achievement[] = [
     check: (s) => s.totalSessions >= 1,
     hint: "Complete 1 study session to unlock",
   },
+  {
+    id: "sessions_25",
+    title: "Regular",
+    description: "Complete 25 study sessions",
+    icon: <BookOpen className="h-6 w-6" />,
+    check: (s) => s.totalSessions >= 25,
+    hint: "Complete 25 study sessions",
+  },
+  {
+    id: "sessions_100",
+    title: "Centurion",
+    description: "Complete 100 study sessions",
+    icon: <Award className="h-6 w-6" />,
+    check: (s) => s.totalSessions >= 100,
+    hint: "Complete 100 study sessions",
+  },
+
+  // ── Streaks ───────────────────────────────────────────
   {
     id: "streak_3",
     title: "On Fire",
@@ -48,6 +68,14 @@ const ACHIEVEMENTS: Achievement[] = [
     hint: "Study for 7 consecutive days",
   },
   {
+    id: "streak_14",
+    title: "Fortnight Focus",
+    description: "Reach a 14-day study streak",
+    icon: <ShieldCheck className="h-6 w-6" />,
+    check: (s) => s.longestStreak >= 14,
+    hint: "Study for 14 consecutive days",
+  },
+  {
     id: "streak_30",
     title: "Unstoppable",
     description: "Maintain a 30-day streak",
@@ -56,12 +84,30 @@ const ACHIEVEMENTS: Achievement[] = [
     hint: "Study for 30 consecutive days",
   },
   {
+    id: "streak_100",
+    title: "Streak Legend",
+    description: "Maintain a 100-day streak",
+    icon: <Crown className="h-6 w-6" />,
+    check: (s) => s.longestStreak >= 100,
+    hint: "Study for 100 consecutive days",
+  },
+
+  // ── Hours ─────────────────────────────────────────────
+  {
     id: "hours_10",
     title: "Dedicated Learner",
     description: "Study for 10 total hours",
     icon: <Clock className="h-6 w-6" />,
     check: (s) => s.totalStudyHours >= 10,
     hint: "Accumulate 10 hours of study",
+  },
+  {
+    id: "hours_50",
+    title: "Half Century",
+    description: "Study for 50 total hours",
+    icon: <Clock className="h-6 w-6" />,
+    check: (s) => s.totalStudyHours >= 50,
+    hint: "Accumulate 50 hours of study",
   },
   {
     id: "hours_100",
@@ -72,12 +118,38 @@ const ACHIEVEMENTS: Achievement[] = [
     hint: "Accumulate 100 hours of study",
   },
   {
+    id: "hours_500",
+    title: "Time Lord",
+    description: "Study for 500 total hours",
+    icon: <Calendar className="h-6 w-6" />,
+    check: (s) => s.totalStudyHours >= 500,
+    hint: "Accumulate 500 hours of study",
+  },
+
+  // ── XP ────────────────────────────────────────────────
+  {
+    id: "xp_500",
+    title: "Spark",
+    description: "Earn 500 total XP",
+    icon: <Sparkles className="h-6 w-6" />,
+    check: (s) => s.totalXP >= 500,
+    hint: "Earn 500 XP from any activity",
+  },
+  {
     id: "xp_1000",
     title: "XP Hunter",
     description: "Earn 1,000 total XP",
     icon: <Zap className="h-6 w-6" />,
     check: (s) => s.totalXP >= 1000,
     hint: "Earn 1,000 XP from all activities",
+  },
+  {
+    id: "xp_5000",
+    title: "Power Player",
+    description: "Earn 5,000 total XP",
+    icon: <Rocket className="h-6 w-6" />,
+    check: (s) => s.totalXP >= 5000,
+    hint: "Earn 5,000 XP from all activities",
   },
   {
     id: "xp_10000",
@@ -88,12 +160,64 @@ const ACHIEVEMENTS: Achievement[] = [
     hint: "Earn 10,000 XP from all activities",
   },
   {
+    id: "xp_50000",
+    title: "Mythic",
+    description: "Earn 50,000 total XP",
+    icon: <Gem className="h-6 w-6" />,
+    check: (s) => s.totalXP >= 50000,
+    hint: "Earn 50,000 XP — the ultimate grind",
+  },
+
+  // ── Tasks ─────────────────────────────────────────────
+  {
     id: "tasks_10",
     title: "Task Master",
     description: "Complete 10 tasks",
     icon: <Target className="h-6 w-6" />,
     check: (s) => s.totalTasks >= 10,
     hint: "Complete 10 study tasks",
+  },
+  {
+    id: "tasks_50",
+    title: "Productivity Beast",
+    description: "Complete 50 tasks",
+    icon: <Target className="h-6 w-6" />,
+    check: (s) => s.totalTasks >= 50,
+    hint: "Complete 50 study tasks",
+  },
+  {
+    id: "tasks_200",
+    title: "Task Annihilator",
+    description: "Complete 200 tasks",
+    icon: <Brain className="h-6 w-6" />,
+    check: (s) => s.totalTasks >= 200,
+    hint: "Complete 200 study tasks",
+  },
+
+  // ── Levels ────────────────────────────────────────────
+  {
+    id: "level_3",
+    title: "Student",
+    description: "Reach Level 3",
+    icon: <Award className="h-6 w-6" />,
+    check: (s) => s.currentLevel >= 3,
+    hint: "Earn enough XP to reach Level 3",
+  },
+  {
+    id: "level_5",
+    title: "Scholar",
+    description: "Reach Level 5",
+    icon: <Award className="h-6 w-6" />,
+    check: (s) => s.currentLevel >= 5,
+    hint: "Earn enough XP to reach Level 5",
+  },
+  {
+    id: "level_8",
+    title: "Legend",
+    description: "Reach the maximum Level 8",
+    icon: <Crown className="h-6 w-6" />,
+    check: (s) => s.currentLevel >= 8,
+    hint: "Reach the highest level — Legend tier",
   },
 ];
 
@@ -109,6 +233,7 @@ export default function Achievements() {
     totalXP: profile?.total_xp ?? 0,
     totalSessions: sessions?.length ?? 0,
     totalTasks: (sessions ?? []).reduce((sum, s) => sum + s.tasks_completed, 0),
+    currentLevel: profile?.current_level ?? 1,
   };
 
   const unlockedCount = ACHIEVEMENTS.filter((a) => a.check(stats)).length;
