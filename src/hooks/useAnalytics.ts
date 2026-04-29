@@ -237,7 +237,7 @@ export function useAnalytics() {
       monthlyProgress,
       loading,
     };
-  }, [sessions, tasks, quizAttempts, flashcardCount, loading]);
+  }, [sessions, tasks, quizAttempts, flashcardCount, xpTx, loading]);
 
   return analytics;
 }
