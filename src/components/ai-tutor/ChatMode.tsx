@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImmersiveBackground } from "@/components/ai-tutor/ImmersiveBackground";
+import { toast } from "@/hooks/use-toast";
 
 export function ChatMode() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
