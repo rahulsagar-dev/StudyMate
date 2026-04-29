@@ -317,6 +317,33 @@ export function WhiteboardDataBridge() {
         if (!text) continue;
 
         const isLocalUser = participant?.identity === room.localParticipant.identity;
+
+        // Quiz intent — user asks Aria to start a quiz
+        if (isLocalUser && isQuizPrompt(text) && !quizInFlight.current) {
+          const topic = extractQuizTopic(text);
+          console.log("[WhiteboardDataBridge] detected voice quiz prompt:", { text, topic });
+          if (topic && topic.length >= 2) {
+            quizInFlight.current = true;
+            (async () => {
+              try {
+                const { data, error } = await supabase.functions.invoke("start-voice-quiz", {
+                  body: { topic, difficulty: "medium", questionCount: 5 },
+                });
+                if (error) throw error;
+                console.log("[WhiteboardDataBridge] voice quiz started:", data);
+              } catch (err) {
+                console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
+              } finally {
+                // small cooldown to avoid double-fire on duplicate transcripts
+                window.setTimeout(() => { quizInFlight.current = false; }, 4000);
+              }
+            })();
+            continue;
+          }
+        }
+
+
+        const isLocalUser = participant?.identity === room.localParticipant.identity;
         if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
           lastUserWhiteboardPrompt.current = { text, at: Date.now() };
           if (isBinaryTreePrompt(text)) {
