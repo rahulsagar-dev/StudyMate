@@ -179,18 +179,30 @@ export function useAnalytics() {
       xp: w.xp,
     }));
 
+    // Quiz stats
+    const quizzesCompleted = quizAttempts.length;
+    const avgScore = quizAttempts.length > 0
+      ? Math.round(
+          quizAttempts.reduce((sum, q) => {
+            const total = q.total_questions || 0;
+            const correct = q.correct_answers ?? q.score ?? 0;
+            return sum + (total > 0 ? (correct / total) * 100 : 0);
+          }, 0) / quizAttempts.length
+        )
+      : 0;
+
     return {
       totalStudyHours,
       studyHoursTrend,
-      quizzesCompleted: 0,
-      flashcardsReviewed: 0,
-      averageScore: 0,
+      quizzesCompleted,
+      flashcardsReviewed: flashcardCount,
+      averageScore: avgScore,
       subjectData,
       dailyPattern,
       monthlyProgress,
       loading,
     };
-  }, [sessions, tasks, loading]);
+  }, [sessions, tasks, quizAttempts, flashcardCount, loading]);
 
   return analytics;
 }
