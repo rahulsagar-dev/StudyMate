@@ -25,7 +25,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EquippedAvatar } from "@/components/EquippedAvatar";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 import { toast } from "sonner";
+
+const LEVEL_THRESHOLDS = [0, 1000, 2500, 5000, 10000, 20000, 35000, 50000];
+function getLevelProgress(xp: number, level: number) {
+  const curr = LEVEL_THRESHOLDS[Math.max(0, level - 1)] ?? 0;
+  const next = LEVEL_THRESHOLDS[level] ?? curr;
+  if (next <= curr) return 100;
+  return Math.min(100, Math.max(0, ((xp - curr) / (next - curr)) * 100));
+}
 
 const mainNavItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
