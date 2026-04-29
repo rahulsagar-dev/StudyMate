@@ -233,6 +233,7 @@ export function WhiteboardDataBridge() {
   const lastDrawDataAt = useRef(0);
   const lastUserWhiteboardPrompt = useRef<{ text: string; at: number } | null>(null);
   const fallbackInFlight = useRef(false);
+  const quizInFlight = useRef(false);
 
   useEffect(() => {
     const dispatchElements = (elements: unknown[], source: string) => {
