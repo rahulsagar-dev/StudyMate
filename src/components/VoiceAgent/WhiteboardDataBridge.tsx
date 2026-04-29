@@ -43,6 +43,34 @@ export function isBinaryTreePrompt(text: string): boolean {
   return /\b(?:b[io]n+ary|bst|tree)\b/.test(normalized) && !/linked\s*list|link\s*list/.test(normalized);
 }
 
+export function isQuizPrompt(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return /\b(quiz|test)\b.*\b(me|on|about|over)\b|\b(start|give|make|create|do)\b.*\bquiz\b/.test(normalized);
+}
+
+export function extractQuizTopic(text: string): string {
+  const normalized = text.toLowerCase().trim();
+  const patterns = [
+    /(?:quiz|test)\s+me\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
+    /(?:start|give\s+me|make\s+me|create|do)\s+(?:a\s+)?quiz\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
+    /quiz\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
+  ];
+  for (const re of patterns) {
+    const m = normalized.match(re);
+    if (m && m[1]) return m[1].trim().replace(/[.?!,]+$/, "");
+  }
+  return normalized
+    .replace(/\b(hey|hi|okay|ok)\s+aria\b/g, "")
+    .replace(/\b(please|can you|could you|would you)\b/g, "")
+    .replace(/\b(start|give me|make me|create|do)\b/g, "")
+    .replace(/\b(a|an|the)\s+quiz\b/g, "")
+    .replace(/\b(quiz|test)\s+me\b/g, "")
+    .replace(/\b(on|about|over)\b/g, "")
+    .replace(/[.?!,]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function isAgentWhiteboardClaim(text: string): boolean {
   const normalized = text.toLowerCase();
   return /white\s*board|canvas|board/.test(normalized) && /i('|’)ve|i have|i just|i/.test(normalized) && /drew|drawn|added|put|placed|created|made/.test(normalized);
