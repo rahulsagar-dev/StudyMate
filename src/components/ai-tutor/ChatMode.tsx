@@ -213,6 +213,22 @@ export function ChatMode() {
               className="min-h-[44px] max-h-[120px] resize-none bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/20"
               rows={1}
             />
+            {speechSupported && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={toggleMic}
+                disabled={isStreaming}
+                title={isListening ? "Stop dictation" : "Speak your message"}
+                className={cn(
+                  "border border-white/10 text-white hover:bg-white/10",
+                  isListening && "animate-pulse"
+                )}
+                style={isListening ? { background: "linear-gradient(135deg, hsl(0 80% 55%), hsl(15 90% 55%))" } : undefined}
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               size="icon"
               onClick={() => sendMessage(input)}
