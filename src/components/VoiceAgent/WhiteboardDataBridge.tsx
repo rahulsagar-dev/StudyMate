@@ -342,8 +342,6 @@ export function WhiteboardDataBridge() {
           }
         }
 
-
-        const isLocalUser = participant?.identity === room.localParticipant.identity;
         if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
           lastUserWhiteboardPrompt.current = { text, at: Date.now() };
           if (isBinaryTreePrompt(text)) {
