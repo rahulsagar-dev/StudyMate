@@ -43,6 +43,16 @@ export function isBinaryTreePrompt(text: string): boolean {
   return /\b(?:b[io]n+ary|bst|tree)\b/.test(normalized) && !/linked\s*list|link\s*list/.test(normalized);
 }
 
+export function isLinkedListPrompt(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return /linked\s*list|link\s*list/.test(normalized);
+}
+
+export function isDoublyLinkedListPrompt(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return isLinkedListPrompt(normalized) && /\b(doubly|double|two[\s-]?way|bidirectional|two[\s-]?direction)\b/.test(normalized);
+}
+
 export function isQuizPrompt(text: string): boolean {
   const normalized = text.toLowerCase();
   return /\b(quiz|test)\b.*\b(me|on|about|over)\b|\b(start|give|make|create|do)\b.*\bquiz\b/.test(normalized);
@@ -217,6 +227,112 @@ export function createBinaryTreeElements(): unknown[] {
   ];
 }
 
+export function createLinkedListElements(opts: { doubly: boolean; count?: number } = { doubly: false }): unknown[] {
+  const doubly = !!opts.doubly;
+  const count = Math.max(3, Math.min(opts.count ?? 4, 6));
+  const prefix = `linked_list_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const nodeWidth = 90;
+  const nodeHeight = 60;
+  const gap = 60;
+  const startX = 80;
+  const baseY = 180;
+
+  const base = (id: string, type: string, x: number, y: number, width: number, height: number) => ({
+    id: `${prefix}_${id}`,
+    type,
+    x,
+    y,
+    width,
+    height,
+    angle: 0,
+    strokeColor: "#1e293b",
+    backgroundColor: type === "rectangle" ? "#f8fafc" : "transparent",
+    fillStyle: "solid",
+    strokeWidth: 2,
+    roughness: 0,
+    opacity: 100,
+    seed: Math.floor(Math.random() * 100000),
+    version: 1,
+    versionNonce: Math.floor(Math.random() * 100000),
+    isDeleted: false,
+    groupIds: [],
+    boundElements: [],
+    locked: false,
+  });
+
+  const text = (id: string, label: string, x: number, y: number, width: number, fontSize = 16) => ({
+    ...base(id, "text", x, y, width, fontSize + 6),
+    text: label,
+    fontSize,
+    fontFamily: 1,
+    textAlign: "center",
+    verticalAlign: "middle",
+    baseline: fontSize - 2,
+    containerId: null,
+  });
+
+  const arrow = (id: string, fromX: number, fromY: number, toX: number, toY: number) => {
+    const x = Math.min(fromX, toX);
+    const y = Math.min(fromY, toY);
+    return {
+      ...base(id, "arrow", x, y, Math.abs(toX - fromX), Math.abs(toY - fromY)),
+      points: [[fromX - x, fromY - y], [toX - x, toY - y]],
+      startBinding: null,
+      endBinding: null,
+      lastCommittedPoint: null,
+      startArrowhead: null,
+      endArrowhead: "arrow",
+    };
+  };
+
+  const elements: unknown[] = [];
+
+  // Title
+  elements.push(text("title", doubly ? "Doubly Linked List" : "Singly Linked List", startX, 90, nodeWidth * count + gap * (count - 1), 20));
+
+  // Nodes (rectangles + value labels)
+  for (let i = 0; i < count; i++) {
+    const x = startX + i * (nodeWidth + gap);
+    elements.push(base(`n${i}`, "rectangle", x, baseY, nodeWidth, nodeHeight));
+    elements.push(text(`n${i}_v`, String((i + 1) * 10), x, baseY + nodeHeight / 2 - 10, nodeWidth, 18));
+  }
+
+  // Arrows between adjacent nodes
+  for (let i = 0; i < count - 1; i++) {
+    const fromX = startX + i * (nodeWidth + gap) + nodeWidth;
+    const toX = startX + (i + 1) * (nodeWidth + gap);
+    if (doubly) {
+      // forward arrow (slightly above center)
+      elements.push(arrow(`a_fwd_${i}`, fromX, baseY + nodeHeight / 2 - 8, toX, baseY + nodeHeight / 2 - 8));
+      // back arrow (slightly below center)
+      elements.push(arrow(`a_back_${i}`, toX, baseY + nodeHeight / 2 + 8, fromX, baseY + nodeHeight / 2 + 8));
+    } else {
+      elements.push(arrow(`a_${i}`, fromX, baseY + nodeHeight / 2, toX, baseY + nodeHeight / 2));
+    }
+  }
+
+  // NULL labels
+  if (doubly) {
+    elements.push(text("null_left", "NULL", startX - gap, baseY + nodeHeight / 2 - 10, gap - 10, 16));
+    elements.push(arrow("a_null_left", startX, baseY + nodeHeight / 2 + 8, startX - gap + 30, baseY + nodeHeight / 2 + 8));
+    const lastX = startX + (count - 1) * (nodeWidth + gap) + nodeWidth;
+    elements.push(text("null_right", "NULL", lastX + 10, baseY + nodeHeight / 2 - 10, gap - 10, 16));
+    elements.push(arrow("a_null_right", lastX, baseY + nodeHeight / 2 - 8, lastX + gap - 30, baseY + nodeHeight / 2 - 8));
+  } else {
+    const lastX = startX + (count - 1) * (nodeWidth + gap) + nodeWidth;
+    elements.push(text("null_right", "NULL", lastX + 10, baseY + nodeHeight / 2 - 10, gap - 10, 16));
+  }
+
+  // Head label
+  elements.push(text("head_label", "HEAD", startX, baseY - 30, nodeWidth, 14));
+  if (doubly) {
+    const lastX = startX + (count - 1) * (nodeWidth + gap);
+    elements.push(text("tail_label", "TAIL", lastX, baseY - 30, nodeWidth, 14));
+  }
+
+  return elements;
+}
+
 /**
  * Bridges LiveKit data messages from the Python agent (Aria) to the
  * Whiteboard page via a window event. Mounted inside <LiveKitRoom>.
@@ -236,15 +352,30 @@ export function WhiteboardDataBridge() {
   const quizInFlight = useRef(false);
 
   useEffect(() => {
+    const ensureWhiteboardRoute = () => {
+      if (typeof window === "undefined") return;
+      if (!window.location.pathname.startsWith("/whiteboard")) {
+        console.log("[WhiteboardDataBridge] navigating to /whiteboard for incoming draw");
+        // Use history API directly so we don't need access to react-router here
+        window.history.pushState({}, "", "/whiteboard");
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      }
+    };
+
     const dispatchElements = (elements: unknown[], source: string) => {
+      ensureWhiteboardRoute();
       lastDrawDataAt.current = Date.now();
-      window.dispatchEvent(
+      const fire = () => window.dispatchEvent(
         new CustomEvent("aria:whiteboard-draw", { detail: { elements, source } }),
       );
+      // give the route + Excalidraw API time to mount when we just navigated
+      fire();
+      window.setTimeout(fire, 400);
+      window.setTimeout(fire, 1200);
     };
 
     const scheduleDiagramFallback = (prompt: string, reason: string) => {
-      if (typeof window === "undefined" || !window.location.pathname.startsWith("/whiteboard")) return;
+      if (typeof window === "undefined") return;
       if (pendingFallbackTimer.current) return;
 
       const scheduledAt = Date.now();
@@ -279,6 +410,22 @@ export function WhiteboardDataBridge() {
           fallbackInFlight.current = false;
         }
       }, 3500);
+    };
+
+    /** Returns true if a deterministic template was dispatched. */
+    const tryDeterministicTemplate = (prompt: string): boolean => {
+      if (isLinkedListPrompt(prompt)) {
+        const doubly = isDoublyLinkedListPrompt(prompt);
+        console.log("[WhiteboardDataBridge] deterministic linked list:", { doubly, prompt });
+        dispatchElements(createLinkedListElements({ doubly, count: 4 }), "voice-linked-list-template");
+        return true;
+      }
+      if (isBinaryTreePrompt(prompt)) {
+        console.log("[WhiteboardDataBridge] deterministic binary tree:", { prompt });
+        dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
+        return true;
+      }
+      return false;
     };
 
     const handleData = (
@@ -335,7 +482,6 @@ export function WhiteboardDataBridge() {
               } catch (err) {
                 console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
               } finally {
-                // small cooldown to avoid double-fire on duplicate transcripts
                 window.setTimeout(() => { quizInFlight.current = false; }, 4000);
               }
             })();
@@ -345,12 +491,7 @@ export function WhiteboardDataBridge() {
 
         if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
           lastUserWhiteboardPrompt.current = { text, at: Date.now() };
-          if (isBinaryTreePrompt(text)) {
-            const cleanedPrompt = cleanVoicePrompt(text);
-            console.log("[WhiteboardDataBridge] deterministic binary tree prompt:", { cleanedPrompt });
-            dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
-            continue;
-          }
+          if (tryDeterministicTemplate(text)) continue;
           scheduleDiagramFallback(text, "user-whiteboard-command");
           continue;
         }
@@ -361,12 +502,7 @@ export function WhiteboardDataBridge() {
           isAgentWhiteboardClaim(text) &&
           (!recentUserPrompt || Date.now() - recentUserPrompt.at < 60_000)
         ) {
-          if (recentUserPrompt?.text && isBinaryTreePrompt(recentUserPrompt.text)) {
-            const cleanedPrompt = cleanVoicePrompt(recentUserPrompt.text);
-            console.log("[WhiteboardDataBridge] deterministic binary tree prompt:", { cleanedPrompt });
-            dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
-            continue;
-          }
+          if (recentUserPrompt?.text && tryDeterministicTemplate(recentUserPrompt.text)) continue;
           scheduleDiagramFallback(recentUserPrompt?.text ?? text, "agent-claimed-whiteboard-draw");
         }
       }
