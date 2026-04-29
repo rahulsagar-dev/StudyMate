@@ -92,6 +92,30 @@ export function ChatMode() {
 
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
+  // Listen for header-triggered actions from AIAssistant page
+  useEffect(() => {
+    const onOpen = () => {
+      setHistoryOpen(true);
+      setHistoryLoading(true);
+      listConversations().then((list) => {
+        setConversations(list);
+        setHistoryLoading(false);
+      });
+    };
+    const onNew = () => {
+      abortRef.current?.abort();
+      setIsStreaming(false);
+      setMessages([]);
+      conversationIdRef.current = newConversationId();
+    };
+    window.addEventListener("ai-tutor:open-history", onOpen);
+    window.addEventListener("ai-tutor:new-chat", onNew);
+    return () => {
+      window.removeEventListener("ai-tutor:open-history", onOpen);
+      window.removeEventListener("ai-tutor:new-chat", onNew);
+    };
+  }, [listConversations]);
+
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || isStreaming) return;
