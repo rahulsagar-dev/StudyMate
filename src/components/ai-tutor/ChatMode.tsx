@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Trash2, Bot, User } from "lucide-react";
+import { Send, Trash2, Bot, User, Mic } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -11,6 +11,7 @@ import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImmersiveBackground } from "@/components/ai-tutor/ImmersiveBackground";
+import { toast } from "@/hooks/use-toast";
 
 export function ChatMode() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -19,6 +20,48 @@ export function ChatMode() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const userCtx = useUserContext();
+
+  // Speech-to-text (in-line dictation into the textarea)
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const recognitionRef = useRef<any>(null);
+  const baseInputRef = useRef("");
+
+  useEffect(() => {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { setSpeechSupported(false); return; }
+    const recognition = new SR();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = "en-US";
+    recognition.onresult = (e: any) => {
+      let text = "";
+      for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+      const prefix = baseInputRef.current ? baseInputRef.current.replace(/\s+$/, "") + " " : "";
+      setInput(prefix + text);
+    };
+    recognition.onerror = (e: any) => {
+      if (e.error === "not-allowed") {
+        toast({ title: "Microphone access denied", description: "Please allow microphone permission.", variant: "destructive" });
+      }
+      setIsListening(false);
+    };
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    return () => { try { recognition.stop(); } catch {} };
+  }, []);
+
+  const toggleMic = () => {
+    if (!recognitionRef.current) return;
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      baseInputRef.current = input;
+      try { recognitionRef.current.start(); setIsListening(true); }
+      catch { /* already started */ }
+    }
+  };
 
   const scrollToBottom = useCallback(() => {
     setTimeout(() => {
@@ -170,6 +213,22 @@ export function ChatMode() {
               className="min-h-[44px] max-h-[120px] resize-none bg-white/5 border-white/10 text-white placeholder:text-white/40 focus-visible:ring-white/20"
               rows={1}
             />
+            {speechSupported && (
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={toggleMic}
+                disabled={isStreaming}
+                title={isListening ? "Stop dictation" : "Speak your message"}
+                className={cn(
+                  "border border-white/10 text-white hover:bg-white/10",
+                  isListening && "animate-pulse"
+                )}
+                style={isListening ? { background: "linear-gradient(135deg, hsl(0 80% 55%), hsl(15 90% 55%))" } : undefined}
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               size="icon"
               onClick={() => sendMessage(input)}

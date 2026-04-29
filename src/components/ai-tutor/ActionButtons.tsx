@@ -28,7 +28,7 @@ export function ActionButtons({ actions, compact = false }: ActionButtonsProps) 
     switch (action.id) {
       case "generate-flashcards":
         navigate("/flashcards", { state: { autoTopic: action.data?.topic } });
-        toast({ title: "Opening Flashcards", description: `Topic: ${action.data?.topic || "General"}` });
+        toast({ title: "Generating flashcards…", description: `Topic: ${action.data?.topic || "General"}` });
         break;
 
       case "add-task":

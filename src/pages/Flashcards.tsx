@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useFlashcards } from "@/hooks/useFlashcards";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface FlashcardData {
   front: string;
@@ -42,6 +42,7 @@ export default function Flashcards() {
   const { toast } = useToast();
   const { user, session } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     flashcardSets, generationHistory, loading: hookLoading,
     createFlashcardSet, deleteFlashcardSet, loadFlashcardsForSet,
@@ -190,6 +191,24 @@ export default function Flashcards() {
       setTimeout(() => setProgress(0), 1500);
     }
   };
+
+  // Auto-generate when navigated here with a topic from AI Tutor
+  const autoRanRef = useRef(false);
+  useEffect(() => {
+    const topic = (location.state as any)?.autoTopic?.trim();
+    if (!topic || autoRanRef.current) return;
+    autoRanRef.current = true;
+
+    // Build a study-prompt seed long enough for the generator (≥50 chars)
+    const seed = `Generate a comprehensive set of study flashcards covering the topic: "${topic}". Include definitions, key concepts, important facts, common examples, and practical applications a student should know.`;
+    setInputText(seed);
+    // Clear router state so refresh doesn't re-trigger
+    navigate(location.pathname, { replace: true, state: {} });
+
+    // Trigger generation on next tick (after state flush)
+    setTimeout(() => { handleGenerate(); }, 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   const handlePrev = () => {
     setFlipped(false);
