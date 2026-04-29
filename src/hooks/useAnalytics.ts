@@ -64,7 +64,9 @@ export function useAnalytics() {
       const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
       const endStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, "0")}-${String(endOfMonth.getDate()).padStart(2, "0")}`;
 
-      const [sessionsRes, tasksRes, quizRes, setsRes] = await Promise.all([
+      const startISO = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+      const [sessionsRes, tasksRes, quizRes, setsRes, xpRes] = await Promise.all([
         supabase
           .from("study_sessions")
           .select("*")
@@ -85,11 +87,17 @@ export function useAnalytics() {
           .from("flashcard_sets" as any)
           .select("id")
           .eq("user_id", user.id),
+        supabase
+          .from("xp_transactions")
+          .select("amount, source, created_at")
+          .eq("user_id", user.id)
+          .gte("created_at", startISO),
       ]);
 
       setSessions(sessionsRes.data || []);
       setTasks(tasksRes.data || []);
       setQuizAttempts(quizRes.data || []);
+      setXpTx(xpRes.data || []);
 
       const setIds = ((setsRes.data as any[]) || []).map((s: any) => s.id);
       if (setIds.length > 0) {
