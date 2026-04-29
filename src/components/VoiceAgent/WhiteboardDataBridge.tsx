@@ -84,7 +84,7 @@ export function cleanVoicePrompt(raw: string): string {
     } else if (/queue/.test(lower)) {
       cleaned = `A queue with 4 horizontal cells and FRONT and REAR labels at the ends`;
     } else if (/tree|bst|binary/.test(lower)) {
-      cleaned = `A binary search tree with a root node and two levels of children connected by lines`;
+      cleaned = `A binary tree with 7 nodes arranged in 3 levels: 1 root at the top, 2 children below it offset left and right, and 4 grandchildren at the bottom. Each parent connects to its two children with lines. Place numeric values inside each node.`;
     } else if (/graph/.test(lower)) {
       cleaned = `A graph with 5 labeled nodes connected by lines representing edges`;
     } else if (/mind\s*map/.test(lower)) {
