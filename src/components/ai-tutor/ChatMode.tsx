@@ -92,6 +92,30 @@ export function ChatMode() {
 
   useEffect(() => { scrollToBottom(); }, [messages, scrollToBottom]);
 
+  // Listen for header-triggered actions from AIAssistant page
+  useEffect(() => {
+    const onOpen = () => {
+      setHistoryOpen(true);
+      setHistoryLoading(true);
+      listConversations().then((list) => {
+        setConversations(list);
+        setHistoryLoading(false);
+      });
+    };
+    const onNew = () => {
+      abortRef.current?.abort();
+      setIsStreaming(false);
+      setMessages([]);
+      conversationIdRef.current = newConversationId();
+    };
+    window.addEventListener("ai-tutor:open-history", onOpen);
+    window.addEventListener("ai-tutor:new-chat", onNew);
+    return () => {
+      window.removeEventListener("ai-tutor:open-history", onOpen);
+      window.removeEventListener("ai-tutor:new-chat", onNew);
+    };
+  }, [listConversations]);
+
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || isStreaming) return;
@@ -183,63 +207,53 @@ export function ChatMode() {
   return (
     <ImmersiveBackground>
       <div className="flex flex-col h-[calc(100vh-220px)] max-h-[700px]">
-        {/* Top toolbar: history + new chat */}
-        <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 backdrop-blur-md" style={{ background: "hsl(0 0% 0% / 0.15)" }}>
-          <Sheet open={historyOpen} onOpenChange={(o) => (o ? openHistory() : setHistoryOpen(false))}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10 gap-2">
-                <History className="h-4 w-4" /> History
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-lg">
-              <SheetHeader>
-                <SheetTitle>Chat History</SheetTitle>
-              </SheetHeader>
-              <ScrollArea className="h-[calc(100vh-100px)] mt-4 pr-2">
-                {historyLoading ? (
-                  <div className="space-y-3">
-                    {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg shimmer" />)}
-                  </div>
-                ) : conversations.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-40" />
-                    <p>No chats yet.</p>
-                    <p className="text-sm">Send your first message to start a conversation!</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {conversations.map((c) => (
-                      <Card key={c.conversation_id} className="glass-card group cursor-pointer" onClick={() => handleLoadConversation(c.conversation_id)}>
-                        <CardContent className="p-4 space-y-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-sm font-medium text-foreground line-clamp-2 flex-1">
-                              {c.preview || "(no preview)"}
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive shrink-0 opacity-60 hover:opacity-100"
-                              onClick={(e) => { e.stopPropagation(); handleDeleteConversation(c.conversation_id); }}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </div>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>{c.message_count} message{c.message_count === 1 ? "" : "s"}</span>
-                            <span>{new Date(c.last_at).toLocaleDateString()}</span>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            </SheetContent>
-          </Sheet>
-          <Button variant="ghost" size="sm" onClick={handleNewChat} className="text-white/80 hover:text-white hover:bg-white/10 gap-2">
-            <MessageSquare className="h-4 w-4" /> New chat
-          </Button>
-        </div>
+        {/* Hidden trigger to open history sheet from external header button */}
+        <Sheet open={historyOpen} onOpenChange={(o) => (o ? openHistory() : setHistoryOpen(false))}>
+          <SheetContent className="w-full sm:max-w-lg">
+            <SheetHeader>
+              <SheetTitle>Chat History</SheetTitle>
+            </SheetHeader>
+            <ScrollArea className="h-[calc(100vh-100px)] mt-4 pr-2">
+              {historyLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg shimmer" />)}
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                  <p>No chats yet.</p>
+                  <p className="text-sm">Send your first message to start a conversation!</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {conversations.map((c) => (
+                    <Card key={c.conversation_id} className="glass-card group cursor-pointer" onClick={() => handleLoadConversation(c.conversation_id)}>
+                      <CardContent className="p-4 space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground line-clamp-2 flex-1">
+                            {c.preview || "(no preview)"}
+                          </p>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 text-destructive shrink-0 opacity-60 hover:opacity-100"
+                            onClick={(e) => { e.stopPropagation(); handleDeleteConversation(c.conversation_id); }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>{c.message_count} message{c.message_count === 1 ? "" : "s"}</span>
+                          <span>{new Date(c.last_at).toLocaleDateString()}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </SheetContent>
+        </Sheet>
 
         <ScrollArea className="flex-1 pr-4" ref={scrollRef as any}>
           <div className="space-y-4 p-4">
