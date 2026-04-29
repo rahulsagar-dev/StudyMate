@@ -352,15 +352,30 @@ export function WhiteboardDataBridge() {
   const quizInFlight = useRef(false);
 
   useEffect(() => {
+    const ensureWhiteboardRoute = () => {
+      if (typeof window === "undefined") return;
+      if (!window.location.pathname.startsWith("/whiteboard")) {
+        console.log("[WhiteboardDataBridge] navigating to /whiteboard for incoming draw");
+        // Use history API directly so we don't need access to react-router here
+        window.history.pushState({}, "", "/whiteboard");
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      }
+    };
+
     const dispatchElements = (elements: unknown[], source: string) => {
+      ensureWhiteboardRoute();
       lastDrawDataAt.current = Date.now();
-      window.dispatchEvent(
+      const fire = () => window.dispatchEvent(
         new CustomEvent("aria:whiteboard-draw", { detail: { elements, source } }),
       );
+      // give the route + Excalidraw API time to mount when we just navigated
+      fire();
+      window.setTimeout(fire, 400);
+      window.setTimeout(fire, 1200);
     };
 
     const scheduleDiagramFallback = (prompt: string, reason: string) => {
-      if (typeof window === "undefined" || !window.location.pathname.startsWith("/whiteboard")) return;
+      if (typeof window === "undefined") return;
       if (pendingFallbackTimer.current) return;
 
       const scheduledAt = Date.now();
@@ -395,6 +410,22 @@ export function WhiteboardDataBridge() {
           fallbackInFlight.current = false;
         }
       }, 3500);
+    };
+
+    /** Returns true if a deterministic template was dispatched. */
+    const tryDeterministicTemplate = (prompt: string): boolean => {
+      if (isLinkedListPrompt(prompt)) {
+        const doubly = isDoublyLinkedListPrompt(prompt);
+        console.log("[WhiteboardDataBridge] deterministic linked list:", { doubly, prompt });
+        dispatchElements(createLinkedListElements({ doubly, count: 4 }), "voice-linked-list-template");
+        return true;
+      }
+      if (isBinaryTreePrompt(prompt)) {
+        console.log("[WhiteboardDataBridge] deterministic binary tree:", { prompt });
+        dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
+        return true;
+      }
+      return false;
     };
 
     const handleData = (
@@ -451,7 +482,6 @@ export function WhiteboardDataBridge() {
               } catch (err) {
                 console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
               } finally {
-                // small cooldown to avoid double-fire on duplicate transcripts
                 window.setTimeout(() => { quizInFlight.current = false; }, 4000);
               }
             })();
@@ -461,12 +491,7 @@ export function WhiteboardDataBridge() {
 
         if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
           lastUserWhiteboardPrompt.current = { text, at: Date.now() };
-          if (isBinaryTreePrompt(text)) {
-            const cleanedPrompt = cleanVoicePrompt(text);
-            console.log("[WhiteboardDataBridge] deterministic binary tree prompt:", { cleanedPrompt });
-            dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
-            continue;
-          }
+          if (tryDeterministicTemplate(text)) continue;
           scheduleDiagramFallback(text, "user-whiteboard-command");
           continue;
         }
@@ -477,12 +502,7 @@ export function WhiteboardDataBridge() {
           isAgentWhiteboardClaim(text) &&
           (!recentUserPrompt || Date.now() - recentUserPrompt.at < 60_000)
         ) {
-          if (recentUserPrompt?.text && isBinaryTreePrompt(recentUserPrompt.text)) {
-            const cleanedPrompt = cleanVoicePrompt(recentUserPrompt.text);
-            console.log("[WhiteboardDataBridge] deterministic binary tree prompt:", { cleanedPrompt });
-            dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
-            continue;
-          }
+          if (recentUserPrompt?.text && tryDeterministicTemplate(recentUserPrompt.text)) continue;
           scheduleDiagramFallback(recentUserPrompt?.text ?? text, "agent-claimed-whiteboard-draw");
         }
       }
