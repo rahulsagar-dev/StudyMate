@@ -100,6 +100,7 @@ export function ChatMode() {
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsStreaming(true);
+    saveMessage(conversationIdRef.current, "user", trimmed);
 
     let assistantContent = "";
     const controller = new AbortController();
@@ -121,7 +122,12 @@ export function ChatMode() {
         messages: [...messages, userMsg],
         userContext: buildContextPrompt(userCtx),
         onDelta: upsert,
-        onDone: () => setIsStreaming(false),
+        onDone: () => {
+          setIsStreaming(false);
+          if (assistantContent.trim()) {
+            saveMessage(conversationIdRef.current, "assistant", assistantContent);
+          }
+        },
         onError: (err) => {
           upsert(`\n\n⚠️ ${err}`);
           setIsStreaming(false);
@@ -134,6 +140,37 @@ export function ChatMode() {
       }
       setIsStreaming(false);
     }
+  };
+
+  const openHistory = async () => {
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    const list = await listConversations();
+    setConversations(list);
+    setHistoryLoading(false);
+  };
+
+  const handleLoadConversation = async (cid: string) => {
+    abortRef.current?.abort();
+    setIsStreaming(false);
+    const msgs = await loadConversation(cid);
+    setMessages(msgs);
+    conversationIdRef.current = cid;
+    setHistoryOpen(false);
+  };
+
+  const handleNewChat = () => {
+    abortRef.current?.abort();
+    setIsStreaming(false);
+    setMessages([]);
+    conversationIdRef.current = newConversationId();
+  };
+
+  const handleDeleteConversation = async (cid: string) => {
+    await deleteConversation(cid);
+    setConversations(prev => prev.filter(c => c.conversation_id !== cid));
+    if (cid === conversationIdRef.current) handleNewChat();
+    toast({ title: "Conversation deleted" });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
