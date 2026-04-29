@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  cleanVoicePrompt,
+  createBinaryTreeElements,
   extractElements,
   inferDiagramType,
   isAgentWhiteboardClaim,
+  isBinaryTreePrompt,
+  isWhiteboardPageDrawingCommand,
   isWhiteboardDiagramCommand,
 } from "./WhiteboardDataBridge";
 
@@ -19,6 +23,13 @@ describe("WhiteboardDataBridge helpers", () => {
   it("detects whiteboard drawing requests from user transcripts", () => {
     expect(isWhiteboardDiagramCommand("draw a flowchart on the whiteboard about photosynthesis")).toBe(true);
     expect(isWhiteboardDiagramCommand("can you explain photosynthesis to me")).toBe(false);
+    expect(isWhiteboardPageDrawingCommand("draw a binary tree")).toBe(true);
+  });
+
+  it("forces binary tree prompts away from linked-list generation", () => {
+    expect(isBinaryTreePrompt("make a binnary tree")).toBe(true);
+    expect(cleanVoicePrompt("hey aria draw a binnary tree")).toContain("A binary tree with 7 nodes");
+    expect(createBinaryTreeElements()).toHaveLength(20);
   });
 
   it("detects when the agent claims it drew on the board", () => {
