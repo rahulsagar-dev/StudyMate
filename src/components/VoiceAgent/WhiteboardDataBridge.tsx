@@ -43,6 +43,34 @@ export function isBinaryTreePrompt(text: string): boolean {
   return /\b(?:b[io]n+ary|bst|tree)\b/.test(normalized) && !/linked\s*list|link\s*list/.test(normalized);
 }
 
+export function isQuizPrompt(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return /\b(quiz|test)\b.*\b(me|on|about|over)\b|\b(start|give|make|create|do)\b.*\bquiz\b/.test(normalized);
+}
+
+export function extractQuizTopic(text: string): string {
+  const normalized = text.toLowerCase().trim();
+  const patterns = [
+    /(?:quiz|test)\s+me\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
+    /(?:start|give\s+me|make\s+me|create|do)\s+(?:a\s+)?quiz\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
+    /quiz\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
+  ];
+  for (const re of patterns) {
+    const m = normalized.match(re);
+    if (m && m[1]) return m[1].trim().replace(/[.?!,]+$/, "");
+  }
+  return normalized
+    .replace(/\b(hey|hi|okay|ok)\s+aria\b/g, "")
+    .replace(/\b(please|can you|could you|would you)\b/g, "")
+    .replace(/\b(start|give me|make me|create|do)\b/g, "")
+    .replace(/\b(a|an|the)\s+quiz\b/g, "")
+    .replace(/\b(quiz|test)\s+me\b/g, "")
+    .replace(/\b(on|about|over)\b/g, "")
+    .replace(/[.?!,]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function isAgentWhiteboardClaim(text: string): boolean {
   const normalized = text.toLowerCase();
   return /white\s*board|canvas|board/.test(normalized) && /i('|’)ve|i have|i just|i/.test(normalized) && /drew|drawn|added|put|placed|created|made/.test(normalized);
@@ -205,6 +233,7 @@ export function WhiteboardDataBridge() {
   const lastDrawDataAt = useRef(0);
   const lastUserWhiteboardPrompt = useRef<{ text: string; at: number } | null>(null);
   const fallbackInFlight = useRef(false);
+  const quizInFlight = useRef(false);
 
   useEffect(() => {
     const dispatchElements = (elements: unknown[], source: string) => {
@@ -289,6 +318,31 @@ export function WhiteboardDataBridge() {
         if (!text) continue;
 
         const isLocalUser = participant?.identity === room.localParticipant.identity;
+
+        // Quiz intent — user asks Aria to start a quiz
+        if (isLocalUser && isQuizPrompt(text) && !quizInFlight.current) {
+          const topic = extractQuizTopic(text);
+          console.log("[WhiteboardDataBridge] detected voice quiz prompt:", { text, topic });
+          if (topic && topic.length >= 2) {
+            quizInFlight.current = true;
+            (async () => {
+              try {
+                const { data, error } = await supabase.functions.invoke("start-voice-quiz", {
+                  body: { topic, difficulty: "medium", questionCount: 5 },
+                });
+                if (error) throw error;
+                console.log("[WhiteboardDataBridge] voice quiz started:", data);
+              } catch (err) {
+                console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
+              } finally {
+                // small cooldown to avoid double-fire on duplicate transcripts
+                window.setTimeout(() => { quizInFlight.current = false; }, 4000);
+              }
+            })();
+            continue;
+          }
+        }
+
         if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
           lastUserWhiteboardPrompt.current = { text, at: Date.now() };
           if (isBinaryTreePrompt(text)) {
