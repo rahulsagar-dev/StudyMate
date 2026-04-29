@@ -70,7 +70,14 @@ serve(async (req) => {
 
     const systemPrompt = `${DIAGRAM_PROMPTS[diagramType] || DIAGRAM_PROMPTS.diagram}
 
-Generate Excalidraw-compatible elements for the following request. Return elements using the tool provided. Each element needs: type, x, y, width, height, and text (for text/shape labels). For arrows, include startBinding and endBinding with elementId, focus, and gap. Give each element a unique id string.`;
+Generate Excalidraw-compatible elements for the following request. Return elements using the tool provided.
+
+CRITICAL RULES:
+- Every shape (rectangle, ellipse, diamond) that needs a label MUST include a "text" field with the label string. The label will be auto-bound and centered.
+- For arrow/line elements: x,y is the START point. width is the HORIZONTAL DELTA (can be negative) from start to end. height is the VERTICAL DELTA (can be negative) from start to end. Example: arrow from (100,50) to (300,50) → x:100, y:50, width:200, height:0.
+- Arrows connecting shapes MUST set startBindingElementId and endBindingElementId (the shape ids), and the start/end points should be at the edges of those shapes so the arrows visually touch the boxes.
+- Give every element a unique id string. Reference shape ids exactly in startBindingElementId/endBindingElementId.
+- Do NOT create separate "text" elements for shape labels — put the label on the shape itself via the "text" field.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
