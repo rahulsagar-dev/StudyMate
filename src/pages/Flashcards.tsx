@@ -192,7 +192,23 @@ export default function Flashcards() {
     }
   };
 
-  const handlePrev = () => {
+  // Auto-generate when navigated here with a topic from AI Tutor
+  const autoRanRef = useRef(false);
+  useEffect(() => {
+    const topic = (location.state as any)?.autoTopic?.trim();
+    if (!topic || autoRanRef.current) return;
+    autoRanRef.current = true;
+
+    // Build a study-prompt seed long enough for the generator (≥50 chars)
+    const seed = `Generate a comprehensive set of study flashcards covering the topic: "${topic}". Include definitions, key concepts, important facts, common examples, and practical applications a student should know.`;
+    setInputText(seed);
+    // Clear router state so refresh doesn't re-trigger
+    navigate(location.pathname, { replace: true, state: {} });
+
+    // Trigger generation on next tick (after state flush)
+    setTimeout(() => { handleGenerate(); }, 100);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
     setFlipped(false);
     setCurrentIndex((i) => (i > 0 ? i - 1 : cards.length - 1));
   };
