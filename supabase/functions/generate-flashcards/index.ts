@@ -56,7 +56,6 @@ Deno.serve(async (req) => {
   try {
     const { input_text, card_count } = await req.json();
 
-    // Validate input
     if (!input_text || typeof input_text !== "string" || input_text.trim().length < 50) {
       return new Response(
         JSON.stringify({ error: "Input text must be at least 50 characters long." }),
@@ -64,7 +63,6 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Rate limit check
     if (!checkRateLimit(userId)) {
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please wait a minute before trying again." }),
@@ -72,59 +70,110 @@ Deno.serve(async (req) => {
       );
     }
 
-    const requestedCount = card_count || 10;
+    const requestedCount = Math.min(Math.max(card_count || 10, 3), 30);
 
-    // Check for AI API key
-    const apiKey = Deno.env.get("LOVABLE_AI_API_KEY");
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) {
-      // Return mock flashcards when API key is not configured
-      console.log("AI API key not configured, returning generated cards from content analysis");
-
-      const flashcards = generateCardsFromContent(input_text, requestedCount);
-
       return new Response(
-        JSON.stringify({
-          flashcards,
-          card_count: flashcards.length,
-          source: "content_analysis",
-          message: "Flashcards generated from content analysis. AI integration will enhance quality when configured.",
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: "AI service not configured." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // TODO: Replace with actual AI API call when API details are provided
-    // The structure below is ready for integration:
-    //
-    // const aiResponse = await fetch("AI_API_ENDPOINT", {
-    //   method: "POST",
-    //   headers: {
-    //     "Authorization": `Bearer ${apiKey}`,
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify({
-    //     prompt: `Generate ${requestedCount} flashcards from the following text. Return JSON array with objects containing "front" and "back" fields.\n\nText: ${input_text}`,
-    //     max_tokens: 2000,
-    //   }),
-    // });
-    //
-    // const aiData = await aiResponse.json();
-    // const flashcards = parseAIResponse(aiData);
+    const systemPrompt = `You are an expert study coach who creates high-quality flashcards for active recall.
+Rules:
+- Generate exactly ${requestedCount} flashcards from the user's content or topic.
+- Each card has a clear, specific QUESTION on the front and a concise, accurate ANSWER on the back.
+- Front must be a real question or term to define — NEVER "What is described by: '...'" or quoted-sentence fillers.
+- Cover the most important concepts, definitions, mechanisms, examples, and relationships.
+- Answers should be 1-3 sentences, factually correct, self-contained.
+- Vary card types: definitions, "why/how" questions, compare/contrast, examples, application.
+- If the input is a short topic (not full content), generate cards from your own knowledge of that topic.
+- Output ONLY via the provided tool. No prose.`;
 
-    const flashcards = generateCardsFromContent(input_text, requestedCount);
+    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: `Create ${requestedCount} study flashcards from this:\n\n${input_text}` },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "emit_flashcards",
+              description: "Return the generated flashcards.",
+              parameters: {
+                type: "object",
+                properties: {
+                  flashcards: {
+                    type: "array",
+                    minItems: 3,
+                    items: {
+                      type: "object",
+                      properties: {
+                        front: { type: "string", description: "Question or term" },
+                        back: { type: "string", description: "Answer or definition" },
+                      },
+                      required: ["front", "back"],
+                      additionalProperties: false,
+                    },
+                  },
+                },
+                required: ["flashcards"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "emit_flashcards" } },
+      }),
+    });
+
+    if (!aiResp.ok) {
+      const errText = await aiResp.text();
+      console.error("AI gateway error:", aiResp.status, errText);
+      if (aiResp.status === 429) {
+        return new Response(JSON.stringify({ error: "AI rate limit reached. Try again shortly." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (aiResp.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Add credits in Lovable workspace settings." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      throw new Error(`AI gateway ${aiResp.status}`);
+    }
+
+    const aiData = await aiResp.json();
+    const toolCall = aiData?.choices?.[0]?.message?.tool_calls?.[0];
+    const argStr = toolCall?.function?.arguments;
+    if (!argStr) {
+      console.error("No tool call in AI response:", JSON.stringify(aiData).slice(0, 500));
+      throw new Error("AI did not return flashcards");
+    }
+
+    const parsed = JSON.parse(argStr);
+    const flashcards = (parsed.flashcards || [])
+      .filter((c: any) => c?.front && c?.back)
+      .map((c: any) => ({ front: String(c.front).trim(), back: String(c.back).trim() }))
+      .slice(0, requestedCount);
+
+    if (flashcards.length === 0) {
+      throw new Error("No valid flashcards generated");
+    }
 
     return new Response(
-      JSON.stringify({
-        flashcards,
-        card_count: flashcards.length,
-        source: "ai",
-      }),
+      JSON.stringify({ flashcards, card_count: flashcards.length, source: "ai" }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("Error generating flashcards:", err);
-
-    // Log error to ai_error_logs
     try {
       const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const body = await req.clone().json().catch(() => ({}));
@@ -144,53 +193,3 @@ Deno.serve(async (req) => {
     );
   }
 });
-
-function generateCardsFromContent(text: string, count: number): Array<{ front: string; back: string }> {
-  // Split text into sentences and create flashcards from content
-  const sentences = text
-    .split(/[.!?]+/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 15);
-
-  const cards: Array<{ front: string; back: string }> = [];
-  const usedIndices = new Set<number>();
-
-  for (let i = 0; i < Math.min(count, sentences.length); i++) {
-    let idx = i;
-    if (idx >= sentences.length) break;
-    
-    // Try to find key terms in the sentence
-    const sentence = sentences[idx];
-    const words = sentence.split(/\s+/);
-    
-    if (words.length >= 4) {
-      // Create a question by removing a key concept
-      const midPoint = Math.floor(words.length / 2);
-      const keyPhrase = words.slice(midPoint, midPoint + Math.min(3, words.length - midPoint)).join(" ");
-      
-      cards.push({
-        front: `What is described by: "${sentence.substring(0, 80)}${sentence.length > 80 ? '...' : ''}"?`,
-        back: sentence,
-      });
-    } else {
-      cards.push({
-        front: `Define or explain: ${sentence}`,
-        back: sentence,
-      });
-    }
-  }
-
-  // If we need more cards, create summary-style cards
-  while (cards.length < count && cards.length < 25) {
-    const idx = cards.length % sentences.length;
-    if (usedIndices.has(idx)) break;
-    usedIndices.add(idx);
-    
-    cards.push({
-      front: `Summarize the following concept: "${sentences[idx]?.substring(0, 60) || "N/A"}..."`,
-      back: sentences[idx] || "No content available",
-    });
-  }
-
-  return cards.slice(0, count);
-}
