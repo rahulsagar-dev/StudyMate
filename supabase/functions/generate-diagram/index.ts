@@ -290,10 +290,11 @@ CRITICAL RULES:
           containerId: el.id,
         });
 
-        // Update the parent shape to reference the bound text
+        // Update the parent shape to reference the bound text (preserve existing arrow bindings)
         const shape = excalidrawElements.find((e: any) => e.id === el.id);
         if (shape) {
-          shape.boundElements = [{ id: textId, type: "text" }];
+          shape.boundElements = shape.boundElements || [];
+          shape.boundElements.push({ id: textId, type: "text" });
         }
       }
     }
