@@ -196,14 +196,20 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
       }
 
       if (el.type === "arrow" || el.type === "line") {
+        // points are relative to (x,y); width/height is the delta vector
+        const dx = Number(el.width) || 0;
+        const dy = Number(el.height) || 0;
         return {
           ...base,
-          points: [[0, 0], [el.width, el.height]],
+          // Use 0 width/height so Excalidraw uses points for the bounding box
+          width: Math.abs(dx),
+          height: Math.abs(dy),
+          points: [[0, 0], [dx, dy]],
           startBinding: el.startBindingElementId
-            ? { elementId: el.startBindingElementId, focus: 0, gap: 5 }
+            ? { elementId: el.startBindingElementId, focus: 0, gap: 1 }
             : null,
           endBinding: el.endBindingElementId
-            ? { elementId: el.endBindingElementId, focus: 0, gap: 5 }
+            ? { elementId: el.endBindingElementId, focus: 0, gap: 1 }
             : null,
           lastCommittedPoint: null,
           startArrowhead: null,
@@ -213,6 +219,22 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
 
       return base;
     });
+
+    // Register arrow bindings on their target shapes so Excalidraw snaps them
+    for (const el of rawElements) {
+      if ((el.type === "arrow" || el.type === "line")) {
+        for (const targetId of [el.startBindingElementId, el.endBindingElementId]) {
+          if (!targetId) continue;
+          const target = excalidrawElements.find((e: any) => e.id === targetId);
+          if (target) {
+            target.boundElements = target.boundElements || [];
+            if (!target.boundElements.some((b: any) => b.id === el.id)) {
+              target.boundElements.push({ id: el.id, type: el.type });
+            }
+          }
+        }
+      }
+    }
 
     // Add text labels as bound text elements for shapes
     const textElements: any[] = [];
