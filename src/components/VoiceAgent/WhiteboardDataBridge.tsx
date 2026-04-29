@@ -31,6 +31,18 @@ export function isWhiteboardDiagramCommand(text: string): boolean {
   return mentionsWhiteboard && asksForDrawing;
 }
 
+export function isWhiteboardPageDrawingCommand(text: string): boolean {
+  const normalized = text.toLowerCase();
+  const asksForDrawing = /draw|diagram|flow\s*chart|flowchart|mind\s*map|mindmap|chart|sketch|show|visuali[sz]e|put|add|create|make/.test(normalized);
+  const drawableSubject = /array|linked\s*list|link\s*list|stack|queue|tree|b[io]n+ary|bst|graph|flow\s*chart|flowchart|mind\s*map|mindmap/.test(normalized);
+  return asksForDrawing && drawableSubject;
+}
+
+export function isBinaryTreePrompt(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return /\b(?:b[io]n+ary|bst|tree)\b/.test(normalized) && !/linked\s*list|link\s*list/.test(normalized);
+}
+
 export function isAgentWhiteboardClaim(text: string): boolean {
   const normalized = text.toLowerCase();
   return /white\s*board|canvas|board/.test(normalized) && /i('|’)ve|i have|i just|i/.test(normalized) && /drew|drawn|added|put|placed|created|made/.test(normalized);
@@ -69,6 +81,11 @@ export function cleanVoicePrompt(raw: string): string {
   }
 
   let cleaned = text.replace(/[.,!?]/g, " ").replace(/\s+/g, " ").trim();
+  const cleanedLower = cleaned.toLowerCase();
+
+  if (isBinaryTreePrompt(cleanedLower)) {
+    return `A binary tree with 7 nodes arranged in 3 levels: 1 root at the top, 2 children below it offset left and right, and 4 grandchildren at the bottom. Each parent connects to its two children with lines. Place numeric values inside each node.`;
+  }
 
   // If the cleaned subject is too thin, expand it with a one-line description
   // so the diagram generator has something concrete to lay out.
@@ -97,6 +114,79 @@ export function cleanVoicePrompt(raw: string): string {
   }
 
   return cleaned;
+}
+
+export function createBinaryTreeElements(): unknown[] {
+  const prefix = `binary_tree_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const base = (id: string, type: string, x: number, y: number, width: number, height: number) => ({
+    id: `${prefix}_${id}`,
+    type,
+    x,
+    y,
+    width,
+    height,
+    angle: 0,
+    strokeColor: "#1e293b",
+    backgroundColor: type === "ellipse" ? "#f8fafc" : "transparent",
+    fillStyle: "solid",
+    strokeWidth: 2,
+    roughness: 0,
+    opacity: 100,
+    seed: Math.floor(Math.random() * 100000),
+    version: 1,
+    versionNonce: Math.floor(Math.random() * 100000),
+    isDeleted: false,
+    groupIds: [],
+    boundElements: [],
+    locked: false,
+  });
+  const nodes = [
+    { id: "n8", label: "8", x: 370, y: 60 },
+    { id: "n3", label: "3", x: 250, y: 190 },
+    { id: "n10", label: "10", x: 490, y: 190 },
+    { id: "n1", label: "1", x: 170, y: 320 },
+    { id: "n6", label: "6", x: 330, y: 320 },
+    { id: "n9", label: "9", x: 450, y: 320 },
+    { id: "n14", label: "14", x: 610, y: 320 },
+  ];
+  const line = (id: string, from: typeof nodes[number], to: typeof nodes[number]) => {
+    const ax = from.x + 30;
+    const ay = from.y + 60;
+    const bx = to.x + 30;
+    const by = to.y;
+    const x = Math.min(ax, bx);
+    const y = Math.min(ay, by);
+    return {
+      ...base(id, "line", x, y, Math.abs(bx - ax), Math.abs(by - ay)),
+      points: [[ax - x, ay - y], [bx - x, by - y]],
+      startBinding: null,
+      endBinding: null,
+      lastCommittedPoint: null,
+      startArrowhead: null,
+      endArrowhead: null,
+    };
+  };
+  const text = (id: string, label: string, x: number, y: number) => ({
+    ...base(`${id}_text`, "text", x + 14, y + 18, 32, 24),
+    text: label,
+    fontSize: 18,
+    fontFamily: 1,
+    textAlign: "center",
+    verticalAlign: "middle",
+    baseline: 18,
+    containerId: null,
+  });
+
+  return [
+    line("l8_3", nodes[0], nodes[1]),
+    line("l8_10", nodes[0], nodes[2]),
+    line("l3_1", nodes[1], nodes[3]),
+    line("l3_6", nodes[1], nodes[4]),
+    line("l10_9", nodes[2], nodes[5]),
+    line("l10_14", nodes[2], nodes[6]),
+    ...nodes.map((node) => base(node.id, "ellipse", node.x, node.y, 60, 60)),
+    ...nodes.map((node) => text(node.id, node.label, node.x, node.y)),
+  ];
 }
 
 /**
@@ -199,8 +289,14 @@ export function WhiteboardDataBridge() {
         if (!text) continue;
 
         const isLocalUser = participant?.identity === room.localParticipant.identity;
-        if (isLocalUser && isWhiteboardDiagramCommand(text)) {
+        if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
           lastUserWhiteboardPrompt.current = { text, at: Date.now() };
+          if (isBinaryTreePrompt(text)) {
+            const cleanedPrompt = cleanVoicePrompt(text);
+            console.log("[WhiteboardDataBridge] deterministic binary tree prompt:", { cleanedPrompt });
+            dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
+            continue;
+          }
           scheduleDiagramFallback(text, "user-whiteboard-command");
           continue;
         }
@@ -211,6 +307,12 @@ export function WhiteboardDataBridge() {
           isAgentWhiteboardClaim(text) &&
           (!recentUserPrompt || Date.now() - recentUserPrompt.at < 60_000)
         ) {
+          if (recentUserPrompt?.text && isBinaryTreePrompt(recentUserPrompt.text)) {
+            const cleanedPrompt = cleanVoicePrompt(recentUserPrompt.text);
+            console.log("[WhiteboardDataBridge] deterministic binary tree prompt:", { cleanedPrompt });
+            dispatchElements(createBinaryTreeElements(), "voice-binary-tree-template");
+            continue;
+          }
           scheduleDiagramFallback(recentUserPrompt?.text ?? text, "agent-claimed-whiteboard-draw");
         }
       }
