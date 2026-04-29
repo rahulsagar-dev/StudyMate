@@ -137,8 +137,14 @@ export function WhiteboardDataBridge() {
 
         fallbackInFlight.current = true;
         try {
+          const cleanedPrompt = cleanVoicePrompt(prompt);
+          console.log("[WhiteboardDataBridge] sending to generate-diagram:", {
+            originalPrompt: prompt,
+            cleanedPrompt,
+            diagramType: "diagram",
+          });
           const { data, error } = await supabase.functions.invoke("generate-diagram", {
-            body: { prompt, diagramType: inferDiagramType(prompt) },
+            body: { prompt: cleanedPrompt, diagramType: "diagram" },
           });
           if (error) throw error;
           const elements = extractElements(data);
