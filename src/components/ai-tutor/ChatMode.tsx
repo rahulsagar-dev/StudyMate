@@ -355,16 +355,11 @@ export function ChatMode() {
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { setMessages([]); abortRef.current?.abort(); setIsStreaming(false); }}
-              className="text-white/60 hover:text-white hover:bg-white/10"
-            >
-              <Trash2 className="h-3 w-3 mr-1" /> Clear chat
-            </Button>
-          )}
+        </div>
+      </div>
+    </ImmersiveBackground>
+  );
+}
         </div>
       </div>
     </ImmersiveBackground>
