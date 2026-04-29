@@ -70,7 +70,14 @@ serve(async (req) => {
 
     const systemPrompt = `${DIAGRAM_PROMPTS[diagramType] || DIAGRAM_PROMPTS.diagram}
 
-Generate Excalidraw-compatible elements for the following request. Return elements using the tool provided. Each element needs: type, x, y, width, height, and text (for text/shape labels). For arrows, include startBinding and endBinding with elementId, focus, and gap. Give each element a unique id string.`;
+Generate Excalidraw-compatible elements for the following request. Return elements using the tool provided.
+
+CRITICAL RULES:
+- Every shape (rectangle, ellipse, diamond) that needs a label MUST include a "text" field with the label string. The label will be auto-bound and centered.
+- For arrow/line elements: x,y is the START point. width is the HORIZONTAL DELTA (can be negative) from start to end. height is the VERTICAL DELTA (can be negative) from start to end. Example: arrow from (100,50) to (300,50) → x:100, y:50, width:200, height:0.
+- Arrows connecting shapes MUST set startBindingElementId and endBindingElementId (the shape ids), and the start/end points should be at the edges of those shapes so the arrows visually touch the boxes.
+- Give every element a unique id string. Reference shape ids exactly in startBindingElementId/endBindingElementId.
+- Do NOT create separate "text" elements for shape labels — put the label on the shape itself via the "text" field.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -196,14 +203,20 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
       }
 
       if (el.type === "arrow" || el.type === "line") {
+        // points are relative to (x,y); width/height is the delta vector
+        const dx = Number(el.width) || 0;
+        const dy = Number(el.height) || 0;
         return {
           ...base,
-          points: [[0, 0], [el.width, el.height]],
+          // Use 0 width/height so Excalidraw uses points for the bounding box
+          width: Math.abs(dx),
+          height: Math.abs(dy),
+          points: [[0, 0], [dx, dy]],
           startBinding: el.startBindingElementId
-            ? { elementId: el.startBindingElementId, focus: 0, gap: 5 }
+            ? { elementId: el.startBindingElementId, focus: 0, gap: 1 }
             : null,
           endBinding: el.endBindingElementId
-            ? { elementId: el.endBindingElementId, focus: 0, gap: 5 }
+            ? { elementId: el.endBindingElementId, focus: 0, gap: 1 }
             : null,
           lastCommittedPoint: null,
           startArrowhead: null,
@@ -214,18 +227,38 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
       return base;
     });
 
+    // Register arrow bindings on their target shapes so Excalidraw snaps them
+    for (const el of rawElements) {
+      if ((el.type === "arrow" || el.type === "line")) {
+        for (const targetId of [el.startBindingElementId, el.endBindingElementId]) {
+          if (!targetId) continue;
+          const target = excalidrawElements.find((e: any) => e.id === targetId);
+          if (target) {
+            target.boundElements = target.boundElements || [];
+            if (!target.boundElements.some((b: any) => b.id === el.id)) {
+              target.boundElements.push({ id: el.id, type: el.type });
+            }
+          }
+        }
+      }
+    }
+
     // Add text labels as bound text elements for shapes
     const textElements: any[] = [];
     for (const el of rawElements) {
       if (el.text && !["text", "arrow", "line"].includes(el.type)) {
         const textId = `${el.id}_text`;
+        const fontSize = el.fontSize || 18;
+        const lineHeight = 1.25;
+        const textHeight = fontSize * lineHeight;
         textElements.push({
           id: textId,
           type: "text",
-          x: el.x + 10,
-          y: el.y + el.height / 2 - 10,
-          width: el.width - 20,
-          height: 20,
+          // Centered inside the container — Excalidraw will auto-center bound text
+          x: el.x,
+          y: el.y + el.height / 2 - textHeight / 2,
+          width: el.width,
+          height: textHeight,
           angle: 0,
           strokeColor: "#1e293b",
           backgroundColor: "transparent",
@@ -241,11 +274,13 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
           boundElements: [],
           locked: false,
           text: el.text,
-          fontSize: el.fontSize || 16,
+          originalText: el.text,
+          fontSize,
           fontFamily: 1,
           textAlign: "center",
           verticalAlign: "middle",
-          baseline: 0,
+          baseline: Math.round(fontSize * 0.85),
+          lineHeight,
           containerId: el.id,
         });
 
