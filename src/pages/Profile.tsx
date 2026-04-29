@@ -1,14 +1,42 @@
 import { useNavigate } from "react-router-dom";
-import { User, Mail, Calendar, Trophy, Flame, Zap, Edit2, Camera, LogIn, Save, X } from "lucide-react";
+import { User, Mail, Calendar, Trophy, Flame, Zap, Edit2, Camera, LogIn, Save, X, BookOpen, Clock, Target, Sparkles, Award, Crown, ShieldCheck, Rocket, Star, Gem, Brain } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { EquippedAvatar } from "@/components/EquippedAvatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { useStudySessions } from "@/hooks/useStudySessions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+const PROFILE_ACHIEVEMENTS = [
+  { id: "first_session", title: "First Steps", icon: <BookOpen className="h-5 w-5" />, check: (s: any) => s.totalSessions >= 1 },
+  { id: "sessions_25", title: "Regular", icon: <BookOpen className="h-5 w-5" />, check: (s: any) => s.totalSessions >= 25 },
+  { id: "sessions_100", title: "Centurion", icon: <Award className="h-5 w-5" />, check: (s: any) => s.totalSessions >= 100 },
+  { id: "streak_3", title: "On Fire", icon: <Flame className="h-5 w-5" />, check: (s: any) => s.longestStreak >= 3 },
+  { id: "streak_7", title: "Week Warrior", icon: <Flame className="h-5 w-5" />, check: (s: any) => s.longestStreak >= 7 },
+  { id: "streak_14", title: "Fortnight Focus", icon: <ShieldCheck className="h-5 w-5" />, check: (s: any) => s.longestStreak >= 14 },
+  { id: "streak_30", title: "Unstoppable", icon: <Flame className="h-5 w-5" />, check: (s: any) => s.longestStreak >= 30 },
+  { id: "streak_100", title: "Streak Legend", icon: <Crown className="h-5 w-5" />, check: (s: any) => s.longestStreak >= 100 },
+  { id: "hours_10", title: "Dedicated Learner", icon: <Clock className="h-5 w-5" />, check: (s: any) => s.totalStudyHours >= 10 },
+  { id: "hours_50", title: "Half Century", icon: <Clock className="h-5 w-5" />, check: (s: any) => s.totalStudyHours >= 50 },
+  { id: "hours_100", title: "Century Club", icon: <Clock className="h-5 w-5" />, check: (s: any) => s.totalStudyHours >= 100 },
+  { id: "hours_500", title: "Time Lord", icon: <Calendar className="h-5 w-5" />, check: (s: any) => s.totalStudyHours >= 500 },
+  { id: "xp_500", title: "Spark", icon: <Sparkles className="h-5 w-5" />, check: (s: any) => s.totalXP >= 500 },
+  { id: "xp_1000", title: "XP Hunter", icon: <Zap className="h-5 w-5" />, check: (s: any) => s.totalXP >= 1000 },
+  { id: "xp_5000", title: "Power Player", icon: <Rocket className="h-5 w-5" />, check: (s: any) => s.totalXP >= 5000 },
+  { id: "xp_10000", title: "XP Legend", icon: <Star className="h-5 w-5" />, check: (s: any) => s.totalXP >= 10000 },
+  { id: "xp_50000", title: "Mythic", icon: <Gem className="h-5 w-5" />, check: (s: any) => s.totalXP >= 50000 },
+  { id: "tasks_10", title: "Task Master", icon: <Target className="h-5 w-5" />, check: (s: any) => s.totalTasks >= 10 },
+  { id: "tasks_50", title: "Productivity Beast", icon: <Target className="h-5 w-5" />, check: (s: any) => s.totalTasks >= 50 },
+  { id: "tasks_200", title: "Task Annihilator", icon: <Brain className="h-5 w-5" />, check: (s: any) => s.totalTasks >= 200 },
+  { id: "level_3", title: "Student", icon: <Award className="h-5 w-5" />, check: (s: any) => s.currentLevel >= 3 },
+  { id: "level_5", title: "Scholar", icon: <Award className="h-5 w-5" />, check: (s: any) => s.currentLevel >= 5 },
+  { id: "level_8", title: "Legend", icon: <Crown className="h-5 w-5" />, check: (s: any) => s.currentLevel >= 8 },
+];
 
 const LEVEL_THRESHOLDS: Record<number, number> = {
   1: 0, 2: 1000, 3: 2500, 4: 5000, 5: 10000, 6: 20000, 7: 35000, 8: 50000,
