@@ -360,8 +360,3 @@ export function ChatMode() {
     </ImmersiveBackground>
   );
 }
-        </div>
-      </div>
-    </ImmersiveBackground>
-  );
-}
