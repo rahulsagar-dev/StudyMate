@@ -227,7 +227,7 @@ Generate Excalidraw-compatible elements for the following request. Return elemen
           width: el.width - 20,
           height: 20,
           angle: 0,
-          strokeColor: "#e2e8f0",
+          strokeColor: "#1e293b",
           backgroundColor: "transparent",
           fillStyle: "solid",
           strokeWidth: 1,
