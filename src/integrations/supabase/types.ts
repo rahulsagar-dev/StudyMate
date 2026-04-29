@@ -109,6 +109,47 @@ export type Database = {
         }
         Relationships: []
       }
+      aria_memory: {
+        Row: {
+          created_at: string | null
+          id: string
+          key_concepts: string | null
+          session_date: string | null
+          student_performance: string | null
+          summary: string | null
+          topics_covered: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key_concepts?: string | null
+          session_date?: string | null
+          student_performance?: string | null
+          summary?: string | null
+          topics_covered?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key_concepts?: string | null
+          session_date?: string | null
+          student_performance?: string | null
+          summary?: string | null
+          topics_covered?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aria_memory_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       calendar_events: {
         Row: {
           color: string | null

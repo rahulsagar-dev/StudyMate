@@ -43,6 +43,16 @@ export function isBinaryTreePrompt(text: string): boolean {
   return /\b(?:b[io]n+ary|bst|tree)\b/.test(normalized) && !/linked\s*list|link\s*list/.test(normalized);
 }
 
+export function isLinkedListPrompt(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return /linked\s*list|link\s*list/.test(normalized);
+}
+
+export function isDoublyLinkedListPrompt(text: string): boolean {
+  const normalized = text.toLowerCase();
+  return isLinkedListPrompt(normalized) && /\b(doubly|double|two[\s-]?way|bidirectional|two[\s-]?direction)\b/.test(normalized);
+}
+
 export function isQuizPrompt(text: string): boolean {
   const normalized = text.toLowerCase();
   return /\b(quiz|test)\b.*\b(me|on|about|over)\b|\b(start|give|make|create|do)\b.*\bquiz\b/.test(normalized);
