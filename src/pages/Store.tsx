@@ -47,7 +47,7 @@ type CategoryFilter = "all" | "themes" | "avatars" | "powerups" | "boosts";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Palette, Flame, Snowflake, Sun, Moon, Brain, Swords, Ghost, Wand2, Crown,
-  ShieldCheck, Zap, Coffee, Sparkles, Rocket, Trophy, Gem,
+  ShieldCheck, Zap, Coffee, Sparkles, Rocket, Trophy, Gem, Star, Timer,
 };
 
 const CATEGORIES: { id: CategoryFilter; label: string; icon: LucideIcon }[] = [
