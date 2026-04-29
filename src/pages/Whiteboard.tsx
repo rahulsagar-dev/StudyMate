@@ -43,12 +43,9 @@ export default function Whiteboard() {
 
   // Receive elements pushed by the AI voice agent (Aria) — supports both
   // raw arrays and { elements: [...] } payload shapes.
+  const pendingDrawRef = useRef<unknown[] | null>(null);
   const handleAgentDraw = useCallback(
     (raw: unknown) => {
-      if (!excalidrawAPI) {
-        console.warn("[Whiteboard] Agent draw arrived but Excalidraw not ready yet");
-        return;
-      }
       const rawElements = Array.isArray(raw)
         ? raw
         : Array.isArray((raw as { elements?: unknown[] })?.elements)
@@ -58,10 +55,13 @@ export default function Whiteboard() {
         console.log("[Whiteboard] Agent draw with empty elements — ignoring");
         return;
       }
+      if (!excalidrawAPI) {
+        console.warn("[Whiteboard] Agent draw arrived but Excalidraw not ready — buffering");
+        pendingDrawRef.current = rawElements;
+        return;
+      }
       // Sanitize incoming elements: unique ids across the batch, valid sizes,
       // no orphan container refs, and visible colors on the white canvas.
-      // Light strokes like #e2e8f0 / "transparent" / "white" become invisible,
-      // so we force them to a dark slate so Aria's drawings actually show up.
       const FORCE_DARK_RE = /^(transparent|#fff(fff)?|#e2e8f0|#f1f5f9|#f8fafc|#cbd5e1|white)$/i;
       const fixColor = (c: any, fallback: string) => {
         if (!c || typeof c !== "string") return fallback;
@@ -85,7 +85,6 @@ export default function Whiteboard() {
           const boundElements = Array.isArray(el.boundElements)
             ? el.boundElements.filter((b: any) => b?.id && validIds.has(b.id))
             : [];
-          // Force visible colors on white canvas
           const strokeColor = fixColor(el.strokeColor, "#1e293b");
           const backgroundColor =
             el.type === "text" || el.type === "arrow" || el.type === "line"
@@ -94,10 +93,6 @@ export default function Whiteboard() {
           return { ...el, id, width, height, containerId, boundElements, strokeColor, backgroundColor };
         }) as never[];
       try {
-        // REPLACE, don't append. Aria sends a complete diagram each turn;
-        // appending stacks duplicate-id elements (which Excalidraw silently
-        // dedupes) so new drawings appear hidden under stale ones, and the
-        // scene grows past Realtime's 256KB payload limit (HTTP 413).
         excalidrawAPI.updateScene({ elements: incomingElements });
         excalidrawAPI.scrollToContent(incomingElements, {
           fitToViewport: true,
@@ -112,6 +107,16 @@ export default function Whiteboard() {
     },
     [excalidrawAPI],
   );
+
+  // Flush any draw that arrived before Excalidraw was ready
+  useEffect(() => {
+    if (excalidrawAPI && pendingDrawRef.current) {
+      const buffered = pendingDrawRef.current;
+      pendingDrawRef.current = null;
+      console.log("[Whiteboard] Flushing buffered draw after Excalidraw ready");
+      handleAgentDraw(buffered);
+    }
+  }, [excalidrawAPI, handleAgentDraw]);
 
   // Listen for direct LiveKit data-channel pushes from Aria (low-latency path)
   useEffect(() => {
