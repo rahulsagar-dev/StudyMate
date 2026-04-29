@@ -147,6 +147,39 @@
     --ring: 280 90% 65%;
     --gradient-primary: linear-gradient(135deg, hsl(280 90% 65%), hsl(320 95% 65%));
   }
+
+  /* Sakura — soft cherry blossom pink */
+  .theme-sakura {
+    --background: 340 25% 8%;
+    --card: 340 22% 12%;
+    --card-elevated: 340 22% 14%;
+    --primary: 335 85% 70%;
+    --primary-glow: 350 90% 75%;
+    --ring: 335 85% 70%;
+    --gradient-primary: linear-gradient(135deg, hsl(335 85% 70%), hsl(290 70% 70%));
+  }
+
+  /* Deep Forest — emerald greens */
+  .theme-forest {
+    --background: 150 25% 6%;
+    --card: 150 22% 10%;
+    --card-elevated: 150 22% 12%;
+    --primary: 155 70% 50%;
+    --primary-glow: 175 70% 55%;
+    --ring: 155 70% 50%;
+    --gradient-primary: linear-gradient(135deg, hsl(155 70% 50%), hsl(95 60% 55%));
+  }
+
+  /* Galaxy Drift — cosmic purple with starlight */
+  .theme-galaxy {
+    --background: 260 35% 6%;
+    --card: 260 30% 10%;
+    --card-elevated: 260 30% 12%;
+    --primary: 270 90% 70%;
+    --primary-glow: 220 95% 70%;
+    --ring: 270 90% 70%;
+    --gradient-primary: linear-gradient(135deg, hsl(270 90% 70%), hsl(220 95% 70%));
+  }
 }
 
 @layer base {

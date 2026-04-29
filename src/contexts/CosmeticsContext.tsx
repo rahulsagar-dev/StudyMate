@@ -20,6 +20,9 @@ const ALL_THEME_CLASSES = [
   "theme-arctic",
   "theme-solstice",
   "theme-midnight",
+  "theme-sakura",
+  "theme-forest",
+  "theme-galaxy",
 ];
 
 export function CosmeticsProvider({ children }: { children: ReactNode }) {
@@ -81,4 +84,8 @@ export const AVATAR_ICON_MAP: Record<string, string> = {
   "avatar-ghost": "Ghost",
   "avatar-wizard": "Wand2",
   "avatar-monarch": "Crown",
+  "avatar-rocket": "Rocket",
+  "avatar-flame": "Flame",
+  "avatar-trophy": "Trophy",
+  "avatar-gem": "Gem",
 };
