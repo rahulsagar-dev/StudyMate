@@ -1,17 +1,30 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Trash2, Bot, User, Mic } from "lucide-react";
+import { Send, Trash2, Bot, User, Mic, History, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Card, CardContent } from "@/components/ui/card";
 import { streamChat, type ChatMessage } from "@/lib/streamChat";
 import { detectActions, stripActionTags } from "@/lib/aiActions";
 import { ActionButtons } from "@/components/ai-tutor/ActionButtons";
 import { useUserContext, buildContextPrompt } from "@/hooks/useUserContext";
+import { useChatHistory, type ChatConversationSummary } from "@/hooks/useChatHistory";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImmersiveBackground } from "@/components/ai-tutor/ImmersiveBackground";
 import { toast } from "@/hooks/use-toast";
+
+function newConversationId() {
+  return (crypto as any)?.randomUUID?.() ?? `conv-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 export function ChatMode() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -20,6 +33,14 @@ export function ChatMode() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const userCtx = useUserContext();
+  const { saveMessage, listConversations, loadConversation, deleteConversation } = useChatHistory();
+  const conversationIdRef = useRef<string>(newConversationId());
+
+  // History sheet state
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [conversations, setConversations] = useState<ChatConversationSummary[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
 
   // Speech-to-text (in-line dictation into the textarea)
   const [isListening, setIsListening] = useState(false);
