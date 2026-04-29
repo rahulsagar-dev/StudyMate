@@ -13,7 +13,8 @@ const DIAGRAM_PROMPTS: Record<string, string> = {
 
 LAYOUT REFERENCES:
 - Array: a single horizontal row of equal rectangles (60x60) with NO gap between them. Place small text labels [0], [1], [2]… ABOVE each cell (y = cell_y - 25). Put the value text inside each cell.
-- Linked list: rectangles (80x50) spaced 40px apart horizontally. Draw an arrow from the right edge of each node to the left edge of the next. Add a text element "NULL" after the last node's arrow.
+- Singly linked list: rectangles (80x50) spaced 60px apart horizontally. Draw EXACTLY ONE arrow from the right edge of each node to the left edge of the NEXT node — do NOT draw a reverse arrow. Add a text element "NULL" after the last node's arrow. For N nodes, there are exactly N-1 arrows total (plus optional final arrow to NULL).
+- Doubly linked list: same as singly linked list but with TWO arrows between each pair of nodes (one forward, one back), placed slightly offset vertically so they don't overlap.
 - Stack: vertical column of rectangles (120x50) stacked with no gap. Add a "TOP" text label to the LEFT of the topmost rectangle.
 - Queue: horizontal row of rectangles (80x50) with no gap. Add "FRONT" text label to the LEFT of the first cell and "REAR" text label to the RIGHT of the last cell.
 - Tree / BST / Binary tree: ellipses (60x60) arranged in horizontal levels. ROOT at center-top (e.g. x=400, y=80). LEVEL 2: two children at (x=280, y=200) and (x=520, y=200). LEVEL 3 (if 4 grandchildren): (x=200,y=320), (x=360,y=320), (x=440,y=320), (x=600,y=320). Each child must be horizontally OFFSET from its parent — never directly below. Connect every parent to its children with a "line" element going from parent center to child center. Put numeric values inside each node (e.g. "8", "3", "10").
