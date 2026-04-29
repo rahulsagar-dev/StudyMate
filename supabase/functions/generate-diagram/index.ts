@@ -9,7 +9,23 @@ const corsHeaders = {
 const DIAGRAM_PROMPTS: Record<string, string> = {
   flowchart: `You are an expert at creating flowchart diagrams. Generate a flowchart using rectangles for steps and arrows connecting them. Use a top-to-bottom layout with consistent spacing. Each rectangle should be 200px wide and 60px tall. Start at y=100 and space elements 120px apart vertically. Use strokeColor "#e2e8f0" and backgroundColor "#1e293b" for rectangles.`,
   mindmap: `You are an expert at creating mind map diagrams. Generate a mind map using ellipses for nodes and lines connecting them. Place the central topic at center (x=400, y=300) with branches radiating outward. Use ellipses 180px wide and 80px tall. Use strokeColor "#e2e8f0" and backgroundColor "#1e293b" for nodes.`,
-  diagram: `You are an expert at creating general diagrams. Generate a clear diagram using appropriate shapes (rectangles, ellipses, diamonds) with arrows or lines connecting them. Use a clean layout with consistent spacing. Use strokeColor "#e2e8f0" and backgroundColor "#1e293b" for shapes.`,
+  diagram: `You are an expert at creating educational diagrams for any subject (data structures, algorithms, processes, biology, math, etc). Pick the layout that best matches the request and follow these layout references precisely. Use strokeColor "#1e293b" and backgroundColor "#ffffff" or light fills for shapes (the canvas is white).
+
+LAYOUT REFERENCES:
+- Array: a single horizontal row of equal rectangles (60x60) with NO gap between them. Place small text labels [0], [1], [2]… ABOVE each cell (y = cell_y - 25). Put the value text inside each cell.
+- Linked list: rectangles (80x50) spaced 40px apart horizontally. Draw an arrow from the right edge of each node to the left edge of the next. Add a text element "NULL" after the last node's arrow.
+- Stack: vertical column of rectangles (120x50) stacked with no gap. Add a "TOP" text label to the LEFT of the topmost rectangle.
+- Queue: horizontal row of rectangles (80x50) with no gap. Add "FRONT" text label to the LEFT of the first cell and "REAR" text label to the RIGHT of the last cell.
+- Tree / BST: ellipses (60x60) arranged in horizontal levels (root at top, children below). Each level is 100px below the previous. Draw straight lines from each parent ellipse to its children.
+- Graph: ellipses (60x60) placed at varied positions (not in a strict grid). Connect related nodes with line elements; you may add small text labels near edges for weights.
+- Mind map: one central ellipse (180x80) at the center; 4-6 child ellipses radiating outward, each connected to the center with a line.
+- Flowchart: top-down layout. Use rectangles for process steps and diamonds for decisions. Connect with downward arrows. Start at y=80, vertical spacing 100px.
+
+GENERAL RULES:
+- Every shape that has a label MUST include the "text" field — it will be auto-bound as a centered label.
+- Arrows MUST set startBindingElementId and endBindingElementId so they snap to shapes.
+- Give every element a unique id string.
+- Use a clean, readable layout with consistent spacing — no overlapping shapes.`,
 };
 
 serve(async (req) => {
