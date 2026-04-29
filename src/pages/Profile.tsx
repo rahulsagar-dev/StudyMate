@@ -46,6 +46,7 @@ export default function Profile() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { profile, loading, getLevelTitle, getLevelProgress, refetch } = useProfile();
+  const { sessions } = useStudySessions();
   const [editing, setEditing] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [saving, setSaving] = useState(false);
