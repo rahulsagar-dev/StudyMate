@@ -44,6 +44,62 @@ export function inferDiagramType(text: string): "flowchart" | "mindmap" | "diagr
 }
 
 /**
+ * Strips voice filler words and command verbs so the AI receives just
+ * the subject of what to draw. If the cleaned subject is too short, it
+ * gets expanded into a more descriptive prompt so the diagram model has
+ * enough information to lay out a useful figure.
+ */
+export function cleanVoicePrompt(raw: string): string {
+  let text = ` ${raw.toLowerCase()} `;
+
+  // Remove common filler phrases (longer phrases first to avoid partial leftovers)
+  const fillerPhrases = [
+    "hey aria", "hi aria", "okay aria", "ok aria", "aria",
+    "on the whiteboard", "on the white board", "on the canvas", "on the board",
+    "to the whiteboard", "to the white board", "to the canvas", "to the board",
+    "for me", "please", "can you", "could you", "would you", "will you",
+    "i want you to", "i need you to", "i'd like you to",
+    "show me", "draw me", "make me",
+    "draw", "sketch", "show", "make", "put", "add", "create", "build",
+    "visualize", "visualise", "display", "render", "generate",
+    "a diagram of", "a picture of", "an image of",
+  ];
+  for (const phrase of fillerPhrases) {
+    text = text.split(` ${phrase} `).join(" ");
+  }
+
+  let cleaned = text.replace(/[.,!?]/g, " ").replace(/\s+/g, " ").trim();
+
+  // If the cleaned subject is too thin, expand it with a one-line description
+  // so the diagram generator has something concrete to lay out.
+  if (cleaned.split(/\s+/).filter(Boolean).length < 3) {
+    const subject = cleaned || raw.trim();
+    const lower = subject.toLowerCase();
+    if (/array/.test(lower)) {
+      cleaned = `An array of 6 cells with index labels 0-5 above each cell and example values inside`;
+    } else if (/linked\s*list/.test(lower)) {
+      cleaned = `A singly linked list of 4 nodes with arrows between them and NULL after the last node`;
+    } else if (/stack/.test(lower)) {
+      cleaned = `A stack with 4 stacked rectangles and a TOP label on the top element`;
+    } else if (/queue/.test(lower)) {
+      cleaned = `A queue with 4 horizontal cells and FRONT and REAR labels at the ends`;
+    } else if (/tree|bst|binary/.test(lower)) {
+      cleaned = `A binary search tree with a root node and two levels of children connected by lines`;
+    } else if (/graph/.test(lower)) {
+      cleaned = `A graph with 5 labeled nodes connected by lines representing edges`;
+    } else if (/mind\s*map/.test(lower)) {
+      cleaned = `A mind map with a central topic "${subject}" and 4 branches radiating outward`;
+    } else if (/flow\s*chart|flowchart/.test(lower)) {
+      cleaned = `A top-down flowchart with start, two process steps, a decision diamond, and an end`;
+    } else {
+      cleaned = `A clear labeled diagram of ${subject} with shapes and connecting lines`;
+    }
+  }
+
+  return cleaned;
+}
+
+/**
  * Bridges LiveKit data messages from the Python agent (Aria) to the
  * Whiteboard page via a window event. Mounted inside <LiveKitRoom>.
  *
