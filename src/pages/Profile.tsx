@@ -221,17 +221,52 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Achievements - Empty State */}
-      <div className="bg-card rounded-2xl border border-border/50 p-6">
-        <h3 className="font-semibold text-foreground mb-4">Recent Achievements</h3>
-        <div className="flex flex-col items-center justify-center py-8 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-achievement/10 flex items-center justify-center mb-4">
-            <Trophy className="h-8 w-8 text-achievement/40" />
+      {/* Recent Achievements */}
+      {(() => {
+        const stats = {
+          totalStudyHours: (sessions ?? []).reduce((sum, s) => sum + s.study_minutes, 0) / 60,
+          longestStreak: profile?.longest_streak ?? 0,
+          totalXP: profile?.total_xp ?? 0,
+          totalSessions: sessions?.length ?? 0,
+          totalTasks: (sessions ?? []).reduce((sum, s) => sum + s.tasks_completed, 0),
+          currentLevel: profile?.current_level ?? 1,
+        };
+        const unlocked = PROFILE_ACHIEVEMENTS.filter((a) => a.check(stats));
+        const recent = unlocked.slice(-6).reverse();
+        return (
+          <div className="bg-card rounded-2xl border border-border/50 p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-foreground">Recent Achievements</h3>
+              <button onClick={() => navigate("/achievements")} className="text-sm text-primary hover:underline">
+                View all ({unlocked.length}/{PROFILE_ACHIEVEMENTS.length})
+              </button>
+            </div>
+            {recent.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-achievement/10 flex items-center justify-center mb-4">
+                  <Trophy className="h-8 w-8 text-achievement/40" />
+                </div>
+                <h4 className="font-medium text-foreground mb-2">No achievements yet</h4>
+                <p className="text-sm text-muted-foreground max-w-sm">Complete tasks, quizzes, and maintain streaks to earn achievements!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {recent.map((a) => (
+                  <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl bg-achievement/5 border border-achievement/20">
+                    <div className="w-10 h-10 rounded-lg bg-achievement/15 text-achievement flex items-center justify-center shrink-0">
+                      {a.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{a.title}</p>
+                      <p className="text-xs text-achievement">Unlocked</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <h4 className="font-medium text-foreground mb-2">No achievements yet</h4>
-          <p className="text-sm text-muted-foreground max-w-sm">Complete tasks, quizzes, and maintain streaks to earn achievements!</p>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Account Settings */}
       <div className="bg-card rounded-2xl border border-border/50 p-6">
