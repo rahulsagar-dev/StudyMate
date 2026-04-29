@@ -3,6 +3,7 @@ import {
   LiveKitRoom,
   useVoiceAssistant,
   useConnectionState,
+  useLocalParticipant,
   VoiceAssistantControlBar,
   RoomAudioRenderer,
   DisconnectButton,
@@ -24,10 +25,16 @@ interface TokenData {
 
 // Inner component — only rendered inside LiveKitRoom context
 function AgentInterface({ onEnd }: { onEnd: () => void }) {
-  const { state, agent } = useVoiceAssistant();
+  const { state, agent, agentTranscriptions } = useVoiceAssistant();
   const connectionState = useConnectionState();
+  const { localParticipant } = useLocalParticipant();
   const [agentTimedOut, setAgentTimedOut] = useState(false);
   const [fallbackCommand, setFallbackCommand] = useState("");
+  const [textInput, setTextInput] = useState("");
+  const [userMessages, setUserMessages] = useState<{ id: string; text: string }[]>([]);
+  const [sending, setSending] = useState(false);
+
+  const isConnected = connectionState === ConnectionState.Connected;
 
   useEffect(() => {
     if (agent || connectionState !== ConnectionState.Connected) {
@@ -46,6 +53,28 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
     setFallbackCommand("");
   };
 
+  const sendTextToAria = async (event: FormEvent) => {
+    event.preventDefault();
+    const text = textInput.trim();
+    if (!text || !isConnected || !localParticipant) return;
+    try {
+      setSending(true);
+      const payload = new TextEncoder().encode(
+        JSON.stringify({ type: "text_input", text })
+      );
+      await localParticipant.publishData(payload, { reliable: true });
+      setUserMessages((prev) => [
+        ...prev,
+        { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, text },
+      ]);
+      setTextInput("");
+    } catch (err) {
+      console.error("[VoiceAgent] Failed to publish text input:", err);
+    } finally {
+      setSending(false);
+    }
+  };
+
   const stateLabel =
     !agent && connectionState === ConnectionState.Connected
       ? "Waking Aria up…"
@@ -58,6 +87,25 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
           speaking: "Speaking…",
           disconnected: "Disconnected",
         }[state] ?? "Connected");
+
+  // Build a merged recent timeline of user texts + Aria transcriptions
+  const ariaSegments = (agentTranscriptions ?? []).map((s) => ({
+    id: `aria-${s.id}`,
+    role: "assistant" as const,
+    text: s.text,
+    time: s.firstReceivedTime ?? 0,
+    final: s.final,
+  }));
+  const userSegments = userMessages.map((m, i) => ({
+    id: m.id,
+    role: "user" as const,
+    text: m.text,
+    time: Number(m.id.split("-")[0]) || i,
+    final: true,
+  }));
+  const timeline = [...ariaSegments, ...userSegments]
+    .sort((a, b) => a.time - b.time)
+    .slice(-4);
 
   return (
     <div className="flex flex-col items-center gap-8 py-4">
@@ -111,6 +159,64 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
       </div>
 
       <RoomAudioRenderer />
+
+      {/* Recent exchanges + text input — only when connected */}
+      {isConnected && (
+        <div className="w-full max-w-md flex flex-col gap-3">
+          {timeline.length > 0 && (
+            <div className="flex flex-col gap-2 max-h-48 overflow-y-auto px-1">
+              <AnimatePresence initial={false}>
+                {timeline.map((m) => (
+                  <motion.div
+                    key={m.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm backdrop-blur-md border ${
+                        m.role === "user"
+                          ? "rounded-br-md text-white border-white/20"
+                          : "rounded-bl-md text-white/90 border-white/10"
+                      }`}
+                      style={
+                        m.role === "user"
+                          ? { background: "linear-gradient(135deg, hsl(265 90% 55% / 0.55), hsl(220 90% 50% / 0.55))" }
+                          : { background: "hsl(0 0% 100% / 0.06)" }
+                      }
+                    >
+                      {m.text}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+
+          <form onSubmit={sendTextToAria} className="flex gap-2">
+            <input
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              placeholder="Type a message..."
+              disabled={sending}
+              className="flex-1 rounded-xl border border-white/15 bg-white/10 backdrop-blur-md px-4 py-2.5 text-sm text-white placeholder:text-white/45 outline-none focus:border-primary/60 transition"
+            />
+            <button
+              type="submit"
+              disabled={!textInput.trim() || sending}
+              aria-label="Send message to Aria"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-xl text-white disabled:opacity-50 transition"
+              style={{
+                background:
+                  "linear-gradient(135deg, hsl(265 90% 60%), hsl(220 90% 55%))",
+              }}
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </form>
+        </div>
+      )}
 
       <DisconnectButton onClick={onEnd}>
         <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-all">
