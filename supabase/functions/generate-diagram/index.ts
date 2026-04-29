@@ -180,14 +180,19 @@ CRITICAL RULES:
         backgroundColor: el.backgroundColor || "#ffffff",
         fillStyle: el.fillStyle || "solid",
         strokeWidth: 2,
+        strokeStyle: "solid",
         roughness: 0,
         opacity: 100,
+        roundness: el.type === "rectangle" || el.type === "diamond" ? { type: 3 } : null,
         seed: Math.floor(Math.random() * 100000),
         version: 1,
         versionNonce: Math.floor(Math.random() * 100000),
         isDeleted: false,
         groupIds: [],
+        frameId: null,
         boundElements: [],
+        updated: Date.now(),
+        link: null,
         locked: false,
       };
 
@@ -285,10 +290,11 @@ CRITICAL RULES:
           containerId: el.id,
         });
 
-        // Update the parent shape to reference the bound text
+        // Update the parent shape to reference the bound text (preserve existing arrow bindings)
         const shape = excalidrawElements.find((e: any) => e.id === el.id);
         if (shape) {
-          shape.boundElements = [{ id: textId, type: "text" }];
+          shape.boundElements = shape.boundElements || [];
+          shape.boundElements.push({ id: textId, type: "text" });
         }
       }
     }

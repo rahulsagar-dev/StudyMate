@@ -303,10 +303,8 @@ export default function Whiteboard() {
       }
 
       if (data?.elements && excalidrawAPI) {
-        const existingElements = excalidrawAPI.getSceneElements();
-        excalidrawAPI.updateScene({
-          elements: [...existingElements, ...data.elements],
-        });
+        // Reuse the same sanitization path Aria uses — guarantees Excalidraw accepts them
+        handleAgentDraw(data.elements);
 
         // Award XP
         try {
