@@ -209,6 +209,8 @@ export default function Flashcards() {
     setTimeout(() => { handleGenerate(); }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);
+
+  const handlePrev = () => {
     setFlipped(false);
     setCurrentIndex((i) => (i > 0 ? i - 1 : cards.length - 1));
   };
