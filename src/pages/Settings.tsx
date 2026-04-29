@@ -40,9 +40,23 @@ export default function Settings() {
   const { settings: pomodoroSettings, updateSettings: updatePomodoroSettings } = usePomodoro();
   // Toggle states
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("studymate-light-mode") !== "1";
+  });
   const [studyReminders, setStudyReminders] = useState(true);
   const [twoFactorAuth, setTwoFactorAuth] = useState(false);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (darkMode) {
+      root.classList.remove("light-mode");
+      localStorage.removeItem("studymate-light-mode");
+    } else {
+      root.classList.add("light-mode");
+      localStorage.setItem("studymate-light-mode", "1");
+    }
+  }, [darkMode]);
 
   // Dialog states
   const [dailyGoalOpen, setDailyGoalOpen] = useState(false);
