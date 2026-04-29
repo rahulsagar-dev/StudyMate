@@ -177,7 +177,7 @@ export default function Settings() {
               </div>
               <div>
                 <p className="font-medium text-foreground">Dark Mode</p>
-                <p className="text-sm text-muted-foreground">Always enabled for optimal focus</p>
+                <p className="text-sm text-muted-foreground">{darkMode ? "Dark theme active" : "Light theme active"}</p>
               </div>
             </div>
             <button
