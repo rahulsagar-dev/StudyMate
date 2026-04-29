@@ -138,13 +138,39 @@ export function useAnalytics() {
     const secondHalf = sessions.slice(mid).reduce((s, r) => s + (r.study_minutes || 0), 0);
     const studyHoursTrend = firstHalf > 0 ? Math.round(((secondHalf - firstHalf) / firstHalf) * 100) : 0;
 
-    // Subject breakdown from completed tasks
+    // Subject/source breakdown from XP transactions this month
+    const SOURCE_LABELS: Record<string, string> = {
+      quiz: "Quizzes",
+      pomodoro: "Focus Sessions",
+      flashcard: "Flashcards",
+      summary: "Summaries",
+      store_purchase: "Store",
+      task_uncomplete: "Adjustments",
+    };
     const subjectMap = new Map<string, number>();
+
+    // Tasks contribute by their subject name
+    const taskMonthStart = new Date();
+    taskMonthStart.setDate(1);
+    taskMonthStart.setHours(0, 0, 0, 0);
     tasks.forEach((t) => {
-      const current = subjectMap.get(t.subject) || 0;
-      subjectMap.set(t.subject, current + (t.xp_reward || 0));
+      if (!t.completed_at) return;
+      if (new Date(t.completed_at) < taskMonthStart) return;
+      const key = t.subject || "General";
+      subjectMap.set(key, (subjectMap.get(key) || 0) + (t.xp_reward || 0));
     });
+
+    // Non-task XP sources
+    xpTx.forEach((tx) => {
+      const amt = tx.amount || 0;
+      if (amt <= 0) return;
+      if (tx.source === "task") return; // already covered above by subject
+      const label = SOURCE_LABELS[tx.source] || (tx.source ? tx.source.replace(/_/g, " ") : "Other");
+      subjectMap.set(label, (subjectMap.get(label) || 0) + amt);
+    });
+
     const subjectData: SubjectData[] = Array.from(subjectMap.entries())
+      .filter(([, v]) => v > 0)
       .map(([name, value], i) => ({
         name,
         value,
