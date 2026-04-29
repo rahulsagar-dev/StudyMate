@@ -434,10 +434,12 @@ export type Database = {
           difficulty: string
           id: string
           incorrect_answers: number
+          questions_payload: Json | null
           quiz_mode: string
           quiz_topic: string
           score: number
           skipped_answers: number
+          status: string | null
           time_taken: number | null
           total_questions: number
           user_id: string
@@ -450,10 +452,12 @@ export type Database = {
           difficulty?: string
           id?: string
           incorrect_answers?: number
+          questions_payload?: Json | null
           quiz_mode?: string
           quiz_topic: string
           score?: number
           skipped_answers?: number
+          status?: string | null
           time_taken?: number | null
           total_questions?: number
           user_id: string
@@ -466,10 +470,12 @@ export type Database = {
           difficulty?: string
           id?: string
           incorrect_answers?: number
+          questions_payload?: Json | null
           quiz_mode?: string
           quiz_topic?: string
           score?: number
           skipped_answers?: number
+          status?: string | null
           time_taken?: number | null
           total_questions?: number
           user_id?: string
@@ -647,7 +653,9 @@ export type Database = {
           date: string
           id: string
           study_minutes: number
+          summary: string | null
           tasks_completed: number
+          topics_covered: string | null
           user_id: string
           xp_earned: number
         }
@@ -656,7 +664,9 @@ export type Database = {
           date: string
           id?: string
           study_minutes?: number
+          summary?: string | null
           tasks_completed?: number
+          topics_covered?: string | null
           user_id: string
           xp_earned?: number
         }
@@ -665,7 +675,9 @@ export type Database = {
           date?: string
           id?: string
           study_minutes?: number
+          summary?: string | null
           tasks_completed?: number
+          topics_covered?: string | null
           user_id?: string
           xp_earned?: number
         }
