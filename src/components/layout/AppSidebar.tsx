@@ -67,6 +67,10 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { profile } = useProfile();
+  const level = profile?.current_level ?? 1;
+  const xp = profile?.total_xp ?? 0;
+  const levelProgress = getLevelProgress(xp, level);
 
   const isActive = (path: string) => location.pathname === path;
 
