@@ -1,17 +1,30 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Trash2, Bot, User, Mic } from "lucide-react";
+import { Send, Trash2, Bot, User, Mic, History, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Card, CardContent } from "@/components/ui/card";
 import { streamChat, type ChatMessage } from "@/lib/streamChat";
 import { detectActions, stripActionTags } from "@/lib/aiActions";
 import { ActionButtons } from "@/components/ai-tutor/ActionButtons";
 import { useUserContext, buildContextPrompt } from "@/hooks/useUserContext";
+import { useChatHistory, type ChatConversationSummary } from "@/hooks/useChatHistory";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ImmersiveBackground } from "@/components/ai-tutor/ImmersiveBackground";
 import { toast } from "@/hooks/use-toast";
+
+function newConversationId() {
+  return (crypto as any)?.randomUUID?.() ?? `conv-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 export function ChatMode() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -20,6 +33,14 @@ export function ChatMode() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const userCtx = useUserContext();
+  const { saveMessage, listConversations, loadConversation, deleteConversation } = useChatHistory();
+  const conversationIdRef = useRef<string>(newConversationId());
+
+  // History sheet state
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [conversations, setConversations] = useState<ChatConversationSummary[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
 
   // Speech-to-text (in-line dictation into the textarea)
   const [isListening, setIsListening] = useState(false);
@@ -79,6 +100,7 @@ export function ChatMode() {
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setIsStreaming(true);
+    saveMessage(conversationIdRef.current, "user", trimmed);
 
     let assistantContent = "";
     const controller = new AbortController();
@@ -100,7 +122,12 @@ export function ChatMode() {
         messages: [...messages, userMsg],
         userContext: buildContextPrompt(userCtx),
         onDelta: upsert,
-        onDone: () => setIsStreaming(false),
+        onDone: () => {
+          setIsStreaming(false);
+          if (assistantContent.trim()) {
+            saveMessage(conversationIdRef.current, "assistant", assistantContent);
+          }
+        },
         onError: (err) => {
           upsert(`\n\n⚠️ ${err}`);
           setIsStreaming(false);
@@ -115,6 +142,37 @@ export function ChatMode() {
     }
   };
 
+  const openHistory = async () => {
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    const list = await listConversations();
+    setConversations(list);
+    setHistoryLoading(false);
+  };
+
+  const handleLoadConversation = async (cid: string) => {
+    abortRef.current?.abort();
+    setIsStreaming(false);
+    const msgs = await loadConversation(cid);
+    setMessages(msgs);
+    conversationIdRef.current = cid;
+    setHistoryOpen(false);
+  };
+
+  const handleNewChat = () => {
+    abortRef.current?.abort();
+    setIsStreaming(false);
+    setMessages([]);
+    conversationIdRef.current = newConversationId();
+  };
+
+  const handleDeleteConversation = async (cid: string) => {
+    await deleteConversation(cid);
+    setConversations(prev => prev.filter(c => c.conversation_id !== cid));
+    if (cid === conversationIdRef.current) handleNewChat();
+    toast({ title: "Conversation deleted" });
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -125,6 +183,64 @@ export function ChatMode() {
   return (
     <ImmersiveBackground>
       <div className="flex flex-col h-[calc(100vh-220px)] max-h-[700px]">
+        {/* Top toolbar: history + new chat */}
+        <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 backdrop-blur-md" style={{ background: "hsl(0 0% 0% / 0.15)" }}>
+          <Sheet open={historyOpen} onOpenChange={(o) => (o ? openHistory() : setHistoryOpen(false))}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10 gap-2">
+                <History className="h-4 w-4" /> History
+              </Button>
+            </SheetTrigger>
+            <SheetContent className="w-full sm:max-w-lg">
+              <SheetHeader>
+                <SheetTitle>Chat History</SheetTitle>
+              </SheetHeader>
+              <ScrollArea className="h-[calc(100vh-100px)] mt-4 pr-2">
+                {historyLoading ? (
+                  <div className="space-y-3">
+                    {[1, 2, 3].map((i) => <div key={i} className="h-20 rounded-lg shimmer" />)}
+                  </div>
+                ) : conversations.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <MessageSquare className="h-10 w-10 mx-auto mb-3 opacity-40" />
+                    <p>No chats yet.</p>
+                    <p className="text-sm">Send your first message to start a conversation!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {conversations.map((c) => (
+                      <Card key={c.conversation_id} className="glass-card group cursor-pointer" onClick={() => handleLoadConversation(c.conversation_id)}>
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-sm font-medium text-foreground line-clamp-2 flex-1">
+                              {c.preview || "(no preview)"}
+                            </p>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7 text-destructive shrink-0 opacity-60 hover:opacity-100"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteConversation(c.conversation_id); }}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>{c.message_count} message{c.message_count === 1 ? "" : "s"}</span>
+                            <span>{new Date(c.last_at).toLocaleDateString()}</span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
+          <Button variant="ghost" size="sm" onClick={handleNewChat} className="text-white/80 hover:text-white hover:bg-white/10 gap-2">
+            <MessageSquare className="h-4 w-4" /> New chat
+          </Button>
+        </div>
+
         <ScrollArea className="flex-1 pr-4" ref={scrollRef as any}>
           <div className="space-y-4 p-4">
             {messages.length === 0 && (
@@ -239,16 +355,6 @@ export function ChatMode() {
               <Send className="h-4 w-4" />
             </Button>
           </div>
-          {messages.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => { setMessages([]); abortRef.current?.abort(); setIsStreaming(false); }}
-              className="text-white/60 hover:text-white hover:bg-white/10"
-            >
-              <Trash2 className="h-3 w-3 mr-1" /> Clear chat
-            </Button>
-          )}
         </div>
       </div>
     </ImmersiveBackground>

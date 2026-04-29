@@ -7,6 +7,7 @@ import QuizSetup from "@/components/quiz/QuizSetup";
 import QuizPlayer from "@/components/quiz/QuizPlayer";
 import QuizResults from "@/components/quiz/QuizResults";
 import QuizReview from "@/components/quiz/QuizReview";
+import QuizHistorySheet from "@/components/quiz/QuizHistorySheet";
 import type { Quiz, QuizMode, Difficulty, QuizAnswer } from "@/types/quiz";
 
 type Phase = "setup" | "playing" | "results" | "review";
@@ -94,14 +95,17 @@ export default function Quizzes() {
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       {/* Header - only show on setup */}
       {phase === "setup" && (
-        <div className="flex items-center gap-3 animate-fade-in-up">
-          <div className="p-2.5 rounded-xl bg-primary/10">
-            <Brain className="h-6 w-6 text-primary" />
+        <div className="flex items-center justify-between gap-3 animate-fade-in-up flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-primary/10">
+              <Brain className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Quizzes</h1>
+              <p className="text-sm text-muted-foreground">Test your knowledge and earn XP</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Quizzes</h1>
-            <p className="text-sm text-muted-foreground">Test your knowledge and earn XP</p>
-          </div>
+          <QuizHistorySheet />
         </div>
       )}
 
