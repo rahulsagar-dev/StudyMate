@@ -362,6 +362,50 @@ export function WhiteboardDataBridge() {
       }
     };
 
+    const handleVoiceCommand = (text: string, isLocalUser: boolean) => {
+      if (!text) return;
+
+      // Quiz intent — user asks Aria to start a quiz
+      if (isLocalUser && isQuizPrompt(text) && !quizInFlight.current) {
+        const topic = extractQuizTopic(text);
+        console.log("[WhiteboardDataBridge] detected voice quiz prompt:", { text, topic });
+        if (topic && topic.length >= 2) {
+          quizInFlight.current = true;
+          (async () => {
+            try {
+              const { data, error } = await supabase.functions.invoke("start-voice-quiz", {
+                body: { topic, difficulty: "medium", questionCount: 5 },
+              });
+              if (error) throw error;
+              console.log("[WhiteboardDataBridge] voice quiz started:", data);
+            } catch (err) {
+              console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
+            } finally {
+              window.setTimeout(() => { quizInFlight.current = false; }, 4000);
+            }
+          })();
+        }
+        return;
+      }
+
+      if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
+        lastUserWhiteboardPrompt.current = { text, at: Date.now() };
+        if (tryDeterministicTemplate(text)) return;
+        scheduleDiagramFallback(text, "user-whiteboard-command");
+        return;
+      }
+
+      const recentUserPrompt = lastUserWhiteboardPrompt.current;
+      if (
+        !isLocalUser &&
+        isAgentWhiteboardClaim(text) &&
+        (!recentUserPrompt || Date.now() - recentUserPrompt.at < 60_000)
+      ) {
+        if (recentUserPrompt?.text && tryDeterministicTemplate(recentUserPrompt.text)) return;
+        scheduleDiagramFallback(recentUserPrompt?.text ?? text, "agent-claimed-whiteboard-draw");
+      }
+    };
+
     const dispatchElements = (elements: unknown[], source: string) => {
       ensureWhiteboardRoute();
       lastDrawDataAt.current = Date.now();
@@ -466,54 +510,23 @@ export function WhiteboardDataBridge() {
 
         const isLocalUser = participant?.identity === room.localParticipant.identity;
 
-        // Quiz intent — user asks Aria to start a quiz
-        if (isLocalUser && isQuizPrompt(text) && !quizInFlight.current) {
-          const topic = extractQuizTopic(text);
-          console.log("[WhiteboardDataBridge] detected voice quiz prompt:", { text, topic });
-          if (topic && topic.length >= 2) {
-            quizInFlight.current = true;
-            (async () => {
-              try {
-                const { data, error } = await supabase.functions.invoke("start-voice-quiz", {
-                  body: { topic, difficulty: "medium", questionCount: 5 },
-                });
-                if (error) throw error;
-                console.log("[WhiteboardDataBridge] voice quiz started:", data);
-              } catch (err) {
-                console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
-              } finally {
-                window.setTimeout(() => { quizInFlight.current = false; }, 4000);
-              }
-            })();
-            continue;
-          }
-        }
-
-        if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
-          lastUserWhiteboardPrompt.current = { text, at: Date.now() };
-          if (tryDeterministicTemplate(text)) continue;
-          scheduleDiagramFallback(text, "user-whiteboard-command");
-          continue;
-        }
-
-        const recentUserPrompt = lastUserWhiteboardPrompt.current;
-        if (
-          !isLocalUser &&
-          isAgentWhiteboardClaim(text) &&
-          (!recentUserPrompt || Date.now() - recentUserPrompt.at < 60_000)
-        ) {
-          if (recentUserPrompt?.text && tryDeterministicTemplate(recentUserPrompt.text)) continue;
-          scheduleDiagramFallback(recentUserPrompt?.text ?? text, "agent-claimed-whiteboard-draw");
-        }
+        handleVoiceCommand(text, isLocalUser);
       }
+    };
+
+    const handleFallbackCommand = (event: Event) => {
+      const text = (event as CustomEvent<{ text?: string }>).detail?.text?.trim();
+      if (text) handleVoiceCommand(text, true);
     };
 
     room.on(RoomEvent.DataReceived, handleData);
     room.on(RoomEvent.TranscriptionReceived, handleTranscription);
+    window.addEventListener("aria:voice-command", handleFallbackCommand);
     return () => {
       if (pendingFallbackTimer.current) window.clearTimeout(pendingFallbackTimer.current);
       room.off(RoomEvent.DataReceived, handleData);
       room.off(RoomEvent.TranscriptionReceived, handleTranscription);
+      window.removeEventListener("aria:voice-command", handleFallbackCommand);
     };
   }, [room]);
 

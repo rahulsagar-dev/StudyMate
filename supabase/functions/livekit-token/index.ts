@@ -86,6 +86,14 @@ serve(async (req) => {
     // Fresh room per session so room metadata is applied and LiveKit can dispatch the agent.
     const roomName = `study-room-${userId}-${crypto.randomUUID()}`;
 
+    console.log("livekit-token session", {
+      roomName,
+      userId,
+      whiteboardIdConfigured: Boolean(whiteboardId),
+      agentNameConfigured: Boolean(agentName),
+      metadataAttached: true,
+    });
+
     const at = new AccessToken(apiKey, apiSecret, {
       identity: userId,
       metadata: agentMetadata,

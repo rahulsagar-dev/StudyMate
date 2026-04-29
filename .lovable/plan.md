@@ -1,64 +1,49 @@
-# Deep Analysis: Voice Quiz Not Showing + Whiteboard Doubly-Linked-List Missing
+I found a different root problem than the earlier quiz/whiteboard UI race: the app is successfully getting a LiveKit token, but the LiveKit assistant participant is not joining the room. That is why the UI stays on `Waking Aria up…` even after you speak.
 
-## What I verified from the database & code
+What the screenshot means:
+- Your browser connected to the LiveKit room.
+- The mic control is visible, so the client session started.
+- `useVoiceAssistant()` has no `agent`, so the UI shows `Waking Aria up…`.
+- The backend `livekit-token` function returned 200 in the logs, so the issue is likely room/agent dispatch or missing agent registration, not a button/UI issue.
 
-**Quiz path — the row IS being created correctly:**
+Likely cause:
+- The project has `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`, and `LIVEKIT_URL` secrets.
+- It does not have `LIVEKIT_AGENT_NAME` configured.
+- The current `livekit-token` function only adds explicit `RoomAgentDispatch` when `LIVEKIT_AGENT_NAME` exists. Without it, the app depends on an automatic LiveKit agent worker being registered and running externally. If that worker is not registered/online, Aria never joins, so actions like quiz and whiteboard drawing never happen.
 
-- Most recent `quiz_attempts` row: `quiz_topic="Linked Lists"`, `quiz_mode="voice"`, `total_questions=5`, `questions_payload` has 5 valid questions, inserted at 19:33:26.
-- `start-voice-quiz` edge function ran successfully (logs show boot + clean shutdown, no errors, no entries in `ai_error_logs`).
-- Realtime publication includes `quiz_attempts` (and `whiteboards`), replica identity is `full`. So the INSERT event WAS broadcast.
-- BUT the row's current `status` is `completed` with `completed_at = 19:34:49` (~83 s after insert). Nothing in our code path sets a row from `active` straight to `completed` other than `HybridQuizListener.finishQuiz()` — which only runs after the user finishes all 5 questions.
+Plan to fix:
 
-That last point is the smoking gun: the dialog DID briefly mount and the listener ran, but something about the flow caused it to auto-complete without the user ever seeing/interacting with questions. Combined with the "Aria says she made a quiz but I see nothing" symptom, the most likely cause is one of:
+1. Improve LiveKit token diagnostics
+- Update `supabase/functions/livekit-token/index.ts` to include safe server logs for:
+  - room name
+  - whether an explicit agent name is configured
+  - whether room metadata was attached
+  - any token/roomConfig creation errors
+- Do not log secrets.
 
-1. **Race in `HybridQuizListener**`: `useEffect` re-runs whenever `user` reference changes. The effect's cleanup calls `removeChannel`, then re-subscribes. If this happens around the moment the INSERT event arrives, the event lands on the old (closed) channel and is dropped. The console log `[WhiteboardListener] Channel status: CLOSED` we see for the whiteboard channel confirms this teardown pattern is happening in the app.
-2. **Status filter is too strict**: `if (!row || row.status !== "active") return;` — if Postgres later updated the row before the realtime broadcast was processed (or if the row was inserted with a default value first then updated), we'd skip it. Less likely but worth defending against.
-3. **Dialog opens, but mounted BEHIND a higher z-index overlay** (FloatingVoiceButton / Sonner toast / sidebar). Then the 2 s auto-advance timer in `handleSelect` never fires because user can't click — but `finishQuiz` still gets called eventually if `handleSkip`/auto-advance triggers… Actually it won't auto-finish without interaction. So this alone doesn't explain `completed`. Rule out.
+2. Add client-side timeout feedback
+- Update `src/components/VoiceAgent/VoiceAgent.tsx` so if the room is connected but no assistant participant appears after about 12 seconds, the user sees a clear message instead of only `Waking Aria up…`.
+- Example message: “Aria connected to voice, but the assistant worker did not join. Please check the LiveKit agent deployment/config.”
+- Keep the existing orb design and controls.
 
-**Whiteboard "doubly linked list" path — the request is silently dropped:**
-Inspecting `src/components/VoiceAgent/WhiteboardDataBridge.tsx`:
+3. Add a text-command fallback while the agent is missing
+- Add a small input under the stuck state so the user can type commands like:
+  - “draw a doubly linked list”
+  - “quiz me on linked lists”
+- Reuse the existing deterministic whiteboard and quiz-start logic by dispatching the same handling path used for voice transcripts.
+- This means the app can still create the quiz/whiteboard output even when the external LiveKit voice agent is not joining.
 
-- `isWhiteboardPageDrawingCommand()` regex for drawable subjects: `array|linked\s*list|link\s*list|stack|queue|tree|binary|bst|graph|flowchart|mindmap`. "Doubly linked list" matches `linked\s*list` ✓.
-- BUT — Aria's Python agent typically tries to draw via the LiveKit data channel itself. When she says "I drew it" but nothing arrives on the data channel, our fallback should kick in via `isAgentWhiteboardClaim()`. That regex requires `i('|')ve|i have|i just|i` AND (`drew|drawn|added|put|placed|created|made`). It will match.
-- The fallback then schedules `generate-diagram` after 3.5 s — but it gates on `window.location.pathname.startsWith("/whiteboard")`. **If the user is on `/quizzes` or any other page when Aria "draws", the fallback is skipped entirely and nothing happens.** Console logs show user is currently on `/quizzes`. That perfectly explains "she said she drew it but it doesn't show up".
-- Even if we were on `/whiteboard`, "doubly linked list" has no deterministic template (only binary tree does), so it would go through `generate-diagram` with the cleaned prompt `"doubly linked list"` (3 words → no expansion). The model has been seen to produce a singly linked list for this — minor secondary issue.
+4. Make voice command handling reusable and more reliable
+- Extract the command-detection helpers from `WhiteboardDataBridge.tsx` into a small shared utility or exported handler so both LiveKit transcripts and the new fallback input use the same logic.
+- Preserve the deterministic linked-list and binary-tree templates already added.
+- Preserve the `start-voice-quiz` flow and existing quiz listener.
 
-## What to change
+5. Deployment/config follow-up
+- Deploy the updated `livekit-token` function.
+- Re-check edge logs after a new voice attempt.
+- If logs show `agentNameConfigured=false`, the remaining required environment fix is to configure `LIVEKIT_AGENT_NAME` to match the deployed LiveKit worker name, or ensure the automatic LiveKit worker is actually running and registered for this project.
 
-### 1. Make `HybridQuizListener` robust to channel teardown & status quirks
-
-- Add `console.log` for channel status + every INSERT payload received, so we can see in real-time what's happening (mirrors `WhiteboardListener` style).
-- Move the channel name to a stable string (`hybrid-quiz-${user.id}`) and only re-subscribe when `user.id` actually changes (use `user?.id` in the dep array, not `user`).
-- Also listen for `UPDATE` events where `status` transitions to `active` (defensive — covers any race where the row briefly appears non-active first).
-- When realtime fires, if the dialog is already open (e.g. for a previous attempt) ignore duplicates by `attemptId`.
-- Backfill on mount: query `quiz_attempts` for the most recent row with `status='active'` created within the last 2 minutes and open it. This guarantees that if realtime missed the event (channel race, refresh, etc.), the dialog still appears.
-- Make sure the `<Dialog>` z-index sits above the floating voice button (add `z-[100]` to `DialogContent`, and a `DialogDescription` to silence the existing accessibility warning we see in the console).
-
-### 2. Whiteboard: stop dropping draw commands when user is on another page
-
-- Remove the `pathname.startsWith("/whiteboard")` gate inside `scheduleDiagramFallback`. Instead, when a draw command is detected from any page:
-  - If on `/whiteboard`, behave as today.
-  - If NOT on `/whiteboard`, navigate the user to `/whiteboard` first (via the same `window.dispatchEvent` pattern, plus a `aria:navigate` event or a small router-aware wrapper), then schedule the fallback after navigation settles.
-- Add explicit `linked list` (singly + doubly) deterministic templates so we don't depend on the model:
-  - `createLinkedListElements({ doubly: boolean, count })` — boxes with arrows. For doubly, draw two parallel arrows (forward + back) between every adjacent pair, plus `NULL` labels at both ends.
-  - Trigger from `isLinkedListPrompt(text)` (matches `linked\s*list`, with `doubly|two[-\s]way|bidirectional` setting `doubly=true`).
-- Update `cleanVoicePrompt` so a "doubly linked list" prompt expands to an explicit description with bidirectional arrows (used only if the deterministic template path is bypassed).
-
-### 3. Quick observability
-
-- Add console logs in `HybridQuizListener`'s subscribe callback (`status` and every INSERT/UPDATE payload).
-- Add a console log in `WhiteboardDataBridge` when a draw intent is detected but skipped due to wrong route — so we can see "skipped: not on /whiteboard" in the future.
-
-## Files to touch
-
-- `src/components/quiz/HybridQuizListener.tsx` — channel hygiene, UPDATE listener, backfill query, dedupe by `attemptId`, `DialogDescription`, z-index.
-- `src/components/VoiceAgent/WhiteboardDataBridge.tsx` — `isLinkedListPrompt` + `createLinkedListElements`, route-agnostic fallback, navigate-to-whiteboard helper, route-skip log.
-- `src/pages/Whiteboard.tsx` — no logic change, but make `handleAgentDraw` retry once if `excalidrawAPI` isn't ready yet (covers the "navigate then immediately apply" race).
-
-## Out of scope (not changing)
-
-- The Python Aria agent itself (we only fix the front-end behavior).
-- The `start-voice-quiz` edge function — it works correctly today; the failure is purely on the listener side.
-- The real-time publication/replica identity — already configured correctly.
-
-After approval, I'll implement the three file changes above. No DB migration is needed.
+Expected result:
+- The UI will no longer silently sit on `Waking Aria up…` with no explanation.
+- If the real-time voice agent joins, everything works as normal.
+- If the agent does not join, the app clearly tells you the backend agent is missing and still lets you trigger quiz/whiteboard commands through the fallback input while we correct the LiveKit agent configuration.

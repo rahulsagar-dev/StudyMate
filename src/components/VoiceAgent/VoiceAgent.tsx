@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import {
   LiveKitRoom,
   useVoiceAssistant,
@@ -10,7 +10,7 @@ import {
 import { ConnectionState } from "livekit-client";
 import "@livekit/components-styles";
 import { supabase } from "@/integrations/supabase/client";
-import { Mic, Loader2, X, AlertCircle } from "lucide-react";
+import { Mic, Loader2, X, AlertCircle, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VoiceOrb } from "./VoiceOrb";
 import { WhiteboardDataBridge } from "./WhiteboardDataBridge";
@@ -26,6 +26,25 @@ interface TokenData {
 function AgentInterface({ onEnd }: { onEnd: () => void }) {
   const { state, agent } = useVoiceAssistant();
   const connectionState = useConnectionState();
+  const [agentTimedOut, setAgentTimedOut] = useState(false);
+  const [fallbackCommand, setFallbackCommand] = useState("");
+
+  useEffect(() => {
+    if (agent || connectionState !== ConnectionState.Connected) {
+      setAgentTimedOut(false);
+      return;
+    }
+    const timer = window.setTimeout(() => setAgentTimedOut(true), 12000);
+    return () => window.clearTimeout(timer);
+  }, [agent, connectionState]);
+
+  const sendFallbackCommand = (event: FormEvent) => {
+    event.preventDefault();
+    const text = fallbackCommand.trim();
+    if (!text) return;
+    window.dispatchEvent(new CustomEvent("aria:voice-command", { detail: { text } }));
+    setFallbackCommand("");
+  };
 
   const stateLabel =
     !agent && connectionState === ConnectionState.Connected
@@ -58,8 +77,33 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
           <p className="text-base font-medium text-white/90 tracking-wide">
             {stateLabel}
           </p>
+          {agentTimedOut && (
+            <div className="mt-3 rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive max-w-md">
+              Aria connected to voice, but the assistant worker did not join.
+              You can still run a command below while the LiveKit agent config is checked.
+            </div>
+          )}
         </motion.div>
       </AnimatePresence>
+
+      {agentTimedOut && (
+        <form onSubmit={sendFallbackCommand} className="w-full max-w-md flex gap-2">
+          <input
+            value={fallbackCommand}
+            onChange={(event) => setFallbackCommand(event.target.value)}
+            placeholder="Try: draw a doubly linked list"
+            className="flex-1 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm text-white placeholder:text-white/45 outline-none focus:border-primary/60"
+          />
+          <button
+            type="submit"
+            disabled={!fallbackCommand.trim()}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-50"
+            aria-label="Send fallback command"
+          >
+            <Send className="h-4 w-4" />
+          </button>
+        </form>
+      )}
 
       {/* Mic controls */}
       <div className="flex justify-center [&_button]:!bg-white/10 [&_button]:!backdrop-blur-md [&_button]:!border-white/20 [&_button]:!text-white">
