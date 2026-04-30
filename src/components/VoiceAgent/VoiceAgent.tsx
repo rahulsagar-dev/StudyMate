@@ -158,14 +158,21 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
     time: s.firstReceivedTime ?? 0,
     final: s.final,
   }));
-  const userSegments = userMessages.map((m, i) => ({
+  const userSegments = userMessages.map((m) => ({
     id: m.id,
     role: "user" as const,
     text: m.text,
-    time: Number(m.id.split("-")[0]) || i,
+    time: m.time,
     final: true,
   }));
-  const timeline = [...ariaSegments, ...userSegments]
+  const replySegments = textReplies.map((r) => ({
+    id: r.id,
+    role: "assistant" as const,
+    text: r.text,
+    time: r.time,
+    final: true,
+  }));
+  const timeline = [...ariaSegments, ...userSegments, ...replySegments]
     .sort((a, b) => a.time - b.time)
     .slice(-4);
 
