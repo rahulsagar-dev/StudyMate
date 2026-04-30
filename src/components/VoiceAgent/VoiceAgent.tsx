@@ -27,7 +27,7 @@ interface TokenData {
 function AgentInterface({ onEnd }: { onEnd: () => void }) {
   const { state, agent, agentTranscriptions } = useVoiceAssistant();
   const connectionState = useConnectionState();
-  const { localParticipant } = useLocalParticipant();
+  const room = useRoomContext();
   const [agentTimedOut, setAgentTimedOut] = useState(false);
   const [fallbackCommand, setFallbackCommand] = useState("");
   const [textInput, setTextInput] = useState("");
