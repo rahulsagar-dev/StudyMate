@@ -3,7 +3,7 @@ import {
   LiveKitRoom,
   useVoiceAssistant,
   useConnectionState,
-  useLocalParticipant,
+  useRoomContext,
   VoiceAssistantControlBar,
   RoomAudioRenderer,
   DisconnectButton,
