@@ -56,13 +56,13 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
   const sendTextToAria = async (event: FormEvent) => {
     event.preventDefault();
     const text = textInput.trim();
-    if (!text || !isConnected || !localParticipant) return;
+    if (!text || !isConnected || !room?.localParticipant) return;
     try {
       setSending(true);
       const payload = new TextEncoder().encode(
         JSON.stringify({ type: "text_input", text })
       );
-      await localParticipant.publishData(payload, { reliable: true });
+      await room.localParticipant.publishData(payload, { reliable: true });
       setUserMessages((prev) => [
         ...prev,
         { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, text },
