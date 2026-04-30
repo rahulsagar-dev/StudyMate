@@ -15,6 +15,7 @@ import { Mic, Loader2, X, AlertCircle, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VoiceOrb } from "./VoiceOrb";
 import { WhiteboardDataBridge } from "./WhiteboardDataBridge";
+import { streamChat, type ChatMessage } from "@/lib/streamChat";
 
 interface TokenData {
   token: string;
