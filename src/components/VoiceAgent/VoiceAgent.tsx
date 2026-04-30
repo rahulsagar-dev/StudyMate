@@ -15,6 +15,7 @@ import { Mic, Loader2, X, AlertCircle, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { VoiceOrb } from "./VoiceOrb";
 import { WhiteboardDataBridge } from "./WhiteboardDataBridge";
+import { streamChat, type ChatMessage } from "@/lib/streamChat";
 
 interface TokenData {
   token: string;
@@ -31,7 +32,8 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
   const [agentTimedOut, setAgentTimedOut] = useState(false);
   const [fallbackCommand, setFallbackCommand] = useState("");
   const [textInput, setTextInput] = useState("");
-  const [userMessages, setUserMessages] = useState<{ id: string; text: string }[]>([]);
+  const [userMessages, setUserMessages] = useState<{ id: string; text: string; time: number }[]>([]);
+  const [textReplies, setTextReplies] = useState<{ id: string; text: string; time: number }[]>([]);
   const [sending, setSending] = useState(false);
 
   const isConnected = connectionState === ConnectionState.Connected;
@@ -56,20 +58,80 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
   const sendTextToAria = async (event: FormEvent) => {
     event.preventDefault();
     const text = textInput.trim();
-    if (!text || !isConnected || !localParticipant) return;
+    if (!text || !isConnected) return;
+
+    // IMPORTANT: create the SpeechSynthesisUtterance synchronously inside the
+    // user gesture so browsers (Safari especially) allow it to speak later.
+    const utterance =
+      typeof window !== "undefined" && "speechSynthesis" in window
+        ? new SpeechSynthesisUtterance("")
+        : null;
+    if (utterance) {
+      utterance.lang = "en-US";
+      utterance.rate = 1.05;
+      utterance.pitch = 1;
+    }
+
+    const now = Date.now();
+    const userId = `user-${now}-${Math.random().toString(36).slice(2, 7)}`;
+    const replyId = `reply-${now}-${Math.random().toString(36).slice(2, 7)}`;
+
+    // Optimistically render the user's message
+    setUserMessages((prev) => [...prev, { id: userId, text, time: now }]);
+    setTextReplies((prev) => [...prev, { id: replyId, text: "…", time: now + 1 }]);
+    setTextInput("");
+
+    // Best-effort: also broadcast to LiveKit room so the agent worker (if it
+    // listens for `text_input`) can react. Failure is non-fatal.
     try {
-      setSending(true);
-      const payload = new TextEncoder().encode(
-        JSON.stringify({ type: "text_input", text })
-      );
-      await localParticipant.publishData(payload, { reliable: true });
-      setUserMessages((prev) => [
-        ...prev,
-        { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, text },
-      ]);
-      setTextInput("");
+      if (localParticipant) {
+        const payload = new TextEncoder().encode(
+          JSON.stringify({ type: "text_input", text })
+        );
+        await localParticipant.publishData(payload, { reliable: true });
+      }
     } catch (err) {
-      console.error("[VoiceAgent] Failed to publish text input:", err);
+      console.warn("[VoiceAgent] publishData failed (non-fatal):", err);
+    }
+
+    setSending(true);
+    let fullReply = "";
+    const messages: ChatMessage[] = [
+      ...userMessages.map((m) => ({ role: "user" as const, content: m.text })),
+      { role: "user", content: text },
+    ];
+
+    try {
+      await streamChat({
+        messages,
+        onDelta: (delta) => {
+          fullReply += delta;
+          setTextReplies((prev) =>
+            prev.map((r) => (r.id === replyId ? { ...r, text: fullReply } : r))
+          );
+        },
+        onDone: () => {
+          if (utterance && fullReply.trim()) {
+            // Strip markdown for cleaner speech
+            utterance.text = fullReply.replace(/[*_`#>]/g, "").slice(0, 1000);
+            try {
+              window.speechSynthesis.cancel();
+              window.speechSynthesis.speak(utterance);
+            } catch (err) {
+              console.warn("[VoiceAgent] speak failed:", err);
+            }
+          }
+        },
+        onError: (msg) => {
+          setTextReplies((prev) =>
+            prev.map((r) =>
+              r.id === replyId ? { ...r, text: `⚠️ ${msg}` } : r
+            )
+          );
+        },
+      });
+    } catch (err) {
+      console.error("[VoiceAgent] streamChat failed:", err);
     } finally {
       setSending(false);
     }
@@ -96,14 +158,21 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
     time: s.firstReceivedTime ?? 0,
     final: s.final,
   }));
-  const userSegments = userMessages.map((m, i) => ({
+  const userSegments = userMessages.map((m) => ({
     id: m.id,
     role: "user" as const,
     text: m.text,
-    time: Number(m.id.split("-")[0]) || i,
+    time: m.time,
     final: true,
   }));
-  const timeline = [...ariaSegments, ...userSegments]
+  const replySegments = textReplies.map((r) => ({
+    id: r.id,
+    role: "assistant" as const,
+    text: r.text,
+    time: r.time,
+    final: true,
+  }));
+  const timeline = [...ariaSegments, ...userSegments, ...replySegments]
     .sort((a, b) => a.time - b.time)
     .slice(-4);
 
