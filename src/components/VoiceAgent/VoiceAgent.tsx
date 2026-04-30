@@ -69,7 +69,39 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
     if (utterance) {
       utterance.lang = "en-US";
       utterance.rate = 1.05;
-      utterance.pitch = 1;
+      utterance.pitch = 1.15;
+
+      // Pick a female English voice for Aria. Browsers sometimes load voices
+      // async, so try now and fall back to onvoiceschanged.
+      const pickAriaVoice = () => {
+        const voices = window.speechSynthesis.getVoices();
+        if (!voices.length) return null;
+        const enVoices = voices.filter((v) => v.lang?.toLowerCase().startsWith("en"));
+        const preferredNames = [
+          "Samantha", "Karen", "Victoria", "Tessa", "Moira", "Fiona",
+          "Google UK English Female", "Google US English",
+          "Microsoft Aria", "Microsoft Jenny", "Microsoft Zira",
+          "Ava", "Allison", "Susan", "Serena",
+        ];
+        for (const name of preferredNames) {
+          const match = enVoices.find((v) => v.name.includes(name));
+          if (match) return match;
+        }
+        const female = enVoices.find((v) => /female|woman|aria|jenny|zira|samantha|karen|victoria/i.test(v.name));
+        return female ?? enVoices[0] ?? voices[0];
+      };
+
+      const chosen = pickAriaVoice();
+      if (chosen) {
+        utterance.voice = chosen;
+      } else {
+        window.speechSynthesis.onvoiceschanged = () => {
+          const v = pickAriaVoice();
+          if (v) utterance.voice = v;
+        };
+        // Trigger voice list load
+        window.speechSynthesis.getVoices();
+      }
     }
 
     const now = Date.now();
