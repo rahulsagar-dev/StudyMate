@@ -32,7 +32,8 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
   const [agentTimedOut, setAgentTimedOut] = useState(false);
   const [fallbackCommand, setFallbackCommand] = useState("");
   const [textInput, setTextInput] = useState("");
-  const [userMessages, setUserMessages] = useState<{ id: string; text: string }[]>([]);
+  const [userMessages, setUserMessages] = useState<{ id: string; text: string; time: number }[]>([]);
+  const [textReplies, setTextReplies] = useState<{ id: string; text: string; time: number }[]>([]);
   const [sending, setSending] = useState(false);
 
   const isConnected = connectionState === ConnectionState.Connected;
