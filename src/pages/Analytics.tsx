@@ -49,7 +49,7 @@ function SubjectChart({ data }: { data: { name: string; value: number; color: st
   return (
     <div className="bg-card rounded-2xl border border-border/50 p-6">
       <h3 className="text-lg font-display font-semibold text-foreground mb-1">Study by Subject</h3>
-      <p className="text-sm text-muted-foreground mb-6">XP earned per subject this month</p>
+      <p className="text-sm text-muted-foreground mb-6">XP earned per subject (last 30 days)</p>
 
       {hasData ? (
         <div className="flex items-center gap-6">
@@ -77,7 +77,7 @@ function SubjectChart({ data }: { data: { name: string; value: number; color: st
                 <span className="text-xs text-muted-foreground ml-auto">{Math.round((d.value / total) * 100)}%</span>
               </div>
             ))}
-            <p className="text-xs text-muted-foreground mt-2">{total} XP total this month</p>
+            <p className="text-xs text-muted-foreground mt-2">{total} XP in last 30 days</p>
           </div>
         </div>
       ) : (
