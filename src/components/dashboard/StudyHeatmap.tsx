@@ -11,7 +11,8 @@ import {
  import { useProfile } from "@/hooks/useProfile";
  import { useAuth } from "@/contexts/AuthContext";
  import { useStudyActivity } from "@/hooks/useStudyActivity";
- import { Skeleton } from "@/components/ui/skeleton";
+  import { Skeleton } from "@/components/ui/skeleton";
+import { toLocalDateKey } from "@/lib/utils";
 
 const CELL_SIZE = 10;
 const CELL_GAP = 2;
@@ -52,8 +53,8 @@ interface MonthGroup {
       
       for (let day = 0; day < 7; day++) {
         const isCurrentMonth = currentDate.getMonth() === month && currentDate.getFullYear() === year;
-         // Use YYYY-MM-DD format to match Supabase date format
-         const dateKey = currentDate.toISOString().split('T')[0];
+         // Use LOCAL YYYY-MM-DD to match Supabase date format without UTC shift
+         const dateKey = toLocalDateKey(currentDate);
         const dayActivity = activityData.get(dateKey);
         
         week.push({
@@ -225,7 +226,7 @@ export function StudyHeatmap() {
                     {monthGroup.weeks.map((week, weekIndex) => (
                       <div key={weekIndex} className="flex flex-col" style={{ gap: CELL_GAP }}>
                         {week.map((day, dayIndex) => {
-                          const dateKey = day.date.toISOString().split('T')[0];
+                          const dateKey = toLocalDateKey(day.date);
                           const actData = studyActivityMap.get(dateKey);
                           // Combine study_sessions minutes with focus/activity tracker minutes
                           const effectiveMinutes = Math.max(day.studyMinutes, actData?.activeMinutes || 0);
@@ -344,7 +345,7 @@ export function StudyHeatmap() {
 
       {/* Focus Score */}
       {(() => {
-        const today = new Date().toISOString().split("T")[0];
+        const today = toLocalDateKey(new Date());
         const todayData = studyActivityMap.get(today);
         if (!todayData || (todayData.activeMinutes === 0 && todayData.pomodoroSessions === 0)) return null;
         const timeScore = Math.min(100, (todayData.activeMinutes / 300) * 100);
