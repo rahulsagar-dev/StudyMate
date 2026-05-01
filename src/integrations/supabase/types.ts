@@ -975,7 +975,12 @@ export type Database = {
         Args: { p_scope?: string; p_user_id: string }
         Returns: number
       }
+      log_study_activity: {
+        Args: { p_minutes: number; p_pomodoros?: number }
+        Returns: undefined
+      }
       purchase_store_item: { Args: { p_item_id: string }; Returns: Json }
+      recalculate_streak: { Args: { p_user_id: string }; Returns: undefined }
       uncomplete_task: { Args: { p_task_id: string }; Returns: undefined }
       update_streak: { Args: { p_user_id: string }; Returns: undefined }
     }
