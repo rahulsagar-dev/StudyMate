@@ -77,7 +77,7 @@ function SubjectChart({ data }: { data: { name: string; value: number; color: st
                 <span className="text-xs text-muted-foreground ml-auto">{Math.round((d.value / total) * 100)}%</span>
               </div>
             ))}
-            <p className="text-xs text-muted-foreground mt-2">{total} XP total this month</p>
+            <p className="text-xs text-muted-foreground mt-2">{total} XP in last 30 days</p>
           </div>
         </div>
       ) : (
