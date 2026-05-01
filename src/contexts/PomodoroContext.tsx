@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback, Re
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { toLocalDateKey } from "@/lib/utils";
 
 export interface PomodoroSettings {
   focusMinutes: number;
@@ -100,7 +101,7 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
   // Fetch today's session count
   useEffect(() => {
     if (!user) return;
-    const today = new Date().toISOString().split("T")[0];
+    const today = toLocalDateKey(new Date());
     supabase
       .from("pomodoro_sessions")
       .select("id", { count: "exact" })
@@ -146,7 +147,7 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
         await supabase.rpc("update_streak", { p_user_id: user.id });
 
         // Update study_sessions for today
-        const today = new Date().toISOString().split("T")[0];
+        const today = toLocalDateKey(new Date());
         const { data: existing } = await supabase
           .from("study_sessions")
           .select("id, study_minutes, xp_earned")
