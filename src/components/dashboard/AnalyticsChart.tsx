@@ -11,25 +11,33 @@ export function AnalyticsChart() {
   const chartData = useMemo(() => {
     if (!sessions.length) return [];
 
-    // Group sessions by week for the last 8 weeks
-    const now = new Date();
+    // Parse YYYY-MM-DD as a LOCAL date (avoid UTC shift)
+    const parseLocal = (s: string) => {
+      const [y, m, d] = s.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    };
+
+    // Build last 8 weeks; week ends today (inclusive), each bucket is 7 days
     const weeks: { label: string; xp: number; minutes: number; tasks: number }[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
     for (let i = 7; i >= 0; i--) {
-      const weekStart = new Date(now);
-      weekStart.setDate(weekStart.getDate() - i * 7);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
+      const weekEnd = new Date(today);
+      weekEnd.setDate(weekEnd.getDate() - i * 7);
+      const weekStart = new Date(weekEnd);
+      weekStart.setDate(weekStart.getDate() - 6);
 
-      const weekLabel = weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const startLabel = weekStart.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const endLabel = weekEnd.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 
       const weekSessions = sessions.filter((s) => {
-        const d = new Date(s.date);
+        const d = parseLocal(s.date);
         return d >= weekStart && d <= weekEnd;
       });
 
       weeks.push({
-        label: weekLabel,
+        label: `${startLabel}–${endLabel}`,
         xp: weekSessions.reduce((sum, s) => sum + s.xp_earned, 0),
         minutes: weekSessions.reduce((sum, s) => sum + s.study_minutes, 0),
         tasks: weekSessions.reduce((sum, s) => sum + s.tasks_completed, 0),
