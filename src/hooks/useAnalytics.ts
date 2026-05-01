@@ -153,13 +153,13 @@ export function useAnalytics() {
     };
     const subjectMap = new Map<string, number>();
 
-    // Tasks contribute by their subject name
-    const taskMonthStart = new Date();
-    taskMonthStart.setDate(1);
-    taskMonthStart.setHours(0, 0, 0, 0);
+    // Tasks contribute by their subject name (rolling 30-day window)
+    const windowStart = new Date();
+    windowStart.setDate(windowStart.getDate() - 29);
+    windowStart.setHours(0, 0, 0, 0);
     tasks.forEach((t) => {
       if (!t.completed_at) return;
-      if (new Date(t.completed_at) < taskMonthStart) return;
+      if (new Date(t.completed_at) < windowStart) return;
       const key = t.subject || "General";
       subjectMap.set(key, (subjectMap.get(key) || 0) + (t.xp_reward || 0));
     });
@@ -187,33 +187,42 @@ export function useAnalytics() {
     const dayTotals = new Array(7).fill(0);
     const dayCounts = new Array(7).fill(0);
     sessions.forEach((s) => {
-      const d = new Date(s.date + "T00:00:00");
+      const [yy, mm, dd] = s.date.split("-").map(Number);
+      const d = new Date(yy, mm - 1, dd);
       const dayIndex = d.getDay();
       dayTotals[dayIndex] += s.study_minutes || 0;
       dayCounts[dayIndex]++;
     });
-    // Reorder to Mon-Sun
     const reorder = [1, 2, 3, 4, 5, 6, 0];
     const dailyPattern: DailyPatternData[] = reorder.map((i) => ({
       day: dayNames[i],
       hours: Math.round((dayCounts[i] > 0 ? dayTotals[i] / dayCounts[i] : 0) / 60 * 10) / 10,
     }));
 
-    // Monthly progress by week
-    const weekBuckets: { tasks: number; xp: number }[] = [
-      { tasks: 0, xp: 0 },
-      { tasks: 0, xp: 0 },
-      { tasks: 0, xp: 0 },
-      { tasks: 0, xp: 0 },
-    ];
-    sessions.forEach((s) => {
-      const day = new Date(s.date + "T00:00:00").getDate();
-      const weekIdx = Math.min(Math.floor((day - 1) / 7), 3);
-      weekBuckets[weekIdx].tasks += s.tasks_completed || 0;
-      weekBuckets[weekIdx].xp += s.xp_earned || 0;
-    });
-    const monthlyProgress: MonthlyProgressData[] = weekBuckets.map((w, i) => ({
-      week: `Week ${i + 1}`,
+    // Weekly progress: 4 rolling 7-day buckets ending today
+    const weekBuckets: { tasks: number; xp: number; label: string }[] = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    for (let i = 3; i >= 0; i--) {
+      const end = new Date(today);
+      end.setDate(end.getDate() - i * 7);
+      const start = new Date(end);
+      start.setDate(start.getDate() - 6);
+      const startLabel = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const endLabel = end.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      let t = 0, x = 0;
+      sessions.forEach((s) => {
+        const [yy, mm, dd] = s.date.split("-").map(Number);
+        const d = new Date(yy, mm - 1, dd);
+        if (d >= start && d <= end) {
+          t += s.tasks_completed || 0;
+          x += s.xp_earned || 0;
+        }
+      });
+      weekBuckets.push({ tasks: t, xp: x, label: `${startLabel}–${endLabel}` });
+    }
+    const monthlyProgress: MonthlyProgressData[] = weekBuckets.map((w) => ({
+      week: w.label,
       tasks: w.tasks,
       xp: w.xp,
     }));
