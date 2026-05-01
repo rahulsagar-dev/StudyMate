@@ -103,6 +103,14 @@ export function ActivityTrackerProvider({ children }: { children: ReactNode }) {
             productivity_score: timeScore,
           });
       }
+
+      // Update streak if today's activity now qualifies (≥10 min or ≥1 pomodoro)
+      const totalMinutesToday = (existing?.active_minutes ?? 0) + minutes;
+      const totalPomosToday = existing?.pomodoro_sessions ?? 0;
+      if (totalMinutesToday >= 10 || totalPomosToday >= 1) {
+        await supabase.rpc("update_streak", { p_user_id: user.id });
+        window.dispatchEvent(new Event("xp-changed"));
+      }
     } catch (err) {
       console.error("Failed to flush activity:", err);
     }
