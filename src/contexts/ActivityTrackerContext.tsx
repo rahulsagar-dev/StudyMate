@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toLocalDateKey } from "@/lib/utils";
 
 const BATCH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const LOCAL_KEY = "active-time-pending";
