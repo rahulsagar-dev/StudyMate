@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toLocalDateKey } from "@/lib/utils";
 
 export interface StudyActivityDay {
   date: string;
@@ -25,7 +26,7 @@ export function useStudyActivity() {
       // Fetch last 365 days
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - 365);
-      const startStr = startDate.toISOString().split("T")[0];
+      const startStr = toLocalDateKey(startDate);
 
       const { data, error } = await supabase
         .from("study_activity")
@@ -84,8 +85,8 @@ export function useStudyActivity() {
     let currentStreak = 0;
     let longestStreak = 0;
     let streak = 0;
-    const todayStr = now.toISOString().split("T")[0];
-    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    const todayStr = toLocalDateKey(now);
+    const yesterdayStr = toLocalDateKey(new Date(Date.now() - 86400000));
 
     // Walk backwards from today
     const activeSet = new Set(sorted);
@@ -99,7 +100,7 @@ export function useStudyActivity() {
         checkDate = new Date(Date.now() - 86400000);
       }
       while (true) {
-        const ds = checkDate.toISOString().split("T")[0];
+        const ds = toLocalDateKey(checkDate);
         if (activeSet.has(ds)) {
           currentStreak++;
           checkDate.setDate(checkDate.getDate() - 1);

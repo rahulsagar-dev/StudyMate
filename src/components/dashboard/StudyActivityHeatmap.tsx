@@ -10,6 +10,7 @@ import {
 import { useStudyActivity } from "@/hooks/useStudyActivity";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toLocalDateKey } from "@/lib/utils";
 
 const CELL_SIZE = 12;
 const CELL_GAP = 3;
@@ -80,7 +81,7 @@ const generateGrid = (
   let week: DayCell[] = [];
 
   while (current <= endDate) {
-    const dateStr = current.toISOString().split("T")[0];
+    const dateStr = toLocalDateKey(current);
     const activity = activityMap.get(dateStr);
 
     week.push({
@@ -105,7 +106,7 @@ const generateGrid = (
       const d = new Date(current);
       week.push({
         date: d,
-        dateStr: d.toISOString().split("T")[0],
+        dateStr: toLocalDateKey(d),
         activeMinutes: 0,
         pomodoroSessions: 0,
         productivityScore: 0,
@@ -167,7 +168,7 @@ export function StudyActivityHeatmap() {
 
   // Focus Score (simplified AI metric)
   const focusScore = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = toLocalDateKey(new Date());
     const todayData = activityMap.get(today);
     if (!todayData) return null;
 

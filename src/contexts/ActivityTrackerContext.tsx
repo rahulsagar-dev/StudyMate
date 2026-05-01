@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useCallback, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toLocalDateKey } from "@/lib/utils";
 
 const BATCH_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 const LOCAL_KEY = "active-time-pending";
@@ -70,7 +71,7 @@ export function ActivityTrackerProvider({ children }: { children: ReactNode }) {
     activeSecondsRef.current = activeSecondsRef.current % 60; // keep remainder
     localStorage.setItem(LOCAL_KEY, String(activeSecondsRef.current));
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = toLocalDateKey(new Date());
 
     // Calculate productivity score
     const timeScore = minutes >= 300 ? 4 : minutes >= 180 ? 3 : minutes >= 60 ? 2 : minutes >= 20 ? 1 : 0;
