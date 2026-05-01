@@ -225,11 +225,13 @@ export function StudyHeatmap() {
                     {monthGroup.weeks.map((week, weekIndex) => (
                       <div key={weekIndex} className="flex flex-col" style={{ gap: CELL_GAP }}>
                         {week.map((day, dayIndex) => {
-                          const intensity = getIntensityLevel(day.studyMinutes);
                           const dateKey = day.date.toISOString().split('T')[0];
                           const actData = studyActivityMap.get(dateKey);
-                          const hasData = day.studyMinutes > 0 || (actData && (actData.activeMinutes > 0 || actData.pomodoroSessions > 0));
-                          
+                          // Combine study_sessions minutes with focus/activity tracker minutes
+                          const effectiveMinutes = Math.max(day.studyMinutes, actData?.activeMinutes || 0);
+                          const intensity = day.isCurrentYear ? getIntensityLevel(effectiveMinutes) : 0;
+                          const hasData = effectiveMinutes > 0 || (actData?.pomodoroSessions ?? 0) > 0 || day.tasksCompleted > 0;
+
                           if (!day.isCurrentYear) {
                             return (
                               <div
