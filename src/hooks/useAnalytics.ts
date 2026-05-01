@@ -60,11 +60,15 @@ export function useAnalytics() {
     try {
       setLoading(true);
       const now = new Date();
-      const startOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const endStr = `${endOfMonth.getFullYear()}-${String(endOfMonth.getMonth() + 1).padStart(2, "0")}-${String(endOfMonth.getDate()).padStart(2, "0")}`;
-
-      const startISO = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      // Rolling 30-day window so analytics doesn't go blank right after a month rollover
+      const windowStart = new Date(now);
+      windowStart.setDate(windowStart.getDate() - 29);
+      windowStart.setHours(0, 0, 0, 0);
+      const fmt = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const startOfMonth = fmt(windowStart);
+      const endStr = fmt(now);
+      const startISO = windowStart.toISOString();
 
       const [sessionsRes, tasksRes, quizRes, setsRes, xpRes] = await Promise.all([
         supabase
