@@ -2,6 +2,7 @@ import { Brain, Crown, Ghost, Swords, Wand2, LucideIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useCosmetics } from "@/contexts/CosmeticsContext";
+import { AVATAR_ICONS as PICKER_ICONS, parseIconAvatar } from "@/components/ProfilePhotoPicker";
 
 const AVATAR_ICONS: Record<string, { icon: LucideIcon; bg: string; fg: string }> = {
   "avatar-scholar": { icon: Brain, bg: "bg-primary/20", fg: "text-primary" },
