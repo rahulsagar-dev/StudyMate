@@ -128,13 +128,24 @@ export default function Profile() {
       {/* Profile Header */}
       <div className="bg-card rounded-2xl border border-border/50 p-8">
         <div className="flex items-start gap-6">
-          <div className="relative group">
+          <button
+            type="button"
+            onClick={() => setPhotoPickerOpen(true)}
+            className="relative group rounded-full focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
+            aria-label="Change profile photo"
+          >
             <EquippedAvatar
               fallbackInitial={userInitial}
               fallbackUrl={profile?.avatar_url}
               className="h-24 w-24 ring-4 ring-primary/20"
             />
-          </div>
+            <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Camera className="h-6 w-6 text-white" />
+            </div>
+            <div className="absolute bottom-0 right-0 h-7 w-7 rounded-full bg-primary border-2 border-card flex items-center justify-center shadow-lg">
+              <Camera className="h-3.5 w-3.5 text-primary-foreground" />
+            </div>
+          </button>
 
           <div className="flex-1">
             <div className="flex items-center gap-3 mb-2">
