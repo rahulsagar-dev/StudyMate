@@ -43,6 +43,19 @@ export function EquippedAvatar({
     );
   }
 
+  // User-picked icon avatar (stored as "icon:<key>" in profiles.avatar_url)
+  const iconKey = parseIconAvatar(fallbackUrl);
+  if (iconKey && PICKER_ICONS[iconKey]) {
+    const Icon = PICKER_ICONS[iconKey].icon;
+    return (
+      <Avatar className={cn(className, "ring-2 ring-primary/30")}>
+        <AvatarFallback className={cn(PICKER_ICONS[iconKey].bg, "flex items-center justify-center")}>
+          <Icon className={cn("h-1/2 w-1/2", PICKER_ICONS[iconKey].fg, iconClassName)} />
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
   return (
     <Avatar className={className}>
       <AvatarImage src={fallbackUrl || undefined} />
