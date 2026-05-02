@@ -110,7 +110,8 @@ export function AppSidebar() {
   );
 
   const userEmail = user?.email ?? "New User";
-  const userInitial = user?.email ? user.email[0].toUpperCase() : "U";
+  const displayName = profile?.username || user?.email?.split("@")[0] || "New User";
+  const userInitial = (profile?.username?.[0] || user?.email?.[0] || "U").toUpperCase();
 
   const sections = [
     { label: "Main", items: mainNavItems },
