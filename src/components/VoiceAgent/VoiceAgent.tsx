@@ -160,8 +160,8 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
 
       <RoomAudioRenderer />
 
-      {/* Recent exchanges + text input — only when connected */}
-      {isConnected && (
+      {/* Recent exchanges + text input — only when connected and worker joined */}
+      {isConnected && !agentTimedOut && (
         <div className="w-full max-w-md flex flex-col gap-3">
           {timeline.length > 0 && (
             <div className="flex flex-col gap-2 max-h-48 overflow-y-auto px-1">
