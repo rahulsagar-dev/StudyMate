@@ -51,6 +51,7 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [newUsername, setNewUsername] = useState("");
   const [saving, setSaving] = useState(false);
+  const [photoPickerOpen, setPhotoPickerOpen] = useState(false);
 
   if (!user) {
     return (
