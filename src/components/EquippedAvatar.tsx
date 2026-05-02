@@ -2,6 +2,7 @@ import { Brain, Crown, Ghost, Swords, Wand2, LucideIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useCosmetics } from "@/contexts/CosmeticsContext";
+import { AVATAR_ICONS as PICKER_ICONS, parseIconAvatar } from "@/components/ProfilePhotoPicker";
 
 const AVATAR_ICONS: Record<string, { icon: LucideIcon; bg: string; fg: string }> = {
   "avatar-scholar": { icon: Brain, bg: "bg-primary/20", fg: "text-primary" },
@@ -29,8 +30,33 @@ export function EquippedAvatar({
   iconClassName,
 }: EquippedAvatarProps) {
   const { equippedAvatar } = useCosmetics();
-  const equipped = equippedAvatar ? AVATAR_ICONS[equippedAvatar] : null;
 
+  // User's chosen profile photo or icon takes priority over store cosmetic
+  const iconKey = parseIconAvatar(fallbackUrl);
+  if (iconKey && PICKER_ICONS[iconKey]) {
+    const Icon = PICKER_ICONS[iconKey].icon;
+    return (
+      <Avatar className={cn(className, "ring-2 ring-primary/30")}>
+        <AvatarFallback className={cn(PICKER_ICONS[iconKey].bg, "flex items-center justify-center")}>
+          <Icon className={cn("h-1/2 w-1/2", PICKER_ICONS[iconKey].fg, iconClassName)} />
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  if (fallbackUrl && !fallbackUrl.startsWith("icon:")) {
+    return (
+      <Avatar className={className}>
+        <AvatarImage src={fallbackUrl} />
+        <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+          {fallbackInitial}
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  // Fall back to store-equipped avatar (from cosmetics)
+  const equipped = equippedAvatar ? AVATAR_ICONS[equippedAvatar] : null;
   if (equipped) {
     const Icon = equipped.icon;
     return (
