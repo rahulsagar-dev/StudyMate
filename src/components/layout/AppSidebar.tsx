@@ -177,7 +177,7 @@ export function AppSidebar() {
             collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
           )}>
             <p className="text-sm font-medium text-foreground truncate">
-              {user ? userEmail.split("@")[0] : "New User"}
+              {displayName}
             </p>
             <div className="flex items-center gap-2">
               <span className="text-xs text-level font-semibold">Level {level}</span>
