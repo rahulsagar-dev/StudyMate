@@ -110,7 +110,8 @@ export function AppSidebar() {
   );
 
   const userEmail = user?.email ?? "New User";
-  const userInitial = user?.email ? user.email[0].toUpperCase() : "U";
+  const displayName = profile?.username || user?.email?.split("@")[0] || "New User";
+  const userInitial = (profile?.username?.[0] || user?.email?.[0] || "U").toUpperCase();
 
   const sections = [
     { label: "Main", items: mainNavItems },
@@ -176,7 +177,7 @@ export function AppSidebar() {
             collapsed ? "w-0 opacity-0" : "w-auto opacity-100"
           )}>
             <p className="text-sm font-medium text-foreground truncate">
-              {user ? userEmail.split("@")[0] : "New User"}
+              {displayName}
             </p>
             <div className="flex items-center gap-2">
               <span className="text-xs text-level font-semibold">Level {level}</span>
