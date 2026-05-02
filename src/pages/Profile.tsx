@@ -300,6 +300,15 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      <ProfilePhotoPicker
+        open={photoPickerOpen}
+        onOpenChange={setPhotoPickerOpen}
+        userId={user.id}
+        currentAvatarUrl={profile?.avatar_url}
+        fallbackInitial={userInitial}
+        onUpdated={refetch}
+      />
     </div>
   );
 }
