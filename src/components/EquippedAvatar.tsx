@@ -30,20 +30,8 @@ export function EquippedAvatar({
   iconClassName,
 }: EquippedAvatarProps) {
   const { equippedAvatar } = useCosmetics();
-  const equipped = equippedAvatar ? AVATAR_ICONS[equippedAvatar] : null;
 
-  if (equipped) {
-    const Icon = equipped.icon;
-    return (
-      <Avatar className={cn(className, "ring-2 ring-primary/30")}>
-        <AvatarFallback className={cn(equipped.bg, "flex items-center justify-center")}>
-          <Icon className={cn("h-1/2 w-1/2", equipped.fg, iconClassName)} />
-        </AvatarFallback>
-      </Avatar>
-    );
-  }
-
-  // User-picked icon avatar (stored as "icon:<key>" in profiles.avatar_url)
+  // User's chosen profile photo or icon takes priority over store cosmetic
   const iconKey = parseIconAvatar(fallbackUrl);
   if (iconKey && PICKER_ICONS[iconKey]) {
     const Icon = PICKER_ICONS[iconKey].icon;
@@ -51,6 +39,30 @@ export function EquippedAvatar({
       <Avatar className={cn(className, "ring-2 ring-primary/30")}>
         <AvatarFallback className={cn(PICKER_ICONS[iconKey].bg, "flex items-center justify-center")}>
           <Icon className={cn("h-1/2 w-1/2", PICKER_ICONS[iconKey].fg, iconClassName)} />
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  if (fallbackUrl && !fallbackUrl.startsWith("icon:")) {
+    return (
+      <Avatar className={className}>
+        <AvatarImage src={fallbackUrl} />
+        <AvatarFallback className="bg-primary/20 text-primary font-semibold">
+          {fallbackInitial}
+        </AvatarFallback>
+      </Avatar>
+    );
+  }
+
+  // Fall back to store-equipped avatar (from cosmetics)
+  const equipped = equippedAvatar ? AVATAR_ICONS[equippedAvatar] : null;
+  if (equipped) {
+    const Icon = equipped.icon;
+    return (
+      <Avatar className={cn(className, "ring-2 ring-primary/30")}>
+        <AvatarFallback className={cn(equipped.bg, "flex items-center justify-center")}>
+          <Icon className={cn("h-1/2 w-1/2", equipped.fg, iconClassName)} />
         </AvatarFallback>
       </Avatar>
     );
