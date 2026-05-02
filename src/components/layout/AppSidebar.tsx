@@ -168,7 +168,7 @@ export function AppSidebar() {
         >
           <EquippedAvatar
             fallbackInitial={userInitial}
-            fallbackUrl="/placeholder.svg"
+            fallbackUrl={profile?.avatar_url}
             className="h-9 w-9 shrink-0 ring-2 ring-primary/20"
           />
           <div className={cn(
