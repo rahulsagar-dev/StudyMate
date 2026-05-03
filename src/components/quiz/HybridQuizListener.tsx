@@ -209,15 +209,9 @@ export default function HybridQuizListener() {
         .eq("user_id", user.id);
 
       try {
-        await supabase.rpc("award_xp", {
-          p_user_id: user.id,
-          p_amount: xp,
-          p_source: "quiz",
-          p_source_id: activeQuiz.attemptId,
-        });
-        await supabase.rpc("update_streak", { p_user_id: user.id });
+        await (supabase.rpc as any)("claim_quiz_xp", { p_attempt_id: activeQuiz.attemptId });
       } catch (e) {
-        console.error("award_xp failed", e);
+        console.error("claim_quiz_xp failed", e);
       }
 
       setXpEarned(xp);
