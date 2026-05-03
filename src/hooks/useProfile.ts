@@ -107,7 +107,7 @@
      const nextThreshold = LEVEL_THRESHOLDS[level + 1] || LEVEL_THRESHOLDS[8];
      const xpInCurrentLevel = xp - currentThreshold;
      const xpNeededForNext = nextThreshold - currentThreshold;
-     return Math.min(100, Math.round((xpInCurrentLevel / xpNeededForNext) * 100));
+     return Math.max(0, Math.min(100, Math.round((xpInCurrentLevel / xpNeededForNext) * 100)));
    };
  
    return {
