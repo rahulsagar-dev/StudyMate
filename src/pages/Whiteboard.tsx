@@ -303,14 +303,12 @@ export default function Whiteboard() {
         // Reuse the same sanitization path Aria uses — guarantees Excalidraw accepts them
         handleAgentDraw(data.elements);
 
-        // Award XP
+        // Award XP via server-validated daily-capped claim
         try {
-          await supabase.rpc("award_xp", {
-            p_user_id: user.id,
-            p_amount: 25,
-            p_source: "whiteboard_ai_generate",
-          });
-          toast.success("Diagram generated! +25 XP");
+          const { data: claim } = await (supabase.rpc as any)("claim_whiteboard_ai_xp");
+          const xp = (claim && typeof claim === "object" && "xp" in claim ? (claim as any).xp : 25) ?? 25;
+          if (xp > 0) toast.success(`Diagram generated! +${xp} XP`);
+          else toast.success("Diagram generated! (daily XP cap reached)");
         } catch {
           toast.success("Diagram generated!");
         }
