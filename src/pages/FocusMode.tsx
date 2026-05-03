@@ -65,14 +65,12 @@ export default function FocusMode() {
       }
 
       const xpAmount = Math.floor((studyMinutes / 30) * 25);
+      let awarded = xpAmount;
       if (xpAmount > 0) {
-        await supabase.rpc("award_xp", {
-          p_user_id: user.id,
-          p_amount: xpAmount,
-          p_source: "focus_session",
-        });
-        await supabase.rpc("update_streak", { p_user_id: user.id });
+        const { data } = await (supabase.rpc as any)("claim_focus_session_xp", { p_minutes: studyMinutes });
+        if (data && typeof data === "object" && "xp" in data) awarded = (data as any).xp ?? 0;
       }
+      // streak handled inside claim_focus_session_xp
 
       toast.success(`Focus session saved! +${xpAmount} XP earned`);
     } catch {
