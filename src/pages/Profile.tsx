@@ -195,14 +195,14 @@ export default function Profile() {
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-muted-foreground">Level Progress</span>
                 <span className="text-sm text-foreground font-medium">
-                  {(totalXp - currentThreshold).toLocaleString()} / {(nextThreshold - currentThreshold).toLocaleString()} XP
+                  {Math.max(0, totalXp - currentThreshold).toLocaleString()} / {(nextThreshold - currentThreshold).toLocaleString()} XP
                 </span>
               </div>
               <div className="h-3 bg-muted rounded-full overflow-hidden">
                 <div className="h-full bg-gradient-level transition-all" style={{ width: `${progress}%` }} />
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                {level >= 8 ? "Max level reached! 🎉" : `${(nextThreshold - totalXp).toLocaleString()} XP until Level ${level + 1}`}
+                {level >= 8 ? "Max level reached! 🎉" : `${Math.max(0, nextThreshold - totalXp).toLocaleString()} XP until Level ${level + 1}`}
               </p>
             </div>
           </div>
