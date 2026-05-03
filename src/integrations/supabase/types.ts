@@ -968,6 +968,14 @@ export type Database = {
         Returns: undefined
       }
       calculate_level: { Args: { xp: number }; Returns: number }
+      claim_focus_session_xp: { Args: { p_minutes: number }; Returns: Json }
+      claim_pomodoro_xp: { Args: { p_session_id: string }; Returns: Json }
+      claim_quiz_xp: { Args: { p_attempt_id: string }; Returns: Json }
+      claim_whiteboard_ai_xp: { Args: never; Returns: Json }
+      claim_whiteboard_save_xp: {
+        Args: { p_whiteboard_id: string }
+        Returns: Json
+      }
       complete_task: { Args: { p_task_id: string }; Returns: undefined }
       consume_inventory_item: { Args: { p_item_id: string }; Returns: Json }
       equip_cosmetic: { Args: { p_item_id: string }; Returns: Json }
