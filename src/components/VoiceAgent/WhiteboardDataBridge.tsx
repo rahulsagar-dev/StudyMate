@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useRoomContext } from "@livekit/components-react";
 import { RoomEvent } from "livekit-client";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import type {
   DataPacket_Kind,
   Participant,
@@ -55,27 +56,42 @@ export function isDoublyLinkedListPrompt(text: string): boolean {
 
 export function isQuizPrompt(text: string): boolean {
   const normalized = text.toLowerCase();
-  return /\b(quiz|test)\b.*\b(me|on|about|over)\b|\b(start|give|make|create|do)\b.*\bquiz\b/.test(normalized);
+  return (
+    /\b(quiz|test)\b.*\b(me|on|about|over|of|with)\b/.test(normalized) ||
+    /\b(start|give|make|create|do|take|run|ask|begin)\b.*\bquiz\b/.test(normalized) ||
+    /\bask\s+me\b.*\b(question|about|on)\b/.test(normalized)
+  );
 }
 
 export function extractQuizTopic(text: string): string {
   const normalized = text.toLowerCase().trim();
   const patterns = [
-    /(?:quiz|test)\s+me\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
-    /(?:start|give\s+me|make\s+me|create|do)\s+(?:a\s+)?quiz\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
-    /quiz\s+(?:on|about|over)\s+(.+?)(?:\s+please|[.?!]|$)/,
+    // "quiz/test me on X", "quiz/test me about X", "quiz me of X", "quiz me with X"
+    /(?:quiz|test)\s+me\s+(?:on|about|over|of|with|regarding)\s+(.+?)(?:\s+please|[.?!]|$)/,
+    // "take/give/make/create/do/run/start/ask a quiz of/on/about me on X"  → grab last "on/about/of X"
+    /(?:start|give|make|create|do|take|run|ask|begin)\s+(?:me\s+)?(?:a\s+)?(?:quick\s+)?quiz\s+(?:of\s+me\s+)?(?:on|about|over|of|with|regarding)\s+(.+?)(?:\s+please|[.?!]|$)/,
+    // bare "quiz on X"
+    /\bquiz\s+(?:on|about|over|of|with|regarding)\s+(.+?)(?:\s+please|[.?!]|$)/,
+    // "ask me about X"
+    /\bask\s+me\s+(?:questions?\s+)?(?:on|about|regarding)\s+(.+?)(?:\s+please|[.?!]|$)/,
   ];
   for (const re of patterns) {
     const m = normalized.match(re);
-    if (m && m[1]) return m[1].trim().replace(/[.?!,]+$/, "");
+    if (m && m[1]) {
+      return m[1]
+        .trim()
+        .replace(/^(the|a|an)\s+/, "")
+        .replace(/[.?!,]+$/, "");
+    }
   }
   return normalized
     .replace(/\b(hey|hi|okay|ok)\s+aria\b/g, "")
     .replace(/\b(please|can you|could you|would you)\b/g, "")
-    .replace(/\b(start|give me|make me|create|do)\b/g, "")
+    .replace(/\b(start|give|make|create|do|take|run|ask|begin)\s+(me\s+)?(a\s+)?(quick\s+)?\b/g, "")
     .replace(/\b(a|an|the)\s+quiz\b/g, "")
     .replace(/\b(quiz|test)\s+me\b/g, "")
-    .replace(/\b(on|about|over)\b/g, "")
+    .replace(/\b(quiz|test)\b/g, "")
+    .replace(/\b(on|about|over|of|with|regarding|me)\b/g, "")
     .replace(/[.?!,]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
@@ -369,24 +385,41 @@ export function WhiteboardDataBridge() {
       if (isLocalUser && isQuizPrompt(text) && !quizInFlight.current) {
         const topic = extractQuizTopic(text);
         console.log("[WhiteboardDataBridge] detected voice quiz prompt:", { text, topic });
-        if (topic && topic.length >= 2) {
-          quizInFlight.current = true;
-          (async () => {
-            try {
-              const { data, error } = await supabase.functions.invoke("start-voice-quiz", {
-                body: { topic, difficulty: "medium", questionCount: 5 },
-              });
-              if (error) throw error;
-              console.log("[WhiteboardDataBridge] voice quiz started:", data);
-            } catch (err) {
-              console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
-            } finally {
-              window.setTimeout(() => { quizInFlight.current = false; }, 4000);
-            }
-          })();
+        if (!topic || topic.length < 2) {
+          toast.info("What topic should I quiz you on?", {
+            description: "Try: \"quiz me on photosynthesis\"",
+          });
+          return;
         }
+        quizInFlight.current = true;
+        const loadingId = toast.loading(`Generating a quiz on "${topic}"…`);
+        (async () => {
+          try {
+            const { data, error } = await supabase.functions.invoke("start-voice-quiz", {
+              body: { topic, difficulty: "medium", questionCount: 5 },
+            });
+            if (error) throw error;
+            const details = (data as any)?.error;
+            if (details) throw new Error(details);
+            console.log("[WhiteboardDataBridge] voice quiz started:", data);
+            toast.success("Quiz ready!", { id: loadingId, description: `Topic: ${topic}` });
+          } catch (err: any) {
+            console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
+            const msg =
+              err?.context?.body
+                ? (() => { try { return JSON.parse(err.context.body)?.details || JSON.parse(err.context.body)?.error; } catch { return null; } })()
+                : null;
+            toast.error("Couldn't generate quiz", {
+              id: loadingId,
+              description: msg || err?.message || "Please try again in a moment.",
+            });
+          } finally {
+            window.setTimeout(() => { quizInFlight.current = false; }, 4000);
+          }
+        })();
         return;
       }
+
 
       if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
         lastUserWhiteboardPrompt.current = { text, at: Date.now() };

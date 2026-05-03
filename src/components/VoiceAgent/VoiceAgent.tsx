@@ -59,6 +59,9 @@ function AgentInterface({ onEnd }: { onEnd: () => void }) {
     if (!text || !isConnected || !room?.localParticipant) return;
     try {
       setSending(true);
+      // Also route through the client-side intent bridge so quiz/whiteboard
+      // intents fire even if the Python agent is offline or slow.
+      window.dispatchEvent(new CustomEvent("aria:voice-command", { detail: { text } }));
       const payload = new TextEncoder().encode(
         JSON.stringify({ type: "text_input", text })
       );
