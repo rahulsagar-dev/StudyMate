@@ -385,24 +385,41 @@ export function WhiteboardDataBridge() {
       if (isLocalUser && isQuizPrompt(text) && !quizInFlight.current) {
         const topic = extractQuizTopic(text);
         console.log("[WhiteboardDataBridge] detected voice quiz prompt:", { text, topic });
-        if (topic && topic.length >= 2) {
-          quizInFlight.current = true;
-          (async () => {
-            try {
-              const { data, error } = await supabase.functions.invoke("start-voice-quiz", {
-                body: { topic, difficulty: "medium", questionCount: 5 },
-              });
-              if (error) throw error;
-              console.log("[WhiteboardDataBridge] voice quiz started:", data);
-            } catch (err) {
-              console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
-            } finally {
-              window.setTimeout(() => { quizInFlight.current = false; }, 4000);
-            }
-          })();
+        if (!topic || topic.length < 2) {
+          toast.info("What topic should I quiz you on?", {
+            description: "Try: \"quiz me on photosynthesis\"",
+          });
+          return;
         }
+        quizInFlight.current = true;
+        const loadingId = toast.loading(`Generating a quiz on "${topic}"…`);
+        (async () => {
+          try {
+            const { data, error } = await supabase.functions.invoke("start-voice-quiz", {
+              body: { topic, difficulty: "medium", questionCount: 5 },
+            });
+            if (error) throw error;
+            const details = (data as any)?.error;
+            if (details) throw new Error(details);
+            console.log("[WhiteboardDataBridge] voice quiz started:", data);
+            toast.success("Quiz ready!", { id: loadingId, description: `Topic: ${topic}` });
+          } catch (err: any) {
+            console.warn("[WhiteboardDataBridge] start-voice-quiz failed", err);
+            const msg =
+              err?.context?.body
+                ? (() => { try { return JSON.parse(err.context.body)?.details || JSON.parse(err.context.body)?.error; } catch { return null; } })()
+                : null;
+            toast.error("Couldn't generate quiz", {
+              id: loadingId,
+              description: msg || err?.message || "Please try again in a moment.",
+            });
+          } finally {
+            window.setTimeout(() => { quizInFlight.current = false; }, 4000);
+          }
+        })();
         return;
       }
+
 
       if (isLocalUser && (isWhiteboardDiagramCommand(text) || isWhiteboardPageDrawingCommand(text))) {
         lastUserWhiteboardPrompt.current = { text, at: Date.now() };
