@@ -86,6 +86,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    const MAX_INPUT_CHARS = 30000;
+    if (input_text.length > MAX_INPUT_CHARS) {
+      return new Response(
+        JSON.stringify({ error: `Input text must be at most ${MAX_INPUT_CHARS} characters.` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const validModes = ["assignment", "detailed", "bullet"];
     const summaryMode = validModes.includes(mode) ? mode : "assignment";
 
