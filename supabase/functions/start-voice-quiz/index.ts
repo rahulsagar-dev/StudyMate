@@ -142,7 +142,15 @@ Return ONLY this JSON object (no markdown):
       parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
     } catch {
       const match = String(raw).match(/\{[\s\S]*\}/);
-      parsed = match ? JSON.parse(match[0]) : null;
+      try {
+        parsed = match ? JSON.parse(match[0]) : null;
+      } catch (e) {
+        console.error("AI returned malformed JSON:", raw);
+        return new Response(
+          JSON.stringify({ error: "AI returned malformed response.", details: "JSON parse failed" }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     const rawQs = Array.isArray(parsed?.questions) ? parsed.questions : [];
@@ -164,7 +172,14 @@ Return ONLY this JSON object (no markdown):
       }));
 
     if (questions.length === 0) {
-      throw new Error("No valid questions returned from AI");
+      console.error("AI returned no valid questions. Raw:", raw);
+      return new Response(
+        JSON.stringify({
+          error: "No valid questions generated.",
+          details: `AI returned ${rawQs.length} candidates, none valid. Try a different topic.`,
+        }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     // Insert as an active voice quiz attempt — realtime listener picks it up
@@ -186,7 +201,10 @@ Return ONLY this JSON object (no markdown):
 
     if (insertErr) {
       console.error("insert quiz_attempts error:", insertErr);
-      throw new Error("Failed to start quiz");
+      return new Response(
+        JSON.stringify({ error: "Failed to start quiz.", details: insertErr.message }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     return new Response(
@@ -201,16 +219,17 @@ Return ONLY this JSON object (no markdown):
     );
   } catch (err) {
     console.error("start-voice-quiz error:", err);
+    const message = err instanceof Error ? err.message : "Unknown error";
     try {
       const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       await supabaseAdmin.from("ai_error_logs").insert({
         user_id: userId,
         feature: "voice_quiz_start",
-        error_message: err instanceof Error ? err.message : "Unknown error",
+        error_message: message,
       });
     } catch (_) {}
     return new Response(
-      JSON.stringify({ error: "Failed to start voice quiz." }),
+      JSON.stringify({ error: "Failed to start voice quiz.", details: message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
