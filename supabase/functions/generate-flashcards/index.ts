@@ -63,6 +63,14 @@ Deno.serve(async (req) => {
       );
     }
 
+    const MAX_INPUT_CHARS = 20000;
+    if (input_text.length > MAX_INPUT_CHARS) {
+      return new Response(
+        JSON.stringify({ error: `Input text must be at most ${MAX_INPUT_CHARS} characters.` }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     if (!checkRateLimit(userId)) {
       return new Response(
         JSON.stringify({ error: "Rate limit exceeded. Please wait a minute before trying again." }),
