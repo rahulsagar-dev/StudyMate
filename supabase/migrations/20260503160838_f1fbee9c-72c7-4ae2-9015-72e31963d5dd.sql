@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Users can create their own xp transactions" ON public.xp_transactions;
