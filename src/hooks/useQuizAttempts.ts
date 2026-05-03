@@ -89,16 +89,8 @@ export function useQuizAttempts() {
 
     await supabase.from("quiz_question_attempts").insert(questionAttempts);
 
-    // Award XP
-    await supabase.rpc("award_xp", {
-      p_user_id: user.id,
-      p_amount: xpEarned,
-      p_source: "quiz",
-      p_source_id: attempt.id,
-    });
-
-    // Update streak
-    await supabase.rpc("update_streak", { p_user_id: user.id });
+    // Award XP via server-validated claim (verifies attempt ownership + idempotent)
+    await (supabase.rpc as any)("claim_quiz_xp", { p_attempt_id: attempt.id });
 
     return { ...attempt, xp_earned: xpEarned, correct, incorrect, skipped };
   };
