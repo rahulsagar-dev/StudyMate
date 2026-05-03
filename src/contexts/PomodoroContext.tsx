@@ -129,21 +129,23 @@ export function PomodoroProvider({ children }: { children: ReactNode }) {
 
       if (user) {
         // Save session to DB
-        await supabase.from("pomodoro_sessions").insert({
-          user_id: user.id,
-          session_length: settings.focusMinutes,
-          completed: true,
-          completed_at: new Date().toISOString(),
-          xp_earned: xp,
-          cycle_position: newCompleted,
-        });
+        const { data: insertedSession } = await supabase
+          .from("pomodoro_sessions")
+          .insert({
+            user_id: user.id,
+            session_length: settings.focusMinutes,
+            completed: true,
+            completed_at: new Date().toISOString(),
+            xp_earned: xp,
+            cycle_position: newCompleted,
+          })
+          .select("id")
+          .single();
 
-        // Award XP via RPC
-        await supabase.rpc("award_xp", {
-          p_user_id: user.id,
-          p_amount: xp,
-          p_source: "pomodoro",
-        });
+        // Award XP via server-validated claim RPC
+        if (insertedSession?.id) {
+          await (supabase.rpc as any)("claim_pomodoro_xp", { p_session_id: insertedSession.id });
+        }
         await supabase.rpc("update_streak", { p_user_id: user.id });
 
         // Update study_sessions for today
