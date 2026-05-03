@@ -230,13 +230,10 @@ export default function Whiteboard() {
 
       if (result.isNew && result.data) {
         setCurrentId(result.data.id);
-        // Award XP for new whiteboard save
+        // Award XP for new whiteboard save (server-validated)
         try {
-          await supabase.rpc("award_xp", {
-            p_user_id: user.id,
-            p_amount: 15,
-            p_source: "whiteboard_save",
-            p_source_id: result.data.id,
+          await (supabase.rpc as any)("claim_whiteboard_save_xp", {
+            p_whiteboard_id: result.data.id,
           });
           toast.success("Whiteboard saved! +15 XP");
         } catch {
