@@ -72,7 +72,7 @@ export default function FocusMode() {
       }
       // streak handled inside claim_focus_session_xp
 
-      toast.success(`Focus session saved! +${xpAmount} XP earned`);
+      toast.success(`Focus session saved! +${awarded} XP earned`);
     } catch {
       toast.error("Failed to save session");
     }
