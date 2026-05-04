@@ -122,7 +122,7 @@ Only add ONE action tag per response. Always confirm what you'll do before the t
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          ...cappedMessages,
         ],
         stream: true,
       }),
