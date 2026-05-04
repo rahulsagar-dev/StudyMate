@@ -229,7 +229,7 @@ Return ONLY this JSON object (no markdown):
       });
     } catch (_) {}
     return new Response(
-      JSON.stringify({ error: "Failed to start voice quiz.", details: message }),
+      JSON.stringify({ error: "Failed to start voice quiz. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
