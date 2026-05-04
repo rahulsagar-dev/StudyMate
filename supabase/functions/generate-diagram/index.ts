@@ -117,7 +117,7 @@ CRITICAL RULES:
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: safePrompt },
         ],
         tools: [
           {
