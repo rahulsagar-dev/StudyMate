@@ -1,10 +1,9 @@
-import { Bot, MessageSquare, Mic, MicIcon, History, Plus } from "lucide-react";
+import { Bot, MessageSquare, MicIcon, History, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { VoiceMode } from "@/components/ai-tutor/VoiceMode";
 import { ChatMode } from "@/components/ai-tutor/ChatMode";
-import { VoiceInputMode } from "@/components/ai-tutor/VoiceInputMode";
 import { motion } from "framer-motion";
 
 export default function AIAssistant() {
@@ -56,9 +55,6 @@ export default function AIAssistant() {
             <TabsTrigger value="chat" className="gap-2 rounded-none h-full border-b-2 border-transparent text-white/60 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=active]:border-primary">
               <MessageSquare className="h-4 w-4" /> Chat Mode
             </TabsTrigger>
-            <TabsTrigger value="voice-input" className="gap-2 rounded-none h-full border-b-2 border-transparent text-white/60 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=active]:border-primary">
-              <Mic className="h-4 w-4" /> Voice Input
-            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="voice" className="m-0">
@@ -66,9 +62,6 @@ export default function AIAssistant() {
           </TabsContent>
           <TabsContent value="chat" className="m-0">
             <ChatMode />
-          </TabsContent>
-          <TabsContent value="voice-input" className="m-0">
-            <VoiceInputMode />
           </TabsContent>
         </Tabs>
       </Card>
