@@ -202,7 +202,7 @@ Return ONLY this JSON object (no markdown):
     if (insertErr) {
       console.error("insert quiz_attempts error:", insertErr);
       return new Response(
-        JSON.stringify({ error: "Failed to start quiz.", details: insertErr.message }),
+        JSON.stringify({ error: "Failed to start quiz. Please try again." }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -229,7 +229,7 @@ Return ONLY this JSON object (no markdown):
       });
     } catch (_) {}
     return new Response(
-      JSON.stringify({ error: "Failed to start voice quiz.", details: message }),
+      JSON.stringify({ error: "Failed to start voice quiz. Please try again." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
