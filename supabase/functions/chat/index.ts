@@ -55,6 +55,13 @@ serve(async (req) => {
       });
     }
 
+    if (isRateLimited(userData.user.id)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait a minute." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { messages, userContext } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
@@ -64,14 +71,20 @@ serve(async (req) => {
       });
     }
 
+    // Cap and truncate messages to bound payload size
+    const cappedMessages = messages.slice(-MAX_MESSAGES).map((m: any) => ({
+      role: typeof m?.role === "string" ? m.role : "user",
+      content: typeof m?.content === "string" ? m.content.slice(0, MAX_MESSAGE_CHARS) : "",
+    }));
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
     let contextBlock = "";
-    if (userContext) {
-      contextBlock = `\n\nUser Context:\n${userContext}`;
+    if (userContext && typeof userContext === "string") {
+      contextBlock = `\n\nUser Context:\n${userContext.slice(0, MAX_USER_CONTEXT_CHARS)}`;
     }
 
     const systemPrompt = `You are an intelligent and friendly AI Tutor for StudyMate. Your goal is to help students understand concepts deeply.
