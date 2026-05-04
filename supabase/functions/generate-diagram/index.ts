@@ -95,13 +95,6 @@ serve(async (req) => {
     }
     const safePrompt = prompt.trim().slice(0, MAX_PROMPT_CHARS);
 
-    const { prompt, diagramType = "diagram" } = await req.json();
-    if (!prompt || typeof prompt !== "string") {
-      return new Response(JSON.stringify({ error: "prompt is required" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const systemPrompt = `${DIAGRAM_PROMPTS[diagramType] || DIAGRAM_PROMPTS.diagram}
 
