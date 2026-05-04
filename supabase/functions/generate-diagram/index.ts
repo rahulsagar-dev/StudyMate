@@ -6,6 +6,24 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// In-memory rate limiter: user_id -> timestamps[]
+const rateLimitMap = new Map<string, number[]>();
+const RATE_LIMIT = 6;
+const RATE_WINDOW_MS = 60_000;
+const MAX_PROMPT_CHARS = 8000;
+
+function isRateLimited(userId: string): boolean {
+  const now = Date.now();
+  const timestamps = (rateLimitMap.get(userId) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (timestamps.length >= RATE_LIMIT) {
+    rateLimitMap.set(userId, timestamps);
+    return true;
+  }
+  timestamps.push(now);
+  rateLimitMap.set(userId, timestamps);
+  return false;
+}
+
 const DIAGRAM_PROMPTS: Record<string, string> = {
   flowchart: `You are an expert at creating flowchart diagrams. Generate a flowchart using rectangles for steps and arrows connecting them. Use a top-to-bottom layout with consistent spacing. Each rectangle should be 200px wide and 60px tall. Start at y=100 and space elements 120px apart vertically. Use strokeColor "#e2e8f0" and backgroundColor "#1e293b" for rectangles.`,
   mindmap: `You are an expert at creating mind map diagrams. Generate a mind map using ellipses for nodes and lines connecting them. Place the central topic at center (x=400, y=300) with branches radiating outward. Use ellipses 180px wide and 80px tall. Use strokeColor "#e2e8f0" and backgroundColor "#1e293b" for nodes.`,
