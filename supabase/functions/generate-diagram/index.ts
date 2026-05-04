@@ -76,8 +76,24 @@ serve(async (req) => {
       });
     }
 
+    if (isRateLimited(user.id)) {
+      return new Response(JSON.stringify({ error: "Rate limit exceeded. Please wait a minute." }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("Missing configuration");
+
+    const { prompt, diagramType = "diagram" } = await req.json();
+    if (!prompt || typeof prompt !== "string") {
+      return new Response(JSON.stringify({ error: "prompt is required" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const safePrompt = prompt.trim().slice(0, MAX_PROMPT_CHARS);
 
     const { prompt, diagramType = "diagram" } = await req.json();
     if (!prompt || typeof prompt !== "string") {
