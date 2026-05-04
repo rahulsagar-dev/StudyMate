@@ -49,7 +49,7 @@ export default function AIAssistant() {
       {/* Tabs */}
       <Card className="overflow-hidden border-white/10" style={{ background: "hsl(240 30% 6%)" }}>
         <Tabs defaultValue="chat">
-          <TabsList className="w-full justify-start rounded-none border-b border-white/10 bg-transparent h-12 p-0">
+          <TabsList className="w-full justify-center rounded-none border-b border-white/10 bg-transparent h-12 p-0">
             <TabsTrigger value="voice" className="gap-2 rounded-none h-full border-b-2 border-transparent text-white/60 data-[state=active]:bg-white/5 data-[state=active]:text-white data-[state=active]:border-primary">
               <MicIcon className="h-4 w-4" /> Voice Mode
             </TabsTrigger>
