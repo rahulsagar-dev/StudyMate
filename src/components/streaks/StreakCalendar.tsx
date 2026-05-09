@@ -88,7 +88,7 @@ export function StreakCalendar() {
                 {day.active ? (
                   <div className="space-y-0.5 text-muted-foreground">
                     <p>🕐 {formatTime(day.minutes)}</p>
-                    <p>🍅 {day.pomodoros} sessions</p>
+                    <p>✅ {day.tasks} tasks · 🍅 {day.pomodoros}</p>
                     <p className="text-streak">✓ Active day</p>
                   </div>
                 ) : (
