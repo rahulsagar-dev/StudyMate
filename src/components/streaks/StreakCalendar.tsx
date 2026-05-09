@@ -107,7 +107,7 @@ export function StreakCalendar() {
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-[2px] bg-streak/60 border border-streak/30" />
-          <span className="text-[10px] text-muted-foreground">Active (≥60min or ≥2 pomodoros)</span>
+          <span className="text-[10px] text-muted-foreground">Active (≥10 min or ≥1 task)</span>
         </div>
       </div>
     </div>
