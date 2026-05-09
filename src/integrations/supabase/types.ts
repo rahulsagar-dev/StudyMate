@@ -989,6 +989,7 @@ export type Database = {
       }
       purchase_store_item: { Args: { p_item_id: string }; Returns: Json }
       recalculate_streak: { Args: { p_user_id: string }; Returns: undefined }
+      reset_stale_streak: { Args: never; Returns: undefined }
       uncomplete_task: { Args: { p_task_id: string }; Returns: undefined }
       update_streak: { Args: { p_user_id: string }; Returns: undefined }
     }

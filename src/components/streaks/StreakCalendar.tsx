@@ -17,7 +17,7 @@ export function StreakCalendar() {
 
   // Build last 90 days calendar
   const days = useMemo(() => {
-    const result: { date: string; label: string; active: boolean; minutes: number; pomodoros: number }[] = [];
+    const result: { date: string; label: string; active: boolean; minutes: number; pomodoros: number; tasks: number }[] = [];
     const now = new Date();
     for (let i = 89; i >= 0; i--) {
       const d = new Date(now);
@@ -25,15 +25,17 @@ export function StreakCalendar() {
       const dateStr = d.toISOString().split("T")[0];
       const activity = activityMap.get(dateStr);
       const session = sessionMap.get(dateStr);
-      const minutes = activity?.activeMinutes || session?.studyMinutes || 0;
+      const minutes = Math.max(activity?.activeMinutes || 0, session?.studyMinutes || 0);
       const pomodoros = activity?.pomodoroSessions || 0;
-      const active = minutes >= 60 || pomodoros >= 2;
+      const tasks = session?.tasksCompleted || 0;
+      const active = minutes >= 10 || tasks >= 1;
       result.push({
         date: dateStr,
         label: d.toLocaleDateString("en-US", { month: "short", day: "numeric", weekday: "short" }),
         active,
         minutes,
         pomodoros,
+        tasks,
       });
     }
     return result;
@@ -86,7 +88,7 @@ export function StreakCalendar() {
                 {day.active ? (
                   <div className="space-y-0.5 text-muted-foreground">
                     <p>🕐 {formatTime(day.minutes)}</p>
-                    <p>🍅 {day.pomodoros} sessions</p>
+                    <p>✅ {day.tasks} tasks · 🍅 {day.pomodoros}</p>
                     <p className="text-streak">✓ Active day</p>
                   </div>
                 ) : (
@@ -105,7 +107,7 @@ export function StreakCalendar() {
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-3 h-3 rounded-[2px] bg-streak/60 border border-streak/30" />
-          <span className="text-[10px] text-muted-foreground">Active (≥60min or ≥2 pomodoros)</span>
+          <span className="text-[10px] text-muted-foreground">Active (≥10 min or ≥1 task)</span>
         </div>
       </div>
     </div>

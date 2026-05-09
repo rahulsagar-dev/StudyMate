@@ -51,13 +51,15 @@
        return;
      }
  
-     try {
-       setLoading(true);
-       const { data, error } = await supabase
-         .from("profiles")
-         .select("*")
-         .eq("id", user.id)
-         .maybeSingle();
+      try {
+        setLoading(true);
+        // Reset streak server-side if last activity is older than yesterday
+        await supabase.rpc("reset_stale_streak");
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .maybeSingle();
  
        if (error) throw error;
        setProfile(data);
