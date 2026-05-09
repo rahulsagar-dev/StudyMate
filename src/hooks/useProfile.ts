@@ -107,6 +107,11 @@
    const getLevelProgress = (xp: number, level: number) => {
      const currentThreshold = LEVEL_THRESHOLDS[level] || 0;
      const nextThreshold = LEVEL_THRESHOLDS[level + 1] || LEVEL_THRESHOLDS[8];
+     // If user spent XP at the store and is below their level's floor,
+     // fall back to absolute progress toward next threshold so the bar still reflects real XP.
+     if (xp < currentThreshold) {
+       return Math.max(0, Math.min(100, Math.round((xp / nextThreshold) * 100)));
+     }
      const xpInCurrentLevel = xp - currentThreshold;
      const xpNeededForNext = nextThreshold - currentThreshold;
      return Math.max(0, Math.min(100, Math.round((xpInCurrentLevel / xpNeededForNext) * 100)));
