@@ -17,7 +17,7 @@ export function StreakCalendar() {
 
   // Build last 90 days calendar
   const days = useMemo(() => {
-    const result: { date: string; label: string; active: boolean; minutes: number; pomodoros: number }[] = [];
+    const result: { date: string; label: string; active: boolean; minutes: number; pomodoros: number; tasks: number }[] = [];
     const now = new Date();
     for (let i = 89; i >= 0; i--) {
       const d = new Date(now);
@@ -25,15 +25,17 @@ export function StreakCalendar() {
       const dateStr = d.toISOString().split("T")[0];
       const activity = activityMap.get(dateStr);
       const session = sessionMap.get(dateStr);
-      const minutes = activity?.activeMinutes || session?.studyMinutes || 0;
+      const minutes = Math.max(activity?.activeMinutes || 0, session?.studyMinutes || 0);
       const pomodoros = activity?.pomodoroSessions || 0;
-      const active = minutes >= 60 || pomodoros >= 2;
+      const tasks = session?.tasksCompleted || 0;
+      const active = minutes >= 10 || tasks >= 1;
       result.push({
         date: dateStr,
         label: d.toLocaleDateString("en-US", { month: "short", day: "numeric", weekday: "short" }),
         active,
         minutes,
         pomodoros,
+        tasks,
       });
     }
     return result;
