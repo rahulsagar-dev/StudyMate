@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     const summaryMode = validModes.includes(mode) ? mode : "assignment";
 
     // Check for AI API key
-    const apiKey = Deno.env.get("LOVABLE_AI_API_KEY");
+    const apiKey = Deno.env.get("LOVABLE_API_KEY");
     if (!apiKey) {
       // Log error
       const serviceClient = createClient(
