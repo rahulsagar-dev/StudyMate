@@ -130,30 +130,48 @@ Deno.serve(async (req) => {
     //
     // For now, return a structured placeholder response:
 
-    const _systemPrompt = `You are a professional text summarizer.\n${getModeInstruction(summaryMode)}\nReturn ONLY the summary text without any prefixes like "Summary:" or additional explanations.`;
+    const systemPrompt = `You are a professional text summarizer.\n${getModeInstruction(summaryMode)}\nReturn ONLY the summary text without any prefixes like "Summary:" or additional explanations.`;
 
-    // Temporary: basic extractive summary until AI is connected
-    const sentences = input_text
-      .split(/[.!?]+/)
-      .map((s: string) => s.trim())
-      .filter((s: string) => s.length > 10);
+    const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: input_text },
+        ],
+      }),
+    });
 
-    let ratio: number;
-    switch (summaryMode) {
-      case "assignment": ratio = 0.15; break;
-      case "detailed": ratio = 0.30; break;
-      case "bullet": ratio = 0.22; break;
-      default: ratio = 0.20;
+    if (!aiResp.ok) {
+      if (aiResp.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (aiResp.status === 402) {
+        return new Response(JSON.stringify({ error: "AI credits exhausted. Please add funds to your Lovable workspace." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const errText = await aiResp.text();
+      console.error("AI gateway error:", aiResp.status, errText);
+      return new Response(JSON.stringify({ error: "AI service error" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const targetCount = Math.max(1, Math.ceil(sentences.length * ratio));
-    const selectedSentences = sentences.slice(0, targetCount);
+    const aiData = await aiResp.json();
+    const summaryText: string = aiData?.choices?.[0]?.message?.content?.trim() ?? "";
 
-    let summaryText: string;
-    if (summaryMode === "bullet") {
-      summaryText = selectedSentences.map((s: string) => `• ${s}.`).join("\n");
-    } else {
-      summaryText = selectedSentences.join(". ") + ".";
+    if (!summaryText) {
+      return new Response(JSON.stringify({ error: "Empty AI response" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const originalWords = input_text.trim().split(/\s+/).length;
