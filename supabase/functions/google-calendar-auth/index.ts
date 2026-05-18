@@ -120,8 +120,29 @@ Deno.serve(async (req) => {
           });
         }
 
-        const redirectUrl = url.searchParams.get("redirect") || req.headers.get("origin") || "";
-        const finalRedirect = `${redirectUrl}/calendar`;
+        const requestedRedirect = url.searchParams.get("redirect") || req.headers.get("origin") || "";
+        const ALLOWED_ORIGINS = [
+          "https://id-preview--3f0f04ba-f0f0-4aa8-b41c-2eb290c18c6f.lovable.app",
+          "https://3f0f04ba-f0f0-4aa8-b41c-2eb290c18c6f.lovableproject.com",
+        ];
+        const allowedSuffixes = [".lovable.app", ".lovableproject.com", ".lovable.dev"];
+        let isAllowed = false;
+        try {
+          const parsed = new URL(requestedRedirect);
+          if (parsed.protocol === "https:") {
+            isAllowed = ALLOWED_ORIGINS.includes(parsed.origin) ||
+              allowedSuffixes.some((s) => parsed.hostname.endsWith(s));
+          }
+        } catch {
+          isAllowed = false;
+        }
+        if (!isAllowed) {
+          return new Response(JSON.stringify({ error: "Invalid redirect origin" }), {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        const finalRedirect = `${requestedRedirect.replace(/\/$/, "")}/calendar`;
 
         // Cleanup any expired states (best-effort)
         await serviceClient
