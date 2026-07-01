@@ -27,6 +27,8 @@ export function extractElements(value: unknown): unknown[] | null {
 
 export function isWhiteboardDiagramCommand(text: string): boolean {
   const normalized = text.toLowerCase();
+  // Don't trigger for flashcard/quiz/summary requests
+  if (/flashcard|flash card|quiz|summary|summari[sz]e|note/.test(normalized)) return false;
   const mentionsWhiteboard = /white\s*board|canvas|board/.test(normalized);
   const asksForDrawing = /draw|diagram|flow\s*chart|flowchart|mind\s*map|mindmap|chart|sketch|show|visuali[sz]e|put|add|create|make/.test(normalized);
   return mentionsWhiteboard && asksForDrawing;
