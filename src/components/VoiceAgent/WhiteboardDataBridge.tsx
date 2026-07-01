@@ -34,6 +34,8 @@ export function isWhiteboardDiagramCommand(text: string): boolean {
 
 export function isWhiteboardPageDrawingCommand(text: string): boolean {
   const normalized = text.toLowerCase();
+  // Don't trigger whiteboard for flashcard/quiz/summary requests
+  if (/flashcard|flash card|quiz|summary|summari[sz]e|note/.test(normalized)) return false;
   const asksForDrawing = /draw|diagram|flow\s*chart|flowchart|mind\s*map|mindmap|chart|sketch|show|visuali[sz]e|put|add|create|make/.test(normalized);
   const drawableSubject = /array|linked\s*list|link\s*list|stack|queue|tree|b[io]n+ary|bst|graph|flow\s*chart|flowchart|mind\s*map|mindmap/.test(normalized);
   return asksForDrawing && drawableSubject;
