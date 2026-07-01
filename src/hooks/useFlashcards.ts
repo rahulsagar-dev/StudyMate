@@ -171,6 +171,31 @@ export function useFlashcards() {
     }
   }, [user, loadFlashcardSets, loadGenerationHistory]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`flashcard-sets-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'flashcard_sets',
+          filter: `user_id=eq.${user.id}`,
+        },
+        () => {
+          loadFlashcardSets();
+          toast({ title: "Aria created new flashcards!", description: "Check your Saved Sets below." });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user, loadFlashcardSets, toast]);
+
   return {
     flashcardSets,
     generationHistory,
