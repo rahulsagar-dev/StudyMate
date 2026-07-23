@@ -965,7 +965,7 @@ export type Database = {
           p_source_id?: string
           p_user_id: string
         }
-        Returns: undefined
+        Returns: number
       }
       calculate_level: { Args: { xp: number }; Returns: number }
       claim_focus_session_xp: { Args: { p_minutes: number }; Returns: Json }
