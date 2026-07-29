@@ -279,9 +279,6 @@ export default function StudyPlanner() {
     toast({ title: "CSV exported!" });
   };
 
-  const exportPDF = () => {
-    toast({ title: "PDF export feature coming soon!" });
-  };
 
   // TODO: Later connect XP system with global user progression system
   // (levels, achievements, streaks, leaderboard)
