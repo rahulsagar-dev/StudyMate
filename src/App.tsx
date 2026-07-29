@@ -27,10 +27,18 @@ import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import HybridQuizListener from "@/components/quiz/HybridQuizListener";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const Whiteboard = lazy(() => import("./pages/Whiteboard"));
 
 const queryClient = new QueryClient();
+
+const page = (element: JSX.Element) => (
+  <ProtectedRoute>
+    <MainLayout>{element}</MainLayout>
+  </ProtectedRoute>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -42,27 +50,36 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ErrorBoundary>
           <HybridQuizListener />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/" element={<MainLayout><Dashboard /></MainLayout>} />
-            <Route path="/focus" element={<MainLayout><FocusMode /></MainLayout>} />
-            <Route path="/ai-assistant" element={<MainLayout><AIAssistant /></MainLayout>} />
-            <Route path="/summarizer" element={<MainLayout><Summarizer /></MainLayout>} />
-            <Route path="/flashcards" element={<MainLayout><Flashcards /></MainLayout>} />
-            <Route path="/quizzes" element={<MainLayout><Quizzes /></MainLayout>} />
-            <Route path="/study-planner" element={<MainLayout><StudyPlanner /></MainLayout>} />
-            <Route path="/calendar" element={<MainLayout><CalendarPage /></MainLayout>} />
-            <Route path="/achievements" element={<MainLayout><Achievements /></MainLayout>} />
-            <Route path="/store" element={<MainLayout><Store /></MainLayout>} />
-            <Route path="/streaks" element={<MainLayout><Streaks /></MainLayout>} />
-            <Route path="/analytics" element={<MainLayout><Analytics /></MainLayout>} />
-            <Route path="/profile" element={<MainLayout><Profile /></MainLayout>} />
-            <Route path="/settings" element={<MainLayout><Settings /></MainLayout>} />
-            <Route path="/whiteboard" element={<MainLayout><Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}><Whiteboard /></Suspense></MainLayout>} />
+            <Route path="/" element={page(<Dashboard />)} />
+            <Route path="/focus" element={page(<FocusMode />)} />
+            <Route path="/ai-assistant" element={page(<AIAssistant />)} />
+            <Route path="/summarizer" element={page(<Summarizer />)} />
+            <Route path="/flashcards" element={page(<Flashcards />)} />
+            <Route path="/quizzes" element={page(<Quizzes />)} />
+            <Route path="/study-planner" element={page(<StudyPlanner />)} />
+            <Route path="/calendar" element={page(<CalendarPage />)} />
+            <Route path="/achievements" element={page(<Achievements />)} />
+            <Route path="/store" element={page(<Store />)} />
+            <Route path="/streaks" element={page(<Streaks />)} />
+            <Route path="/analytics" element={page(<Analytics />)} />
+            <Route path="/profile" element={page(<Profile />)} />
+            <Route path="/settings" element={page(<Settings />)} />
+            <Route
+              path="/whiteboard"
+              element={page(
+                <Suspense fallback={<div className="flex items-center justify-center h-64"><div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" /></div>}>
+                  <Whiteboard />
+                </Suspense>
+              )}
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          </ErrorBoundary>
         </BrowserRouter>
       </TooltipProvider>
       </ActivityTrackerProvider>
