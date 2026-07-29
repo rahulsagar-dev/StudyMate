@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   GraduationCap, Settings, Calendar, BarChart3, Plus, Trash2,
-  FileDown, Download, Save, History, AlertCircle, Copy, Eye, ArrowRight, ListTodo, CalendarPlus
+  FileDown, Save, History, AlertCircle, Copy, Eye, ArrowRight, ListTodo, CalendarPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
