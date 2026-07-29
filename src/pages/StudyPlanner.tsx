@@ -657,9 +657,6 @@ export default function StudyPlanner() {
                     <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={exportCSV}>
                       <FileDown className="h-3 w-3" /> CSV
                     </Button>
-                    <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={exportPDF}>
-                      <Download className="h-3 w-3" /> PDF
-                    </Button>
                     <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={saveSchedule}>
                       <Save className="h-3 w-3" /> Save
                     </Button>
