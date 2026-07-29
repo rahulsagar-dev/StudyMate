@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   GraduationCap, Settings, Calendar, BarChart3, Plus, Trash2,
-  FileDown, Download, Save, History, AlertCircle, Copy, Eye, ArrowRight, ListTodo, CalendarPlus
+  FileDown, Save, History, AlertCircle, Copy, Eye, ArrowRight, ListTodo, CalendarPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -279,9 +279,6 @@ export default function StudyPlanner() {
     toast({ title: "CSV exported!" });
   };
 
-  const exportPDF = () => {
-    toast({ title: "PDF export feature coming soon!" });
-  };
 
   // TODO: Later connect XP system with global user progression system
   // (levels, achievements, streaks, leaderboard)
@@ -656,9 +653,6 @@ export default function StudyPlanner() {
                   <div className="flex items-center gap-1">
                     <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={exportCSV}>
                       <FileDown className="h-3 w-3" /> CSV
-                    </Button>
-                    <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={exportPDF}>
-                      <Download className="h-3 w-3" /> PDF
                     </Button>
                     <Button size="sm" variant="ghost" className="gap-1 text-xs" onClick={saveSchedule}>
                       <Save className="h-3 w-3" /> Save
