@@ -97,7 +97,14 @@ export function XPTransactions() {
                   <p className="text-sm font-medium text-foreground truncate">{meta.label}</p>
                   <p className="text-xs text-muted-foreground">{formatTime(tx.created_at)}</p>
                 </div>
-                <span className="text-sm font-semibold text-xp whitespace-nowrap">+{tx.amount}</span>
+                <span
+                  className={cn(
+                    "text-sm font-semibold whitespace-nowrap",
+                    tx.amount >= 0 ? "text-xp" : "text-destructive"
+                  )}
+                >
+                  {tx.amount >= 0 ? `+${tx.amount}` : tx.amount}
+                </span>
               </div>
             );
           })

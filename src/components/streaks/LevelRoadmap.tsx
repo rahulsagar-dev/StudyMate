@@ -72,7 +72,11 @@ export function LevelRoadmap({
                   {lvl.title}
                 </p>
                 <p className="text-[10px] text-muted-foreground/70 mt-0.5">
-                  {lvl.xp > 0 ? `${(lvl.xp / 1000).toFixed(lvl.xp >= 1000 ? 0 : 1)}k XP` : "Start"}
+                  {lvl.xp > 0
+                    ? lvl.xp % 1000 === 0
+                      ? `${lvl.xp / 1000}k XP`
+                      : `${(lvl.xp / 1000).toFixed(1)}k XP`
+                    : "Start"}
                 </p>
               </div>
             );
