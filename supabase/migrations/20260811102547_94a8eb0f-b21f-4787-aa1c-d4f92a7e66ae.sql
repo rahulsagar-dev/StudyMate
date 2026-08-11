@@ -1,0 +1,1 @@
+DROP TRIGGER IF EXISTS prevent_profile_game_state_changes_trg ON public.profiles;
