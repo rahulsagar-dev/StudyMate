@@ -4,14 +4,18 @@ import { TopBar } from "./TopBar";
 import { FloatingAIButton } from "@/components/FloatingAIButton";
 import { FloatingVoiceButton } from "@/components/VoiceAgent/FloatingVoiceButton";
 import { MotivationPopup } from "@/components/MotivationPopup";
+import { usePageTracking } from "@/hooks/usePageTracking";
 
 interface MainLayoutProps {
   children: ReactNode;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
+  usePageTracking();
+
   return (
     <div className="min-h-screen bg-background flex w-full">
+
       <AppSidebar />
       
       <div className="flex-1 ml-16 flex flex-col">

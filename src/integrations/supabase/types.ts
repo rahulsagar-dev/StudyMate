@@ -109,6 +109,36 @@ export type Database = {
         }
         Relationships: []
       }
+      app_events: {
+        Row: {
+          created_at: string
+          details: Json
+          event_name: string
+          id: string
+          path: string | null
+          session_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json
+          event_name: string
+          id?: string
+          path?: string | null
+          session_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json
+          event_name?: string
+          id?: string
+          path?: string | null
+          session_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       aria_memory: {
         Row: {
           created_at: string | null
@@ -955,7 +985,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      daily_active_users: {
+        Row: {
+          active_users: number | null
+          day: string | null
+          events: number | null
+        }
+        Relationships: []
+      }
+      user_retention: {
+        Row: {
+          active_days: number | null
+          last_active_day: string | null
+          lifespan_days: number | null
+          returned_d1: boolean | null
+          returned_d30: boolean | null
+          returned_d7: boolean | null
+          signup_day: string | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       award_xp: {
